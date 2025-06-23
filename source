@@ -175,7 +175,7 @@ return function()
 			local dragConn, stopConn
 
 			dragConn = UserInputService.InputChanged:Connect(function(newInput)
-				if newInput.UserInputType == UserInputService.GetLastInputType() then
+				if newInput.UserInputType == UserInputService:GetLastInputType() then
 					Background.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + (newInput.Position.X - dragStart.X), startPos.Y.Scale, startPos.Y.Offset + (newInput.Position.Y - dragStart.Y))
 				end
 			end)
@@ -386,9 +386,8 @@ return function()
 						Create("UICorner"){ CornerRadius = UDim.new(0, 4)},
 						Create("ImageLabel"){
 							Name = "Checkmark",
-							Parent = self,
 							Size = UDim2.new(1, -4, 1, -4),
-							Position = UDim2.new(0.5, -0.5, 0.5, -0.5),
+							Position = UDim2.new(0.5, 0, 0.5, 0),
 							AnchorPoint = Vector2.new(0.5, 0.5),
 							Image = Assets.Checkmark,
 							ImageColor3 = Config.Theme.AccentContrast,
