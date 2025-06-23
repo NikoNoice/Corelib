@@ -301,7 +301,7 @@ return function()
 				Tween(Background, {Size = UDim2.new(0, Background.AbsoluteSize.X, 0, requiredHeight)}, 0.2)
 			end
 
-			TabButton.MouseButton1Click:Connect(function() self:SetActive() end)
+			TabButton.MouseButton1Click:Connect(function() Tab:SetActive() end) -- <<< FIX IS HERE
 			table.insert(Window.Tabs, Tab)
 
 			function Tab:AddSection(title)
