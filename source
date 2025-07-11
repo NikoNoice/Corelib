@@ -18,7 +18,8 @@ local Theme = {
     Text = Color3.fromRGB(255, 255, 255),
     SubText = Color3.fromRGB(124, 121, 125),
     DisabledText = Color3.fromRGB(111, 108, 112),
-    Divider = Color3.fromRGB(36, 36, 43)
+    Divider = Color3.fromRGB(36, 36, 43),
+    ToggleStroke = Color3.fromRGB(36, 36, 43)
 }
 
 -- Utility Functions
@@ -308,6 +309,17 @@ function Library:GetTabMethods()
             sectionFrame.Position = UDim2.new(0.498, 4, 0, 0)
         end
         
+        -- Section background with stroke
+        local sectionBg = Instance.new("Frame")
+        sectionBg.Name = "SectionBackground"
+        sectionBg.Parent = sectionFrame
+        sectionBg.BackgroundColor3 = Theme.Background
+        sectionBg.BorderSizePixel = 0
+        sectionBg.Position = UDim2.new(0, 0, 0.022, 0)
+        sectionBg.Size = UDim2.new(0, 225, 0, 398)
+        CreateCorner(sectionBg, 3)
+        CreateStroke(sectionBg, Theme.Divider, 1)
+        
         -- Section title bar
         local titleBar = Instance.new("Frame")
         titleBar.Name = "TitleBar"
@@ -368,29 +380,25 @@ end
 function Library:GetSectionMethods()
     local methods = {}
     
-    function methods:CreateToggle(name, default, callback)
+    function methods:CreateToggle(name, default, callback, colorpicker)
         default = default or false
         callback = callback or function() end
+        colorpicker = colorpicker or nil
         
         local toggleFrame = Instance.new("TextButton")
         toggleFrame.Name = "Toggle_" .. name
         toggleFrame.Parent = self.section.contentHolder
-        toggleFrame.BackgroundTransparency = 1
+        toggleFrame.BackgroundColor3 = default and Theme.Accent or Color3.fromRGB(255, 255, 255)
+        toggleFrame.BackgroundTransparency = default and 0 or 1
+        toggleFrame.BorderSizePixel = 0
         toggleFrame.Size = UDim2.new(0, 18, 0, 18)
         toggleFrame.Text = ""
-        
-        local toggleBg = Instance.new("Frame")
-        toggleBg.Parent = toggleFrame
-        toggleBg.BackgroundColor3 = default and Theme.Accent or Color3.fromRGB(255, 255, 255)
-        toggleBg.BackgroundTransparency = default and 0 or 1
-        toggleBg.BorderSizePixel = 0
-        toggleBg.Size = UDim2.new(1, 0, 1, 0)
-        CreateCorner(toggleBg, 3)
-        CreateStroke(toggleBg, Theme.Accent, 1)
+        CreateCorner(toggleFrame, 3)
+        CreateStroke(toggleFrame, default and Theme.Accent or Theme.ToggleStroke, 1)
         
         local checkmark = Instance.new("ImageLabel")
         checkmark.Name = "Checkmark"
-        checkmark.Parent = toggleBg
+        checkmark.Parent = toggleFrame
         checkmark.BackgroundTransparency = 1
         checkmark.Position = UDim2.new(0.111, 0, 0.111, 0)
         checkmark.Size = UDim2.new(0, 13, 0, 13)
@@ -403,21 +411,45 @@ function Library:GetSectionMethods()
         titleLabel.Parent = toggleFrame
         titleLabel.BackgroundTransparency = 1
         titleLabel.Position = UDim2.new(1.461, 0, -0.056, 0)
-        titleLabel.Size = UDim2.new(0, 188, 0, 20)
+        titleLabel.Size = UDim2.new(0, 150, 0, 20)
         titleLabel.Font = Enum.Font.SourceSansSemibold
         titleLabel.Text = name
         titleLabel.TextColor3 = default and Theme.Text or Theme.SubText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
         
+        -- Colorpicker if provided
+        local colorpickerButton = nil
+        if colorpicker then
+            colorpickerButton = Instance.new("TextButton")
+            colorpickerButton.Name = "ColorpickerBinded"
+            colorpickerButton.Parent = toggleFrame
+            colorpickerButton.BackgroundColor3 = colorpicker.default or Color3.fromRGB(255, 0, 0)
+            colorpickerButton.BorderSizePixel = 0
+            colorpickerButton.Position = UDim2.new(10.222, 0, 0.111, 0)
+            colorpickerButton.Size = UDim2.new(0, 32, 0, 13)
+            colorpickerButton.Text = ""
+            CreateCorner(colorpickerButton, 3)
+            
+            colorpickerButton.MouseButton1Click:Connect(function()
+                if colorpicker.callback then
+                    colorpicker.callback(colorpickerButton.BackgroundColor3)
+                end
+            end)
+        end
+        
         local state = default
         
         toggleFrame.MouseButton1Click:Connect(function()
             state = not state
             
-            local bgTween = CreateTween(toggleBg, {
+            local bgTween = CreateTween(toggleFrame, {
                 BackgroundColor3 = state and Theme.Accent or Color3.fromRGB(255, 255, 255),
                 BackgroundTransparency = state and 0 or 1
+            }, 0.2)
+            
+            local strokeTween = CreateTween(toggleFrame.UIStroke, {
+                Color = state and Theme.Accent or Theme.ToggleStroke
             }, 0.2)
             
             local textTween = CreateTween(titleLabel, {
@@ -426,6 +458,7 @@ function Library:GetSectionMethods()
             
             checkmark.Visible = state
             bgTween:Play()
+            strokeTween:Play()
             textTween:Play()
             
             callback(state)
@@ -434,14 +467,16 @@ function Library:GetSectionMethods()
         return {
             SetValue = function(value)
                 state = value
-                toggleBg.BackgroundColor3 = state and Theme.Accent or Color3.fromRGB(255, 255, 255)
-                toggleBg.BackgroundTransparency = state and 0 or 1
+                toggleFrame.BackgroundColor3 = state and Theme.Accent or Color3.fromRGB(255, 255, 255)
+                toggleFrame.BackgroundTransparency = state and 0 or 1
+                toggleFrame.UIStroke.Color = state and Theme.Accent or Theme.ToggleStroke
                 titleLabel.TextColor3 = state and Theme.Text or Theme.SubText
                 checkmark.Visible = state
             end,
             GetValue = function()
                 return state
-            end
+            end,
+            Colorpicker = colorpickerButton
         }
     end
     
@@ -480,10 +515,11 @@ function Library:GetSectionMethods()
         valueBox.TextSize = 16
         valueBox.TextXAlignment = Enum.TextXAlignment.Right
         
+        -- Slider track (just a line)
         local sliderTrack = Instance.new("Frame")
         sliderTrack.Name = "Track"
         sliderTrack.Parent = sliderFrame
-        sliderTrack.BackgroundColor3 = Theme.Divider
+        sliderTrack.BackgroundColor3 = Theme.ToggleStroke
         sliderTrack.BorderSizePixel = 0
         sliderTrack.Position = UDim2.new(0, 0, 0.8, 0)
         sliderTrack.Size = UDim2.new(0, 214, 0, 2)
@@ -493,7 +529,7 @@ function Library:GetSectionMethods()
         sliderFill.Parent = sliderTrack
         sliderFill.BackgroundColor3 = Theme.Accent
         sliderFill.BorderSizePixel = 0
-        sliderFill.Position = UDim2.new(0, 0, -2, 0)
+        sliderFill.Position = UDim2.new(0, 0, -1, 0)
         sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 0, 4)
         sliderFill.ZIndex = 2
         CreateCorner(sliderFill, 2)
@@ -563,10 +599,11 @@ function Library:GetSectionMethods()
         }
     end
     
-    function methods:CreateDropdown(name, options, default, callback)
+    function methods:CreateDropdown(name, options, default, callback, multiSelect)
         options = options or {}
         default = default or (options[1] or "None")
         callback = callback or function() end
+        multiSelect = multiSelect or false
         
         local dropdownFrame = Instance.new("TextButton")
         dropdownFrame.Name = "Dropdown_" .. name
@@ -574,7 +611,7 @@ function Library:GetSectionMethods()
         dropdownFrame.BackgroundTransparency = 1
         dropdownFrame.Size = UDim2.new(0, 216, 0, 20)
         dropdownFrame.Font = Enum.Font.SourceSansSemibold
-        dropdownFrame.Text = " " .. default
+        dropdownFrame.Text = " " .. (multiSelect and table.concat(default, ", ") or default)
         dropdownFrame.TextColor3 = Theme.SubText
         dropdownFrame.TextSize = 15
         dropdownFrame.TextXAlignment = Enum.TextXAlignment.Left
@@ -604,7 +641,7 @@ function Library:GetSectionMethods()
         optionLayout.SortOrder = Enum.SortOrder.LayoutOrder
         optionLayout.Padding = UDim.new(0, 1)
         
-        local selectedValue = default
+        local selectedValue = multiSelect and (type(default) == "table" and default or {default}) or default
         local isOpen = false
         
         for i, option in ipairs(options) do
@@ -614,24 +651,68 @@ function Library:GetSectionMethods()
             optionButton.BackgroundTransparency = 1
             optionButton.Size = UDim2.new(0, 215, 0, 16)
             optionButton.Font = Enum.Font.SourceSansSemibold
-            optionButton.Text = (option == selectedValue and "       " or " ") .. option
-            optionButton.TextColor3 = option == selectedValue and Theme.Accent or Theme.DisabledText
             optionButton.TextSize = 14
             optionButton.TextXAlignment = Enum.TextXAlignment.Left
             optionButton.LayoutOrder = i
             
+            local function updateOptionAppearance()
+                if multiSelect then
+                    local isSelected = false
+                    for _, selected in ipairs(selectedValue) do
+                        if selected == option then
+                            isSelected = true
+                            break
+                        end
+                    end
+                    optionButton.Text = (isSelected and "       " or " ") .. option
+                    optionButton.TextColor3 = isSelected and Theme.Accent or Theme.DisabledText
+                else
+                    optionButton.Text = (option == selectedValue and "       " or " ") .. option
+                    optionButton.TextColor3 = option == selectedValue and Theme.Accent or Theme.DisabledText
+                end
+            end
+            
+            updateOptionAppearance()
+            
             optionButton.MouseButton1Click:Connect(function()
-                selectedValue = option
-                dropdownFrame.Text = " " .. option
-                dropdownHolder.Visible = false
-                isOpen = false
+                if multiSelect then
+                    local found = false
+                    for j, selected in ipairs(selectedValue) do
+                        if selected == option then
+                            table.remove(selectedValue, j)
+                            found = true
+                            break
+                        end
+                    end
+                    if not found then
+                        table.insert(selectedValue, option)
+                    end
+                    dropdownFrame.Text = " " .. table.concat(selectedValue, ", ")
+                else
+                    selectedValue = option
+                    dropdownFrame.Text = " " .. option
+                    dropdownHolder.Visible = false
+                    isOpen = false
+                end
                 
-                -- Update option appearances
+                -- Update all option appearances
                 for _, child in ipairs(dropdownHolder:GetChildren()) do
                     if child:IsA("TextButton") then
                         local optName = child.Text:gsub("^%s+", "")
-                        child.Text = (optName == selectedValue and "       " or " ") .. optName
-                        child.TextColor3 = optName == selectedValue and Theme.Accent or Theme.DisabledText
+                        if multiSelect then
+                            local isSelected = false
+                            for _, selected in ipairs(selectedValue) do
+                                if selected == optName then
+                                    isSelected = true
+                                    break
+                                end
+                            end
+                            child.Text = (isSelected and "       " or " ") .. optName
+                            child.TextColor3 = isSelected and Theme.Accent or Theme.DisabledText
+                        else
+                            child.Text = (optName == selectedValue and "       " or " ") .. optName
+                            child.TextColor3 = optName == selectedValue and Theme.Accent or Theme.DisabledText
+                        end
                     end
                 end
                 
@@ -647,7 +728,7 @@ function Library:GetSectionMethods()
         return {
             SetValue = function(value)
                 selectedValue = value
-                dropdownFrame.Text = " " .. value
+                dropdownFrame.Text = " " .. (multiSelect and table.concat(value, ", ") or value)
                 callback(value)
             end,
             GetValue = function()
@@ -668,6 +749,8 @@ function Library:GetSectionMethods()
         buttonFrame.Text = name
         buttonFrame.TextColor3 = Theme.Text
         buttonFrame.TextSize = 15
+        CreateStroke(buttonFrame, Theme.ToggleStroke, 1)
+        CreateCorner(buttonFrame, 3)
         
         buttonFrame.MouseButton1Click:Connect(function()
             -- Button click animation
@@ -680,6 +763,146 @@ function Library:GetSectionMethods()
         end)
         
         return buttonFrame
+    end
+    
+    function methods:CreateKeybind(name, default, callback)
+        default = default or "None"
+        callback = callback or function() end
+        
+        local keybindFrame = Instance.new("Frame")
+        keybindFrame.Name = "Keybind_" .. name
+        keybindFrame.Parent = self.section.contentHolder
+        keybindFrame.BackgroundTransparency = 1
+        keybindFrame.Size = UDim2.new(0, 215, 0, 20)
+        
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Parent = keybindFrame
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Size = UDim2.new(0, 150, 0, 20)
+        titleLabel.Font = Enum.Font.SourceSansSemibold
+        titleLabel.Text = name
+        titleLabel.TextColor3 = Theme.SubText
+        titleLabel.TextSize = 15
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        
+        local keybindBox = Instance.new("TextBox")
+        keybindBox.Name = "KeybindBox"
+        keybindBox.Parent = keybindFrame
+        keybindBox.BackgroundTransparency = 1
+        keybindBox.Position = UDim2.new(0.814, 0, 0, 0)
+        keybindBox.Size = UDim2.new(0, 40, 0, 20)
+        keybindBox.Font = Enum.Font.SourceSansSemibold
+        keybindBox.PlaceholderText = default
+        keybindBox.Text = default ~= "None" and default or ""
+        keybindBox.TextColor3 = Theme.Text
+        keybindBox.TextSize = 15
+        
+        local currentKey = default
+        local listening = false
+        
+        keybindBox.Focused:Connect(function()
+            listening = true
+            keybindBox.Text = "..."
+        end)
+        
+        UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if listening and not gameProcessed then
+                local keyName = input.KeyCode.Name
+                if keyName ~= "Unknown" then
+                    currentKey = keyName
+                    keybindBox.Text = keyName
+                    keybindBox:ReleaseFocus()
+                    listening = false
+                    callback(input.KeyCode)
+                end
+            end
+        end)
+        
+        keybindBox.FocusLost:Connect(function()
+            listening = false
+            if keybindBox.Text == "..." then
+                keybindBox.Text = currentKey ~= "None" and currentKey or ""
+            end
+        end)
+        
+        return {
+            SetKey = function(keyCode)
+                currentKey = keyCode.Name
+                keybindBox.Text = currentKey
+            end,
+            GetKey = function()
+                return Enum.KeyCode[currentKey]
+            end
+        }
+    end
+    
+    function methods:CreateColorpicker(name, default, callback)
+        default = default or Color3.fromRGB(0, 251, 255)
+        callback = callback or function() end
+        
+        local colorpickerFrame = Instance.new("Frame")
+        colorpickerFrame.Name = "Colorpicker_" .. name
+        colorpickerFrame.Parent = self.section.contentHolder
+        colorpickerFrame.BackgroundTransparency = 1
+        colorpickerFrame.Size = UDim2.new(0, 215, 0, 20)
+        
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Parent = colorpickerFrame
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Size = UDim2.new(0, 150, 0, 20)
+        titleLabel.Font = Enum.Font.SourceSansSemibold
+        titleLabel.Text = name
+        titleLabel.TextColor3 = Theme.SubText
+        titleLabel.TextSize = 15
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        
+        local colorButton = Instance.new("TextButton")
+        colorButton.Name = "ColorButton"
+        colorButton.Parent = colorpickerFrame
+        colorButton.BackgroundColor3 = default
+        colorButton.BorderSizePixel = 0
+        colorButton.Position = UDim2.new(0.851, 0, 0.148, 0)
+        colorButton.Size = UDim2.new(0, 32, 0, 13)
+        colorButton.Text = ""
+        CreateCorner(colorButton, 3)
+        
+        local currentColor = default
+        
+        colorButton.MouseButton1Click:Connect(function()
+            -- Simple color cycle for demo (you can implement a full colorpicker here)
+            local colors = {
+                Color3.fromRGB(255, 0, 0),
+                Color3.fromRGB(0, 255, 0),
+                Color3.fromRGB(0, 0, 255),
+                Color3.fromRGB(255, 255, 0),
+                Color3.fromRGB(255, 0, 255),
+                Color3.fromRGB(0, 255, 255),
+                Color3.fromRGB(0, 251, 255)
+            }
+            
+            local currentIndex = 1
+            for i, color in ipairs(colors) do
+                if color == currentColor then
+                    currentIndex = i
+                    break
+                end
+            end
+            
+            currentIndex = (currentIndex % #colors) + 1
+            currentColor = colors[currentIndex]
+            colorButton.BackgroundColor3 = currentColor
+            callback(currentColor)
+        end)
+        
+        return {
+            SetColor = function(color)
+                currentColor = color
+                colorButton.BackgroundColor3 = color
+            end,
+            GetColor = function()
+                return currentColor
+            end
+        }
     end
     
     function methods:CreateLabel(text)
@@ -795,4 +1018,3 @@ function Library:Destroy()
 end
 
 return Library
-
