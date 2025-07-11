@@ -43,25 +43,38 @@ local function detectGame()
     return gameNames[placeId] or "Universal Script"
 end
 
--- HTTP Spy Detection
+-- HTTP Spy Detection (with proper error handling)
 local function detectHTTPSpy()
-    local suspiciousHeaders = {
-        "x-roblox-place-id",
-        "x-request-id", 
-        "x-forwarded-for"
-    }
+    -- Check if HttpService is available
+    if not game:GetService("HttpService") then
+        return false
+    end
     
-    -- Check for common HTTP monitoring tools
     local success, result = pcall(function()
-        local test = game:HttpGet("https://httpbin.org/headers")
+        -- Try to make a simple HTTP request
+        local httpService = game:GetService("HttpService")
+        if not httpService.HttpEnabled then
+            return false
+        end
+        
+        local testUrl = "https://httpbin.org/headers"
+        local response = game:HttpGet(testUrl)
+        
+        local suspiciousHeaders = {
+            "x-roblox-place-id",
+            "x-request-id", 
+            "x-forwarded-for"
+        }
+        
         for _, header in pairs(suspiciousHeaders) do
-            if string.find(test:lower(), header:lower()) then
+            if string.find(response:lower(), header:lower()) then
                 return true
             end
         end
         return false
     end)
     
+    -- If the HTTP request fails, assume no spy is present
     return success and result
 end
 
@@ -235,10 +248,15 @@ Window.__index = Window
 function CoreSploitLib:CreateWindow(title, gameDetection)
     local self = setmetatable({}, Window)
     
-    -- Security Check
-    if detectHTTPSpy() then
-        LocalPlayer:Kick("HTTP monitoring detected. Please disable network monitoring tools.")
-        return
+    -- Security Check (optional - won't break if HTTP is unavailable)
+    local spyDetected = false
+    pcall(function()
+        spyDetected = detectHTTPSpy()
+    end)
+    
+    if spyDetected then
+        warn("HTTP monitoring detected. Some features may be limited.")
+        -- Don't kick the player, just warn
     end
     
     -- Create main GUI structure
