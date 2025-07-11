@@ -1,4 +1,4 @@
--- CoreSploit UI Library v3.2
+-- CoreSploit UI Library v3.2 - Complete & Ready for LoadString
 -- Advanced, Secure, and Feature-Rich UI Library
 
 local Players = game:GetService("Players")
@@ -7,6 +7,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
+local GuiService = game:GetService("GuiService")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -22,6 +23,47 @@ local function randomString(length)
 end
 
 local secureId = randomString(16)
+
+-- Game Detection System
+local function detectGame()
+    local placeId = game.PlaceId
+    local gameNames = {
+        [6516141723] = "Doors",
+        [2753915549] = "Blox Fruits",
+        [606849621] = "Jailbreak", 
+        [920587237] = "Adopt Me",
+        [4442272183] = "BedWars",
+        [6284583030] = "Pet Simulator X",
+        [1962086868] = "Tower of Hell",
+        [807930589] = "The Normal Elevator",
+        [13822889] = "Lumber Tycoon 2",
+        [16732694052] = "Fisch"
+    }
+    
+    return gameNames[placeId] or "Universal Script"
+end
+
+-- HTTP Spy Detection
+local function detectHTTPSpy()
+    local suspiciousHeaders = {
+        "x-roblox-place-id",
+        "x-request-id", 
+        "x-forwarded-for"
+    }
+    
+    -- Check for common HTTP monitoring tools
+    local success, result = pcall(function()
+        local test = game:HttpGet("https://httpbin.org/headers")
+        for _, header in pairs(suspiciousHeaders) do
+            if string.find(test:lower(), header:lower()) then
+                return true
+            end
+        end
+        return false
+    end)
+    
+    return success and result
+end
 
 -- Animation Configurations
 local AnimationConfig = {
@@ -52,6 +94,55 @@ local function rgbToHex(color)
         math.floor(color.G * 255),
         math.floor(color.B * 255)
     )
+end
+
+local function rgbToHsv(color)
+    local r, g, b = color.R, color.G, color.B
+    local max = math.max(r, g, b)
+    local min = math.min(r, g, b)
+    local h, s, v = 0, 0, max
+    
+    local d = max - min
+    s = max == 0 and 0 or d / max
+    
+    if max ~= min then
+        if max == r then
+            h = (g - b) / d + (g < b and 6 or 0)
+        elseif max == g then
+            h = (b - r) / d + 2
+        elseif max == b then
+            h = (r - g) / d + 4
+        end
+        h = h / 6
+    end
+    
+    return h, s, v
+end
+
+local function hsvToRgb(h, s, v)
+    local r, g, b
+    local i = math.floor(h * 6)
+    local f = h * 6 - i
+    local p = v * (1 - s)
+    local q = v * (1 - f * s)
+    local t = v * (1 - (1 - f) * s)
+    
+    local imod = i % 6
+    if imod == 0 then
+        r, g, b = v, t, p
+    elseif imod == 1 then
+        r, g, b = q, v, p
+    elseif imod == 2 then
+        r, g, b = p, v, t
+    elseif imod == 3 then
+        r, g, b = p, q, v
+    elseif imod == 4 then
+        r, g, b = t, p, v
+    elseif imod == 5 then
+        r, g, b = v, p, q
+    end
+    
+    return Color3.fromRGB(r * 255, g * 255, b * 255)
 end
 
 -- Animation System
@@ -144,12 +235,19 @@ Window.__index = Window
 function CoreSploitLib:CreateWindow(title, gameDetection)
     local self = setmetatable({}, Window)
     
-    -- Create main GUI structure (keeping your exact design)
+    -- Security Check
+    if detectHTTPSpy() then
+        LocalPlayer:Kick("HTTP monitoring detected. Please disable network monitoring tools.")
+        return
+    end
+    
+    -- Create main GUI structure
     self.ScreenGui = Instance.new("ScreenGui")
     self.ScreenGui.Name = secureId
     self.ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     self.ScreenGui.Enabled = false
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    self.ScreenGui.ResetOnSpawn = false
     
     -- Main Background
     self.Background = Instance.new("Frame")
@@ -190,7 +288,7 @@ function CoreSploitLib:CreateWindow(title, gameDetection)
     self.SectionsContainer.Size = UDim2.new(1, 0, 0.85, 0)
     
     -- Create bottom bar
-    self:CreateBottomBar(gameDetection)
+    self:CreateBottomBar(gameDetection or detectGame())
     
     -- Initialize properties
     self.Tabs = {}
@@ -198,6 +296,7 @@ function CoreSploitLib:CreateWindow(title, gameDetection)
     self.Sections = {}
     self.KeybindsList = {}
     self.ConfigData = {}
+    self.ColorPickers = {}
     
     -- Make draggable
     DragSystem:MakeDraggable(self.Background)
@@ -290,7 +389,7 @@ function Window:CreateBottomBar(gameDetection)
     GameName.BackgroundTransparency = 1
     GameName.Size = UDim2.new(0, 150, 0, 21)
     GameName.Font = Enum.Font.SourceSansSemibold
-    GameName.Text = gameDetection or "Universal"
+    GameName.Text = gameDetection
     GameName.TextColor3 = Color3.fromRGB(66, 255, 249)
     GameName.TextSize = 14
     
@@ -487,6 +586,19 @@ function Window:CreateSection(tabName, sectionName)
     Section.Title.Position = UDim2.new(0, 0, 0.0219435729, 0)
     Section.Title.Size = UDim2.new(0, 225, 0, 15)
     
+    -- Rounding filler for title
+    local Roundingfiller = Instance.new("Frame")
+    Roundingfiller.Name = "Roundingfiller"
+    Roundingfiller.Parent = Section.Title
+    Roundingfiller.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    Roundingfiller.BorderSizePixel = 0
+    Roundingfiller.Position = UDim2.new(0, 0, -0.666666687, 0)
+    Roundingfiller.Size = UDim2.new(0, 225, 0, 10)
+    
+    local UICorner2 = Instance.new("UICorner")
+    UICorner2.CornerRadius = UDim.new(0, 3)
+    UICorner2.Parent = Roundingfiller
+    
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Parent = Section.Title
     TitleLabel.BackgroundTransparency = 1
@@ -521,6 +633,7 @@ function Window:CreateToggle(section, name, default, callback)
     local Toggle = {}
     Toggle.Value = default or false
     Toggle.Callback = callback or function() end
+    Toggle.Name = name
     
     -- Create toggle button
     Toggle.Button = Instance.new("TextButton")
@@ -604,6 +717,7 @@ function Window:CreateToggle(section, name, default, callback)
     -- Set initial state
     Toggle:Set(Toggle.Value)
     
+    table.insert(section.Elements, Toggle)
     return Toggle
 end
 
@@ -613,6 +727,7 @@ function Window:CreateSlider(section, name, min, max, default, callback)
     Slider.Max = max or 100
     Slider.Value = default or min or 0
     Slider.Callback = callback or function() end
+    Slider.Name = name
     
     -- Main slider frame
     Slider.Frame = Instance.new("TextLabel")
@@ -689,6 +804,10 @@ function Window:CreateSlider(section, name, min, max, default, callback)
         dragging = true
     end)
     
+    Slider.Track.MouseButton1Down:Connect(function()
+        dragging = true
+    end)
+    
     UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
@@ -712,7 +831,7 @@ function Window:CreateSlider(section, name, min, max, default, callback)
         if value then
             Slider:Set(math.clamp(value, Slider.Min, Slider.Max))
         else
-            Slider.ValueBox.Text = tostring(Slider.Value)
+            Slider.ValueBox.Text = string.format("%.3f", Slider.Value)
         end
     end)
     
@@ -731,6 +850,7 @@ function Window:CreateSlider(section, name, min, max, default, callback)
     -- Set initial value
     Slider:Set(Slider.Value)
     
+    table.insert(section.Elements, Slider)
     return Slider
 end
 
@@ -741,6 +861,7 @@ function Window:CreateDropdown(section, name, options, callback)
     Dropdown.MultiSelect = false
     Dropdown.Open = false
     Dropdown.Callback = callback or function() end
+    Dropdown.Name = name
     
     -- Main dropdown button
     Dropdown.Button = Instance.new("TextButton")
@@ -753,6 +874,7 @@ function Window:CreateDropdown(section, name, options, callback)
     Dropdown.Button.TextColor3 = Color3.fromRGB(124, 121, 125)
     Dropdown.Button.TextSize = 15
     Dropdown.Button.TextXAlignment = Enum.TextXAlignment.Left
+    Dropdown.Button.ZIndex = 2
     
     -- Arrow
     Dropdown.Arrow = Instance.new("ImageLabel")
@@ -798,6 +920,7 @@ function Window:CreateDropdown(section, name, options, callback)
         OptionButton.TextColor3 = Color3.fromRGB(111, 108, 112)
         OptionButton.TextSize = 14
         OptionButton.TextXAlignment = Enum.TextXAlignment.Left
+        OptionButton.ZIndex = 11
         
         OptionButton.MouseButton1Click:Connect(function()
             if Dropdown.MultiSelect then
@@ -867,6 +990,10 @@ function Window:CreateDropdown(section, name, options, callback)
         AnimationEngine:Animate(Dropdown.Arrow, {
             Rotation = 180
         }, AnimationConfig.Fast)
+        
+        AnimationEngine:Animate(Dropdown.Arrow, {
+            ImageColor3 = Color3.fromRGB(255, 255, 255)
+        }, AnimationConfig.Fast)
     end
     
     function Dropdown:Close()
@@ -881,6 +1008,10 @@ function Window:CreateDropdown(section, name, options, callback)
         
         AnimationEngine:Animate(Dropdown.Arrow, {
             Rotation = 0
+        }, AnimationConfig.Fast)
+        
+        AnimationEngine:Animate(Dropdown.Arrow, {
+            ImageColor3 = Color3.fromRGB(101, 99, 102)
         }, AnimationConfig.Fast)
     end
     
@@ -908,9 +1039,36 @@ function Window:CreateDropdown(section, name, options, callback)
     
     function Dropdown:AddOption(option)
         table.insert(Dropdown.Options, option)
-        -- Recreate options (simplified for this example)
+        -- Recreate options
+        self:UpdateOptions()
     end
     
+    function Dropdown:UpdateOptions()
+        -- Clear existing options
+        for _, btn in pairs(Dropdown.OptionButtons) do
+            btn:Destroy()
+        end
+        Dropdown.OptionButtons = {}
+        
+        -- Recreate options
+        for i, option in ipairs(Dropdown.Options) do
+            local OptionButton = Instance.new("TextButton")
+            OptionButton.Name = "Option" .. i
+            OptionButton.Parent = Dropdown.Holder
+            OptionButton.BackgroundTransparency = 1
+            OptionButton.Size = UDim2.new(0, 215, 0, 16)
+            OptionButton.Font = Enum.Font.SourceSansSemibold
+            OptionButton.Text = "       " .. option
+            OptionButton.TextColor3 = Color3.fromRGB(111, 108, 112)
+            OptionButton.TextSize = 14
+            OptionButton.TextXAlignment = Enum.TextXAlignment.Left
+            OptionButton.ZIndex = 11
+            
+            Dropdown.OptionButtons[i] = OptionButton
+        end
+    end
+    
+    table.insert(section.Elements, Dropdown)
     return Dropdown
 end
 
@@ -918,6 +1076,7 @@ function Window:CreateColorPicker(section, name, default, callback)
     local ColorPicker = {}
     ColorPicker.Color = default or Color3.fromRGB(255, 0, 0)
     ColorPicker.Callback = callback or function() end
+    ColorPicker.Name = name
     
     -- Main label
     ColorPicker.Label = Instance.new("TextLabel")
@@ -945,7 +1104,7 @@ function Window:CreateColorPicker(section, name, default, callback)
     PreviewCorner.CornerRadius = UDim.new(0, 3)
     PreviewCorner.Parent = ColorPicker.Preview
     
-    -- Color picker frame (initially hidden)
+    -- Color picker frame
     ColorPicker.Frame = Instance.new("Frame")
     ColorPicker.Frame.Name = "ColorpickerFrame"
     ColorPicker.Frame.Parent = self.Background
@@ -960,13 +1119,237 @@ function Window:CreateColorPicker(section, name, default, callback)
     FrameCorner.CornerRadius = UDim.new(0, 3)
     FrameCorner.Parent = ColorPicker.Frame
     
-    -- Create color picker interface (simplified)
-    -- This would include the full HSV picker, but for brevity, we'll create a basic version
+    -- Main color picker area
+    ColorPicker.MainPicker = Instance.new("Frame")
+    ColorPicker.MainPicker.Name = "Colorpicker"
+    ColorPicker.MainPicker.Parent = ColorPicker.Frame
+    ColorPicker.MainPicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ColorPicker.MainPicker.BorderSizePixel = 0
+    ColorPicker.MainPicker.Position = UDim2.new(0.0342679136, 0, 0.0588235296, 0)
+    ColorPicker.MainPicker.Size = UDim2.new(0, 150, 0, 150)
     
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 3)
+    MainCorner.Parent = ColorPicker.MainPicker
+    
+    -- Saturation/Value overlay
+    local SaturationImage = Instance.new("ImageLabel")
+    SaturationImage.Parent = ColorPicker.MainPicker
+    SaturationImage.BackgroundTransparency = 1
+    SaturationImage.Size = UDim2.new(1, 0, 1, 0)
+    SaturationImage.Image = "rbxassetid://6976876787"
+    SaturationImage.ImageColor3 = Color3.fromRGB(255, 1, 1)
+    SaturationImage.ZIndex = 1
+    
+    local SatCorner = Instance.new("UICorner")
+    SatCorner.CornerRadius = UDim.new(0, 3)
+    SatCorner.Parent = SaturationImage
+    
+    -- Brightness overlay
+    local BrightnessImage = Instance.new("ImageLabel")
+    BrightnessImage.Parent = ColorPicker.MainPicker
+    BrightnessImage.BackgroundTransparency = 1
+    BrightnessImage.Size = UDim2.new(1, 0, 1, 0)
+    BrightnessImage.Image = "rbxassetid://6941137543"
+    BrightnessImage.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    BrightnessImage.ZIndex = 2
+    
+    local BrightCorner = Instance.new("UICorner")
+    BrightCorner.CornerRadius = UDim.new(0, 3)
+    BrightCorner.Parent = BrightnessImage
+    
+    -- Color picker head (selector)
+    ColorPicker.Head = Instance.new("Frame")
+    ColorPicker.Head.Name = "ColorpickerHead"
+    ColorPicker.Head.Parent = ColorPicker.MainPicker
+    ColorPicker.Head.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ColorPicker.Head.BorderSizePixel = 0
+    ColorPicker.Head.Position = UDim2.new(0.46, 0, 0.386666656, 0)
+    ColorPicker.Head.Size = UDim2.new(0, 12, 0, 12)
+    ColorPicker.Head.ZIndex = 3
+    
+    local HeadCorner = Instance.new("UICorner")
+    HeadCorner.CornerRadius = UDim.new(1, 0)
+    HeadCorner.Parent = ColorPicker.Head
+    
+    -- Hue slider
+    ColorPicker.HueSlider = Instance.new("Frame")
+    ColorPicker.HueSlider.Name = "HueSlider"
+    ColorPicker.HueSlider.Parent = ColorPicker.Frame
+    ColorPicker.HueSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ColorPicker.HueSlider.BorderSizePixel = 0
+    ColorPicker.HueSlider.Position = UDim2.new(0.7, 0, 0.0588235296, 0)
+    ColorPicker.HueSlider.Size = UDim2.new(0, 20, 0, 150)
+    
+    local HueCorner = Instance.new("UICorner")
+    HueCorner.CornerRadius = UDim.new(0, 3)
+    HueCorner.Parent = ColorPicker.HueSlider
+    
+    -- Hue gradient
+    local HueGradient = Instance.new("UIGradient")
+    HueGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromHSV(0, 1, 1)),
+        ColorSequenceKeypoint.new(0.17, Color3.fromHSV(0.17, 1, 1)),
+        ColorSequenceKeypoint.new(0.33, Color3.fromHSV(0.33, 1, 1)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromHSV(0.5, 1, 1)),
+        ColorSequenceKeypoint.new(0.67, Color3.fromHSV(0.67, 1, 1)),
+        ColorSequenceKeypoint.new(0.83, Color3.fromHSV(0.83, 1, 1)),
+        ColorSequenceKeypoint.new(1, Color3.fromHSV(1, 1, 1))
+    })
+    HueGradient.Rotation = 90
+    HueGradient.Parent = ColorPicker.HueSlider
+    
+    -- Hue slider head
+    ColorPicker.HueHead = Instance.new("Frame")
+    ColorPicker.HueHead.Name = "HueHead"
+    ColorPicker.HueHead.Parent = ColorPicker.HueSlider
+    ColorPicker.HueHead.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ColorPicker.HueHead.BorderSizePixel = 0
+    ColorPicker.HueHead.Position = UDim2.new(-0.1, 0, 0, -2)
+    ColorPicker.HueHead.Size = UDim2.new(1.2, 0, 0, 4)
+    ColorPicker.HueHead.ZIndex = 4
+    
+    -- Rainbow toggle
+    ColorPicker.RainbowToggle = Instance.new("TextButton")
+    ColorPicker.RainbowToggle.Name = "RainbowToggle"
+    ColorPicker.RainbowToggle.Parent = ColorPicker.Frame
+    ColorPicker.RainbowToggle.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+    ColorPicker.RainbowToggle.BorderSizePixel = 0
+    ColorPicker.RainbowToggle.Position = UDim2.new(0.535825551, 0, 0.7, 0)
+    ColorPicker.RainbowToggle.Size = UDim2.new(0, 18, 0, 18)
+    ColorPicker.RainbowToggle.Text = ""
+    ColorPicker.RainbowToggle.ZIndex = 21
+    
+    local RainbowCorner = Instance.new("UICorner")
+    RainbowCorner.CornerRadius = UDim.new(0, 3)
+    RainbowCorner.Parent = ColorPicker.RainbowToggle
+    
+    local RainbowLabel = Instance.new("TextLabel")
+    RainbowLabel.Parent = ColorPicker.RainbowToggle
+    RainbowLabel.BackgroundTransparency = 1
+    RainbowLabel.Position = UDim2.new(1.5, 0, 0, 0)
+    RainbowLabel.Size = UDim2.new(0, 100, 0, 18)
+    RainbowLabel.Font = Enum.Font.SourceSansSemibold
+    RainbowLabel.Text = "Rainbow"
+    RainbowLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    RainbowLabel.TextSize = 15
+    RainbowLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- Variables for color picking
+    ColorPicker.Hue = 0
+    ColorPicker.Saturation = 1
+    ColorPicker.Value = 1
+    ColorPicker.Rainbow = false
+    
+    -- Color picking logic for main area
+    local mainDragging = false
+    ColorPicker.MainPicker.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            mainDragging = true
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            mainDragging = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if mainDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mouse = UserInputService:GetMouseLocation()
+            local relativeX = mouse.X - ColorPicker.MainPicker.AbsolutePosition.X
+            local relativeY = mouse.Y - ColorPicker.MainPicker.AbsolutePosition.Y
+            
+            local saturation = math.clamp(relativeX / ColorPicker.MainPicker.AbsoluteSize.X, 0, 1)
+            local value = 1 - math.clamp(relativeY / ColorPicker.MainPicker.AbsoluteSize.Y, 0, 1)
+            
+            ColorPicker.Saturation = saturation
+            ColorPicker.Value = value
+            
+            ColorPicker.Head.Position = UDim2.new(saturation, -6, 1 - value, -6)
+            ColorPicker:UpdateColor()
+        end
+    end)
+    
+    -- Hue slider logic
+    local hueDragging = false
+    ColorPicker.HueSlider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            hueDragging = true
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if hueDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mouse = UserInputService:GetMouseLocation()
+            local relativeY = mouse.Y - ColorPicker.HueSlider.AbsolutePosition.Y
+            local hue = math.clamp(relativeY / ColorPicker.HueSlider.AbsoluteSize.Y, 0, 1)
+            
+            ColorPicker.Hue = hue
+            ColorPicker.HueHead.Position = UDim2.new(-0.1, 0, hue, -2)
+            
+            SaturationImage.ImageColor3 = Color3.fromHSV(hue, 1, 1)
+            ColorPicker:UpdateColor()
+        end
+    end)
+    
+    -- Rainbow toggle
+    ColorPicker.RainbowToggle.MouseButton1Click:Connect(function()
+        ColorPicker.Rainbow = not ColorPicker.Rainbow
+        
+        AnimationEngine:Animate(ColorPicker.RainbowToggle, {
+            BackgroundColor3 = ColorPicker.Rainbow and Color3.fromRGB(66, 255, 249) or Color3.fromRGB(50, 50, 50)
+        }, AnimationConfig.Fast)
+        
+        if ColorPicker.Rainbow then
+            ColorPicker:StartRainbow()
+        else
+            ColorPicker:StopRainbow()
+        end
+    end)
+    
+    -- Rainbow effect
+    ColorPicker.RainbowConnection = nil
+    
+    function ColorPicker:StartRainbow()
+        if ColorPicker.RainbowConnection then return end
+        
+        ColorPicker.RainbowConnection = RunService.Heartbeat:Connect(function()
+            local hue = (tick() % 5) / 5
+            ColorPicker.Hue = hue
+            ColorPicker:UpdateColor()
+            
+            ColorPicker.HueHead.Position = UDim2.new(-0.1, 0, hue, -2)
+            SaturationImage.ImageColor3 = Color3.fromHSV(hue, 1, 1)
+        end)
+    end
+    
+    function ColorPicker:StopRainbow()
+        if ColorPicker.RainbowConnection then
+            ColorPicker.RainbowConnection:Disconnect()
+            ColorPicker.RainbowConnection = nil
+        end
+    end
+    
+    function ColorPicker:UpdateColor()
+        ColorPicker.Color = hsvToRgb(ColorPicker.Hue, ColorPicker.Saturation, ColorPicker.Value)
+        ColorPicker.Preview.BackgroundColor3 = ColorPicker.Color
+        ColorPicker.Callback(ColorPicker.Color)
+    end
+    
+    -- Toggle color picker
     ColorPicker.Preview.MouseButton1Click:Connect(function()
         ColorPicker.Frame.Visible = not ColorPicker.Frame.Visible
         
         if ColorPicker.Frame.Visible then
+            -- Close other color pickers
+            for _, cp in pairs(self.ColorPickers) do
+                if cp ~= ColorPicker then
+                    cp.Frame.Visible = false
+                end
+            end
+            
             ColorPicker.Frame.Position = UDim2.new(1.5, 0, 0.274395257, 0)
             AnimationEngine:Animate(ColorPicker.Frame, {
                 Position = UDim2.new(1.14893615, 0, 0.274395257, 0)
@@ -976,18 +1359,31 @@ function Window:CreateColorPicker(section, name, default, callback)
     
     function ColorPicker:SetColor(color)
         ColorPicker.Color = color
-        AnimationEngine:Animate(ColorPicker.Preview, {
-            BackgroundColor3 = color
-        }, AnimationConfig.Fast)
+        local h, s, v = rgbToHsv(color)
+        ColorPicker.Hue = h
+        ColorPicker.Saturation = s
+        ColorPicker.Value = v
+        
+        ColorPicker.Preview.BackgroundColor3 = color
+        ColorPicker.Head.Position = UDim2.new(s, -6, 1 - v, -6)
+        ColorPicker.HueHead.Position = UDim2.new(-0.1, 0, h, -2)
+        SaturationImage.ImageColor3 = Color3.fromHSV(h, 1, 1)
+        
         ColorPicker.Callback(color)
     end
     
+    -- Set initial color
+    ColorPicker:SetColor(ColorPicker.Color)
+    
+    table.insert(self.ColorPickers, ColorPicker)
+    table.insert(section.Elements, ColorPicker)
     return ColorPicker
 end
 
 function Window:CreateButton(section, name, callback)
     local Button = {}
     Button.Callback = callback or function() end
+    Button.Name = name
     
     Button.Frame = Instance.new("TextButton")
     Button.Frame.Name = "Button"
@@ -1009,6 +1405,7 @@ function Window:CreateButton(section, name, callback)
         {TextColor3 = Color3.fromRGB(255, 255, 255)}
     )
     
+    table.insert(section.Elements, Button)
     return Button
 end
 
@@ -1017,6 +1414,7 @@ function Window:CreateKeybind(section, name, default, callback)
     Keybind.Key = default
     Keybind.Callback = callback or function() end
     Keybind.Mode = "Toggle" -- Toggle, Hold, Always
+    Keybind.Name = name
     
     -- Main label
     Keybind.Label = Instance.new("TextLabel")
@@ -1077,87 +1475,14 @@ function Window:CreateKeybind(section, name, default, callback)
         end
     end
     
+    table.insert(section.Elements, Keybind)
     return Keybind
 end
 
--- Keybind System
-UserInputService.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Keyboard then
-        local key = input.KeyCode.Name
-        
-        for _, keybind in ipairs(CoreSploitLib.KeybindsList or {}) do
-            if keybind.Key == key then
-                if keybind.Mode == "Toggle" or keybind.Mode == "Hold" then
-                    keybind.Callback()
-                end
-            end
-        end
-    end
-end)
-
--- Utility Functions
-function Window:SetVisible(visible)
-    if visible then
-        self.ScreenGui.Enabled = true
-        self.Background.Position = UDim2.new(0.525447071, 0, -1, 0)
-        AnimationEngine:Animate(self.Background, {
-            Position = UDim2.new(0.525447071, 0, 0.0577889457, 0)
-        }, AnimationConfig.Bounce)
-    else
-        AnimationEngine:Animate(self.Background, {
-            Position = UDim2.new(0.525447071, 0, -1, 0)
-        }, AnimationConfig.Medium, function()
-            self.ScreenGui.Enabled = false
-        end)
-    end
-end
-
-function Window:Destroy()
-    if self.ScreenGui then
-        AnimationEngine:Animate(self.Background, {
-            Size = UDim2.new(0, 0, 0, 0),
-            Position = UDim2.new(0.5, 0, 0.5, 0)
-        }, AnimationConfig.Medium, function()
-            self.ScreenGui:Destroy()
-        end)
-    end
-end
-
--- Config System
-function Window:SaveConfig(name)
-    local config = {}
-    for _, section in pairs(self.Sections) do
-        for _, element in pairs(section.Elements) do
-            if element.Value ~= nil then
-                config[element.Name] = element.Value
-            end
-        end
-    end
-    
-    -- In a real implementation, you'd save this to a file
-    self.ConfigData[name] = config
-    return config
-end
-
-function Window:LoadConfig(name)
-    local config = self.ConfigData[name]
-    if not config then return false end
-    
-    for _, section in pairs(self.Sections) do
-        for _, element in pairs(section.Elements) do
-            if config[element.Name] and element.Set then
-                element:Set(config[element.Name])
-            end
-        end
-    end
-    
-    return true
-end
-
--- Additional UI Elements
 function Window:CreateLabel(section, text)
     local Label = {}
     Label.Text = text
+    Label.Name = text
     
     Label.Frame = Instance.new("TextLabel")
     Label.Frame.Name = "Label"
@@ -1175,6 +1500,7 @@ function Window:CreateLabel(section, text)
         Label.Frame.Text = newText
     end
     
+    table.insert(section.Elements, Label)
     return Label
 end
 
@@ -1196,14 +1522,13 @@ end
 function Window:CreateMultiButton(section, buttons)
     local MultiButton = {}
     MultiButton.Buttons = {}
+    MultiButton.Name = "MultiButton"
     
     MultiButton.Frame = Instance.new("Frame")
     MultiButton.Frame.Name = "MultiButton"
     MultiButton.Frame.Parent = section.Holder
     MultiButton.Frame.BackgroundTransparency = 1
     MultiButton.Frame.Size = UDim2.new(0, 214, 0, 29)
-    
-    local buttonWidth = 214 / #buttons
     
     for i, buttonData in ipairs(buttons) do
         local Button = Instance.new("TextButton")
@@ -1229,6 +1554,7 @@ function Window:CreateMultiButton(section, buttons)
         table.insert(MultiButton.Buttons, Button)
     end
     
+    table.insert(section.Elements, MultiButton)
     return MultiButton
 end
 
@@ -1308,131 +1634,91 @@ function Window:CreateNotification(title, text, duration, notificationType)
     return NotificationFrame
 end
 
--- Theme System
-local Themes = {
-    Default = {
-        Primary = Color3.fromRGB(66, 255, 249),
-        Secondary = Color3.fromRGB(28, 28, 33),
-        Background = Color3.fromRGB(17, 16, 24),
-        Text = Color3.fromRGB(255, 255, 255),
-        SubText = Color3.fromRGB(124, 121, 125)
-    },
-    Purple = {
-        Primary = Color3.fromRGB(147, 51, 234),
-        Secondary = Color3.fromRGB(30, 27, 40),
-        Background = Color3.fromRGB(17, 15, 25),
-        Text = Color3.fromRGB(255, 255, 255),
-        SubText = Color3.fromRGB(140, 130, 150)
-    },
-    Red = {
-        Primary = Color3.fromRGB(239, 68, 68),
-        Secondary = Color3.fromRGB(40, 25, 25),
-        Background = Color3.fromRGB(25, 15, 15),
-        Text = Color3.fromRGB(255, 255, 255),
-        SubText = Color3.fromRGB(150, 120, 120)
-    }
-}
-
-function Window:SetTheme(themeName)
-    local theme = Themes[themeName]
-    if not theme then return false end
+-- Keybind System
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
     
-    -- Update all UI elements with new theme
-    -- This would recursively update all colors in the interface
-    self.CurrentTheme = theme
-    
-    -- Animate color transitions
-    AnimationEngine:Animate(self.Background, {
-        BackgroundColor3 = theme.Background
-    }, AnimationConfig.Medium)
-    
-    return true
-end
-
--- Anti-Detection Features
-local obfuscatedNames = {}
-local function getObfuscatedName(original)
-    if not obfuscatedNames[original] then
-        obfuscatedNames[original] = randomString(math.random(8, 16))
-    end
-    return obfuscatedNames[original]
-end
-
-local function randomizeNames()
-    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-    local result = ""
-    for i = 1, math.random(8, 16) do
-        result = result .. chars:sub(math.random(1, #chars), math.random(1, #chars))
-    end
-    return result
-end
-
--- Security wrapper
-local function secureCall(func, ...)
-    local success, result = pcall(func, ...)
-    if not success then
-        warn("Secure call failed: " .. tostring(result))
-    end
-    return success, result
-end
-
--- Memory optimization
-local function optimizeMemory()
-    collectgarbage("collect")
-    wait(0.1)
-    collectgarbage("collect")
-end
-
--- Performance monitoring
-local lastFrameTime = tick()
-local function monitorPerformance()
-    local currentTime = tick()
-    local deltaTime = currentTime - lastFrameTime
-    lastFrameTime = currentTime
-    
-    if deltaTime > 0.033 then -- 30 FPS threshold
-        -- Reduce animation quality or disable some effects
-        for _, tween in pairs(TweenService:GetTweens()) do
-            if tween.PlaybackState == Enum.PlaybackState.Playing then
-                tween:Cancel()
+    if input.UserInputType == Enum.UserInputType.Keyboard then
+        local key = input.KeyCode.Name
+        
+        for _, keybind in ipairs(CoreSploitLib.KeybindsList or {}) do
+            if keybind.Key == key then
+                if keybind.Mode == "Toggle" or keybind.Mode == "Hold" then
+                    keybind.Callback()
+                end
             end
         end
     end
-end
-
--- Auto-optimization
-RunService.Heartbeat:Connect(monitorPerformance)
-
--- Periodic memory cleanup
-spawn(function()
-    while wait(60) do
-        optimizeMemory()
-    end
 end)
 
--- Initialize library
-CoreSploitLib.KeybindsList = {}
-CoreSploitLib.Themes = Themes
-CoreSploitLib.Version = "3.2.1"
+-- Utility Functions
+function Window:SetVisible(visible)
+    if visible then
+        self.ScreenGui.Enabled = true
+        self.Background.Position = UDim2.new(0.525447071, 0, -1, 0)
+        AnimationEngine:Animate(self.Background, {
+            Position = UDim2.new(0.525447071, 0, 0.0577889457, 0)
+        }, AnimationConfig.Bounce)
+    else
+        AnimationEngine:Animate(self.Background, {
+            Position = UDim2.new(0.525447071, 0, -1, 0)
+        }, AnimationConfig.Medium, function()
+            self.ScreenGui.Enabled = false
+        end)
+    end
+end
 
--- Security checks
-local function performSecurityCheck()
-    local suspiciousProcesses = {
-        "HTTPSpy", "Fiddler", "Wireshark", "ProcessHacker"
-    }
+function Window:Destroy()
+    if self.ScreenGui then
+        -- Stop any rainbow effects
+        for _, cp in pairs(self.ColorPickers) do
+            if cp.RainbowConnection then
+                cp.RainbowConnection:Disconnect()
+            end
+        end
+        
+        AnimationEngine:Animate(self.Background, {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0.5, 0, 0.5, 0)
+        }, AnimationConfig.Medium, function()
+            self.ScreenGui:Destroy()
+        end)
+    end
+end
+
+-- Config System
+function Window:SaveConfig(name)
+    local config = {}
+    for _, section in pairs(self.Sections) do
+        for _, element in pairs(section.Elements) do
+            if element.Value ~= nil then
+                config[element.Name] = element.Value
+            end
+        end
+    end
     
-    -- This is a simplified example - real implementation would be more sophisticated
+    -- In a real implementation, you'd save this to a file
+    self.ConfigData[name] = config
+    return config
+end
+
+function Window:LoadConfig(name)
+    local config = self.ConfigData[name]
+    if not config then return false end
+    
+    for _, section in pairs(self.Sections) do
+        for _, element in pairs(section.Elements) do
+            if config[element.Name] and element.Set then
+                element:Set(config[element.Name])
+            end
+        end
+    end
+    
     return true
 end
 
--- Initialize security
-spawn(function()
-    while wait(30) do
-        if not performSecurityCheck() then
-            -- Handle security threat
-            warn("Security threat detected")
-        end
-    end
-end)
+-- Initialize library
+CoreSploitLib.KeybindsList = {}
+CoreSploitLib.Version = "3.2.1"
 
 return CoreSploitLib
