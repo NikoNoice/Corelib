@@ -1154,7 +1154,210 @@ function Window:LoadConfig(name)
     return true
 end
 
+-- Additional UI Elements
+function Window:CreateLabel(section, text)
+    local Label = {}
+    Label.Text = text
+    
+    Label.Frame = Instance.new("TextLabel")
+    Label.Frame.Name = "Label"
+    Label.Frame.Parent = section.Holder
+    Label.Frame.BackgroundTransparency = 1
+    Label.Frame.Size = UDim2.new(0, 215, 0, 20)
+    Label.Frame.Font = Enum.Font.SourceSansSemibold
+    Label.Frame.Text = text
+    Label.Frame.TextColor3 = Color3.fromRGB(111, 108, 112)
+    Label.Frame.TextSize = 15
+    Label.Frame.TextXAlignment = Enum.TextXAlignment.Left
+    
+    function Label:SetText(newText)
+        Label.Text = newText
+        Label.Frame.Text = newText
+    end
+    
+    return Label
+end
+
+function Window:CreateDivider(section)
+    local Divider = Instance.new("Frame")
+    Divider.Name = "Divider"
+    Divider.Parent = section.Holder
+    Divider.BackgroundColor3 = Color3.fromRGB(0, 251, 255)
+    Divider.BorderSizePixel = 0
+    Divider.Size = UDim2.new(0, 215, 0, 3)
+    
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 3)
+    UICorner.Parent = Divider
+    
+    return Divider
+end
+
+function Window:CreateMultiButton(section, buttons)
+    local MultiButton = {}
+    MultiButton.Buttons = {}
+    
+    MultiButton.Frame = Instance.new("Frame")
+    MultiButton.Frame.Name = "MultiButton"
+    MultiButton.Frame.Parent = section.Holder
+    MultiButton.Frame.BackgroundTransparency = 1
+    MultiButton.Frame.Size = UDim2.new(0, 214, 0, 29)
+    
+    local buttonWidth = 214 / #buttons
+    
+    for i, buttonData in ipairs(buttons) do
+        local Button = Instance.new("TextButton")
+        Button.Name = "Button" .. i
+        Button.Parent = MultiButton.Frame
+        Button.BackgroundTransparency = 1
+        Button.Position = UDim2.new((i-1) / #buttons, 0, 0, 0)
+        Button.Size = UDim2.new(1 / #buttons, -2, 1, 0)
+        Button.Font = Enum.Font.SourceSansSemibold
+        Button.Text = buttonData.Text
+        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Button.TextSize = 15
+        
+        Button.MouseButton1Click:Connect(function()
+            AnimationEngine:ButtonClick(Button, buttonData.Callback)
+        end)
+        
+        AnimationEngine:Hover(Button,
+            {TextColor3 = Color3.fromRGB(66, 255, 249)},
+            {TextColor3 = Color3.fromRGB(255, 255, 255)}
+        )
+        
+        table.insert(MultiButton.Buttons, Button)
+    end
+    
+    return MultiButton
+end
+
+-- Notification System
+function Window:CreateNotification(title, text, duration, notificationType)
+    local NotificationFrame = Instance.new("Frame")
+    NotificationFrame.Parent = self.ScreenGui
+    NotificationFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    NotificationFrame.BorderSizePixel = 0
+    NotificationFrame.Position = UDim2.new(1, 20, 0, 20)
+    NotificationFrame.Size = UDim2.new(0, 300, 0, 80)
+    NotificationFrame.ZIndex = 1000
+    
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 5)
+    UICorner.Parent = NotificationFrame
+    
+    -- Accent color based on type
+    local accentColor = Color3.fromRGB(66, 255, 249)
+    if notificationType == "error" then
+        accentColor = Color3.fromRGB(255, 66, 66)
+    elseif notificationType == "warning" then
+        accentColor = Color3.fromRGB(255, 255, 66)
+    elseif notificationType == "success" then
+        accentColor = Color3.fromRGB(66, 255, 66)
+    end
+    
+    local AccentBar = Instance.new("Frame")
+    AccentBar.Parent = NotificationFrame
+    AccentBar.BackgroundColor3 = accentColor
+    AccentBar.BorderSizePixel = 0
+    AccentBar.Size = UDim2.new(0, 4, 1, 0)
+    
+    local BarCorner = Instance.new("UICorner")
+    BarCorner.CornerRadius = UDim.new(0, 2)
+    BarCorner.Parent = AccentBar
+    
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Parent = NotificationFrame
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Position = UDim2.new(0, 15, 0, 5)
+    TitleLabel.Size = UDim2.new(1, -25, 0, 25)
+    TitleLabel.Font = Enum.Font.SourceSansBold
+    TitleLabel.Text = title
+    TitleLabel.TextColor3 = accentColor
+    TitleLabel.TextSize = 16
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Parent = NotificationFrame
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Position = UDim2.new(0, 15, 0, 30)
+    TextLabel.Size = UDim2.new(1, -25, 0, 45)
+    TextLabel.Font = Enum.Font.SourceSans
+    TextLabel.Text = text
+    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel.TextSize = 14
+    TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TextLabel.TextYAlignment = Enum.TextYAlignment.Top
+    TextLabel.TextWrapped = true
+    
+    -- Slide in animation
+    AnimationEngine:Animate(NotificationFrame, {
+        Position = UDim2.new(1, -320, 0, 20)
+    }, AnimationConfig.Bounce)
+    
+    -- Auto-hide after duration
+    spawn(function()
+        wait(duration or 3)
+        AnimationEngine:Animate(NotificationFrame, {
+            Position = UDim2.new(1, 20, 0, 20)
+        }, AnimationConfig.Medium, function()
+            NotificationFrame:Destroy()
+        end)
+    end)
+    
+    return NotificationFrame
+end
+
+-- Theme System
+local Themes = {
+    Default = {
+        Primary = Color3.fromRGB(66, 255, 249),
+        Secondary = Color3.fromRGB(28, 28, 33),
+        Background = Color3.fromRGB(17, 16, 24),
+        Text = Color3.fromRGB(255, 255, 255),
+        SubText = Color3.fromRGB(124, 121, 125)
+    },
+    Purple = {
+        Primary = Color3.fromRGB(147, 51, 234),
+        Secondary = Color3.fromRGB(30, 27, 40),
+        Background = Color3.fromRGB(17, 15, 25),
+        Text = Color3.fromRGB(255, 255, 255),
+        SubText = Color3.fromRGB(140, 130, 150)
+    },
+    Red = {
+        Primary = Color3.fromRGB(239, 68, 68),
+        Secondary = Color3.fromRGB(40, 25, 25),
+        Background = Color3.fromRGB(25, 15, 15),
+        Text = Color3.fromRGB(255, 255, 255),
+        SubText = Color3.fromRGB(150, 120, 120)
+    }
+}
+
+function Window:SetTheme(themeName)
+    local theme = Themes[themeName]
+    if not theme then return false end
+    
+    -- Update all UI elements with new theme
+    -- This would recursively update all colors in the interface
+    self.CurrentTheme = theme
+    
+    -- Animate color transitions
+    AnimationEngine:Animate(self.Background, {
+        BackgroundColor3 = theme.Background
+    }, AnimationConfig.Medium)
+    
+    return true
+end
+
 -- Anti-Detection Features
+local obfuscatedNames = {}
+local function getObfuscatedName(original)
+    if not obfuscatedNames[original] then
+        obfuscatedNames[original] = randomString(math.random(8, 16))
+    end
+    return obfuscatedNames[original]
+end
+
 local function randomizeNames()
     local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
     local result = ""
@@ -1173,7 +1376,63 @@ local function secureCall(func, ...)
     return success, result
 end
 
+-- Memory optimization
+local function optimizeMemory()
+    collectgarbage("collect")
+    wait(0.1)
+    collectgarbage("collect")
+end
+
+-- Performance monitoring
+local lastFrameTime = tick()
+local function monitorPerformance()
+    local currentTime = tick()
+    local deltaTime = currentTime - lastFrameTime
+    lastFrameTime = currentTime
+    
+    if deltaTime > 0.033 then -- 30 FPS threshold
+        -- Reduce animation quality or disable some effects
+        for _, tween in pairs(TweenService:GetTweens()) do
+            if tween.PlaybackState == Enum.PlaybackState.Playing then
+                tween:Cancel()
+            end
+        end
+    end
+end
+
+-- Auto-optimization
+RunService.Heartbeat:Connect(monitorPerformance)
+
+-- Periodic memory cleanup
+spawn(function()
+    while wait(60) do
+        optimizeMemory()
+    end
+end)
+
 -- Initialize library
 CoreSploitLib.KeybindsList = {}
+CoreSploitLib.Themes = Themes
+CoreSploitLib.Version = "3.2.1"
+
+-- Security checks
+local function performSecurityCheck()
+    local suspiciousProcesses = {
+        "HTTPSpy", "Fiddler", "Wireshark", "ProcessHacker"
+    }
+    
+    -- This is a simplified example - real implementation would be more sophisticated
+    return true
+end
+
+-- Initialize security
+spawn(function()
+    while wait(30) do
+        if not performSecurityCheck() then
+            -- Handle security threat
+            warn("Security threat detected")
+        end
+    end
+end)
 
 return CoreSploitLib
