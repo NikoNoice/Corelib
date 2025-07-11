@@ -304,6 +304,9 @@ function CoreSploitLib:CreateWindow(title, gameDetection)
     -- Add glow effect
     self:AddGlowEffect()
     
+    -- Setup keybind system for this window
+    setupKeybindSystem(self)
+    
     -- Entrance animation
     self.Background.Position = UDim2.new(0.525447071, 0, -1, 0)
     self.ScreenGui.Enabled = true
@@ -742,14 +745,16 @@ function Window:CreateSlider(section, name, min, max, default, callback)
     Slider.Frame.TextXAlignment = Enum.TextXAlignment.Left
     Slider.Frame.TextYAlignment = Enum.TextYAlignment.Top
     
-    -- Slider track
-    Slider.Track = Instance.new("Frame")
+    -- Slider track (using TextButton for input detection)
+    Slider.Track = Instance.new("TextButton")
     Slider.Track.Name = "Slider"
     Slider.Track.Parent = Slider.Frame
     Slider.Track.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     Slider.Track.BorderSizePixel = 0
     Slider.Track.Position = UDim2.new(0, 0, 0.800000012, 0)
     Slider.Track.Size = UDim2.new(0, 214, 0, 4)
+    Slider.Track.Text = ""
+    Slider.Track.AutoButtonColor = false
     
     local TrackCorner = Instance.new("UICorner")
     TrackCorner.CornerRadius = UDim.new(0, 2)
@@ -806,9 +811,16 @@ function Window:CreateSlider(section, name, min, max, default, callback)
     
     Slider.Track.MouseButton1Down:Connect(function()
         dragging = true
+        -- Calculate initial position
+        local mouse = UserInputService:GetMouseLocation()
+        local relativePos = mouse.X - Slider.Track.AbsolutePosition.X
+        local percentage = math.clamp(relativePos / Slider.Track.AbsoluteSize.X, 0, 1)
+        local value = Slider.Min + (Slider.Max - Slider.Min) * percentage
+        Slider:Set(value)
     end)
     
-    UserInputService.InputEnded:Connect(function(input)
+    local sliderConnection
+    sliderConnection = UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
@@ -1119,14 +1131,16 @@ function Window:CreateColorPicker(section, name, default, callback)
     FrameCorner.CornerRadius = UDim.new(0, 3)
     FrameCorner.Parent = ColorPicker.Frame
     
-    -- Main color picker area
-    ColorPicker.MainPicker = Instance.new("Frame")
+    -- Main color picker area (using TextButton for input detection)
+    ColorPicker.MainPicker = Instance.new("TextButton")
     ColorPicker.MainPicker.Name = "Colorpicker"
     ColorPicker.MainPicker.Parent = ColorPicker.Frame
     ColorPicker.MainPicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     ColorPicker.MainPicker.BorderSizePixel = 0
     ColorPicker.MainPicker.Position = UDim2.new(0.0342679136, 0, 0.0588235296, 0)
     ColorPicker.MainPicker.Size = UDim2.new(0, 150, 0, 150)
+    ColorPicker.MainPicker.Text = ""
+    ColorPicker.MainPicker.AutoButtonColor = false
     
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 3)
@@ -1172,14 +1186,16 @@ function Window:CreateColorPicker(section, name, default, callback)
     HeadCorner.CornerRadius = UDim.new(1, 0)
     HeadCorner.Parent = ColorPicker.Head
     
-    -- Hue slider
-    ColorPicker.HueSlider = Instance.new("Frame")
+    -- Hue slider (using TextButton for input detection)
+    ColorPicker.HueSlider = Instance.new("TextButton")
     ColorPicker.HueSlider.Name = "HueSlider"
     ColorPicker.HueSlider.Parent = ColorPicker.Frame
     ColorPicker.HueSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     ColorPicker.HueSlider.BorderSizePixel = 0
     ColorPicker.HueSlider.Position = UDim2.new(0.7, 0, 0.0588235296, 0)
     ColorPicker.HueSlider.Size = UDim2.new(0, 20, 0, 150)
+    ColorPicker.HueSlider.Text = ""
+    ColorPicker.HueSlider.AutoButtonColor = false
     
     local HueCorner = Instance.new("UICorner")
     HueCorner.CornerRadius = UDim.new(0, 3)
@@ -1243,15 +1259,14 @@ function Window:CreateColorPicker(section, name, default, callback)
     
     -- Color picking logic for main area
     local mainDragging = false
-    ColorPicker.MainPicker.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            mainDragging = true
-        end
+    ColorPicker.MainPicker.MouseButton1Down:Connect(function()
+        mainDragging = true
     end)
     
     UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             mainDragging = false
+            hueDragging = false
         end
     end)
     
@@ -1274,10 +1289,8 @@ function Window:CreateColorPicker(section, name, default, callback)
     
     -- Hue slider logic
     local hueDragging = false
-    ColorPicker.HueSlider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            hueDragging = true
-        end
+    ColorPicker.HueSlider.MouseButton1Down:Connect(function()
+        hueDragging = true
     end)
     
     UserInputService.InputChanged:Connect(function(input)
@@ -1466,7 +1479,7 @@ function Window:CreateKeybind(section, name, default, callback)
         Keybind.Input.Text = key or "None"
         
         -- Register keybind
-        if Keybind.Key then
+        if Keybind.Key and self.KeybindsList then
             table.insert(self.KeybindsList, {
                 Key = Keybind.Key,
                 Callback = Keybind.Callback,
@@ -1634,22 +1647,26 @@ function Window:CreateNotification(title, text, duration, notificationType)
     return NotificationFrame
 end
 
--- Keybind System
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    
-    if input.UserInputType == Enum.UserInputType.Keyboard then
-        local key = input.KeyCode.Name
+-- Keybind System (this will be bound to each window instance)
+local function setupKeybindSystem(window)
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
         
-        for _, keybind in ipairs(CoreSploitLib.KeybindsList or {}) do
-            if keybind.Key == key then
-                if keybind.Mode == "Toggle" or keybind.Mode == "Hold" then
-                    keybind.Callback()
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            local key = input.KeyCode.Name
+            
+            if window.KeybindsList then
+                for _, keybind in ipairs(window.KeybindsList) do
+                    if keybind.Key == key then
+                        if keybind.Mode == "Toggle" or keybind.Mode == "Hold" then
+                            keybind.Callback()
+                        end
+                    end
                 end
             end
         end
-    end
-end)
+    end)
+end
 
 -- Utility Functions
 function Window:SetVisible(visible)
@@ -1718,7 +1735,6 @@ function Window:LoadConfig(name)
 end
 
 -- Initialize library
-CoreSploitLib.KeybindsList = {}
 CoreSploitLib.Version = "3.2.1"
 
 return CoreSploitLib
