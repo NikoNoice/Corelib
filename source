@@ -382,14 +382,82 @@ function Library:CreateColorPickerFrame()
         end
     end)
     
-    -- Right side controls
-    local list = Instance.new("Frame")
-    list.Name = "List"
-    list.Parent = self.colorPickerFrame
-    list.BackgroundTransparency = 1
-    list.Position = UDim2.new(0.536, 0, 0.111, 0)
-    list.Size = UDim2.new(0, 136, 0, 85)
-    list.ZIndex = 101
+    -- Right side of colorpicker - hue slider
+    local hueSlider = Instance.new("Frame")
+    hueSlider.Name = "HueSlider"
+    hueSlider.Parent = self.colorPickerFrame
+    hueSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    hueSlider.BorderSizePixel = 0
+    hueSlider.Position = UDim2.new(0.56, 0, 0.111, 0)
+    hueSlider.Size = UDim2.new(0, 15, 0, 150)
+    hueSlider.ZIndex = 101
+    CreateCorner(hueSlider, 3)
+    
+    -- Hue gradient
+    local hueGradient = Instance.new("UIGradient")
+    hueGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
+        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+        ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
+        ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0))
+    }
+    hueGradient.Rotation = 90
+    hueGradient.Parent = hueSlider
+    
+    -- Hue slider head
+    local hueSliderHead = Instance.new("TextButton")
+    hueSliderHead.Name = "HueSliderHead"
+    hueSliderHead.Parent = hueSlider
+    hueSliderHead.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    hueSliderHead.BorderSizePixel = 0
+    hueSliderHead.Position = UDim2.new(-0.2, 0, 0, -2)
+    hueSliderHead.Size = UDim2.new(0, 19, 0, 8)
+    hueSliderHead.ZIndex = 103
+    hueSliderHead.Text = ""
+    CreateCorner(hueSliderHead, 2)
+    CreateStroke(hueSliderHead, Theme.ToggleStroke, 1)
+    
+    local currentHue = 0
+    local currentSat = 1
+    local currentVal = 1
+    local hueSliderDragging = false
+    local headDragging = false
+    
+    -- Make hue slider draggable
+    hueSliderHead.MouseButton1Down:Connect(function()
+        hueSliderDragging = true
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if hueSliderDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mousePos = input.Position
+            local sliderPos = hueSlider.AbsolutePosition
+            local sliderSize = hueSlider.AbsoluteSize
+            
+            local relativeY = math.clamp((mousePos.Y - sliderPos.Y) / sliderSize.Y, 0, 1)
+            hueSliderHead.Position = UDim2.new(-0.2, 0, relativeY, -4)
+            
+            currentHue = relativeY
+            
+            -- Update main color gradient
+            colorGradient.ImageColor3 = Color3.fromHSV(currentHue, 1, 1)
+            
+            -- Update current color if callback exists
+            if self.currentColorCallback then
+                local color = Color3.fromHSV(currentHue, currentSat, currentVal)
+                self.currentColorCallback(color)
+            end
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            hueSliderDragging = false
+        end
+    end)
     
     local listLayout = Instance.new("UIListLayout")
     listLayout.Parent = list
@@ -406,6 +474,7 @@ function Library:CreateColorPickerFrame()
     rainbowToggle.Size = UDim2.new(0, 18, 0, 18)
     rainbowToggle.Text = ""
     rainbowToggle.ZIndex = 104
+    rainbowToggle.LayoutOrder = 2
     CreateCorner(rainbowToggle, 3)
     CreateStroke(rainbowToggle, Theme.ToggleStroke, 1)
     
@@ -425,7 +494,7 @@ function Library:CreateColorPickerFrame()
     rainbowTitle.Parent = rainbowToggle
     rainbowTitle.BackgroundTransparency = 1
     rainbowTitle.Position = UDim2.new(1.461, 0, -0.056, 0)
-    rainbowTitle.Size = UDim2.new(0, 122, 0, 20)
+    rainbowTitle.Size = UDim2.new(0, 100, 0, 20)
     rainbowTitle.Font = Enum.Font.SourceSansSemibold
     rainbowTitle.Text = "Rainbow"
     rainbowTitle.TextColor3 = Theme.SubText
@@ -444,11 +513,11 @@ function Library:CreateColorPickerFrame()
         rainbowTitle.TextColor3 = rainbowEnabled and Theme.Text or Theme.SubText
         rainbowCheck.Visible = rainbowEnabled
         
-        -- Rainbow functionality
+        -- Rainbow functionality with speed control
         if rainbowEnabled then
             rainbowConnection = RunService.Heartbeat:Connect(function()
                 if self.currentColorCallback and rainbowEnabled then
-                    local hue = (tick() * 0.5) % 1
+                    local hue = (tick() * speedMultiplier) % 1  -- Use speed multiplier
                     local color = Color3.fromHSV(hue, 1, 1)
                     self.currentColorCallback(color)
                 end
@@ -471,6 +540,7 @@ function Library:CreateColorPickerFrame()
     pulseToggle.Size = UDim2.new(0, 18, 0, 18)
     pulseToggle.Text = ""
     pulseToggle.ZIndex = 104
+    pulseToggle.LayoutOrder = 3
     CreateCorner(pulseToggle, 3)
     CreateStroke(pulseToggle, Theme.ToggleStroke, 1)
     
@@ -490,7 +560,7 @@ function Library:CreateColorPickerFrame()
     pulseTitle.Parent = pulseToggle
     pulseTitle.BackgroundTransparency = 1
     pulseTitle.Position = UDim2.new(1.461, 0, -0.056, 0)
-    pulseTitle.Size = UDim2.new(0, 122, 0, 20)
+    pulseTitle.Size = UDim2.new(0, 100, 0, 20)
     pulseTitle.Font = Enum.Font.SourceSansSemibold
     pulseTitle.Text = "Pulse"
     pulseTitle.TextColor3 = Theme.SubText
@@ -509,14 +579,12 @@ function Library:CreateColorPickerFrame()
         pulseTitle.TextColor3 = pulseEnabled and Theme.Text or Theme.SubText
         pulseCheck.Visible = pulseEnabled
         
-        -- Pulse functionality
+        -- Pulse functionality with speed control
         if pulseEnabled then
             pulseConnection = RunService.Heartbeat:Connect(function()
                 if self.currentColorCallback and pulseEnabled then
-                    local brightness = (math.sin(tick() * 3) + 1) / 2  -- Oscillate between 0 and 1
-                    local currentColor = self.currentColorCallback and self.currentColorCallback.currentColor or Color3.fromRGB(0, 251, 255)
-                    local h, s, v = Color3.toHSV(currentColor)
-                    local color = Color3.fromHSV(h, s, brightness)
+                    local brightness = (math.sin(tick() * 3 * speedMultiplier) + 1) / 2  -- Use speed multiplier
+                    local color = Color3.fromHSV(currentHue, currentSat, brightness)
                     self.currentColorCallback(color)
                 end
             end)
@@ -528,45 +596,13 @@ function Library:CreateColorPickerFrame()
         end
     end)
     
-    -- Speed slider
-    local speedSlider = Instance.new("Frame")
-    speedSlider.Name = "SpeedSlider"
-    speedSlider.Parent = list
-    speedSlider.BackgroundTransparency = 1
-    speedSlider.Size = UDim2.new(0, 148, 0, 32)
-    speedSlider.ZIndex = 101
-    
-    local speedTitle = Instance.new("TextLabel")
-    speedTitle.Parent = speedSlider
-    speedTitle.BackgroundTransparency = 1
-    speedTitle.Size = UDim2.new(0, 100, 0, 19)
-    speedTitle.Font = Enum.Font.SourceSansSemibold
-    speedTitle.Text = "Speed"
-    speedTitle.TextColor3 = Theme.SubText
-    speedTitle.TextSize = 15
-    speedTitle.TextXAlignment = Enum.TextXAlignment.Left
-    speedTitle.TextYAlignment = Enum.TextYAlignment.Top
-    speedTitle.ZIndex = 102
-    
-    local speedValue = Instance.new("TextBox")
-    speedValue.Parent = speedSlider
-    speedValue.BackgroundTransparency = 1
-    speedValue.Position = UDim2.new(0.675, 0, 0, 0)
-    speedValue.Size = UDim2.new(0, 40, 0, 19)
-    speedValue.Font = Enum.Font.SourceSansSemibold
-    speedValue.PlaceholderText = "0.150"
-    speedValue.Text = ""
-    speedValue.TextColor3 = Theme.DisabledText
-    speedValue.TextSize = 16
-    speedValue.TextXAlignment = Enum.TextXAlignment.Right
-    speedValue.ZIndex = 102
     
     -- Copy and Paste buttons
     local copyButton = Instance.new("TextButton")
     copyButton.Name = "CopyButton"
     copyButton.Parent = self.colorPickerFrame
     copyButton.BackgroundTransparency = 1
-    copyButton.Position = UDim2.new(0.535, 0, 0.445, 0)
+    copyButton.Position = UDim2.new(0.535, 0, 0.8, 0)
     copyButton.Size = UDim2.new(0, 63, 0, 20)
     copyButton.Font = Enum.Font.SourceSansSemibold
     copyButton.Text = "Copy"
@@ -578,7 +614,7 @@ function Library:CreateColorPickerFrame()
     pasteButton.Name = "PasteButton"
     pasteButton.Parent = self.colorPickerFrame
     pasteButton.BackgroundTransparency = 1
-    pasteButton.Position = UDim2.new(0.762, 0, 0.442, 0)
+    pasteButton.Position = UDim2.new(0.762, 0, 0.8, 0)
     pasteButton.Size = UDim2.new(0, 63, 0, 20)
     pasteButton.Font = Enum.Font.SourceSansSemibold
     pasteButton.Text = "Paste"
@@ -680,12 +716,12 @@ function Library:GetTabMethods()
             frame = nil
         }
         
-        -- Create section frame
+        -- Create section frame (auto-scaling)
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Name = "Section_" .. name
         sectionFrame.Parent = self.tab.frame
         sectionFrame.BackgroundTransparency = 1
-        sectionFrame.Size = UDim2.new(0, 225, 0, 420)
+        sectionFrame.Size = UDim2.new(0, 225, 0, 50)  -- Start small, will auto-scale
         
         -- Position sections side by side
         local sectionCount = #self.tab.sections
@@ -701,15 +737,15 @@ function Library:GetTabMethods()
         sectionBg.Parent = sectionFrame
         sectionBg.BackgroundColor3 = Theme.Background
         sectionBg.BorderSizePixel = 0
-        sectionBg.Position = UDim2.new(0, 0, 0.022, 0)  -- Fixed positioning
-        sectionBg.Size = UDim2.new(0, 225, 0, 411)
+        sectionBg.Position = UDim2.new(0, 0, 0.022, 0)
+        sectionBg.Size = UDim2.new(0, 225, 0, 50)  -- Will auto-scale
         CreateCorner(sectionBg, 3)
-        CreateStroke(sectionBg, Theme.Divider, 1)
+        CreateStroke(sectionBg, Theme.ToggleStroke, 1)  -- Always visible stroke
         
         -- Section title bar - properly aligned with background
         local titleBar = Instance.new("Frame")
         titleBar.Name = "TitleBar"
-        titleBar.Parent = sectionBg  -- Parent to background for proper alignment
+        titleBar.Parent = sectionBg
         titleBar.BackgroundColor3 = Theme.SectionBackground
         titleBar.BorderSizePixel = 0
         titleBar.Position = UDim2.new(0, 0, 0, 0)
@@ -740,16 +776,35 @@ function Library:GetTabMethods()
         contentHolder.Name = "ContentHolder"
         contentHolder.Parent = sectionFrame
         contentHolder.BackgroundTransparency = 1
-        contentHolder.Position = UDim2.new(0.015, 0, 0.067, 0)  -- Adjusted position
-        contentHolder.Size = UDim2.new(0, 216, 0, 383)
+        contentHolder.Position = UDim2.new(0.015, 0, 0.067, 0)
+        contentHolder.Size = UDim2.new(0, 216, 0, 20)  -- Will auto-scale
         
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Parent = contentHolder
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Padding = UDim.new(0, 7)
         
+        -- Auto-scaling functionality
+        local function updateSectionSize()
+            local contentSize = contentLayout.AbsoluteContentSize
+            local newHeight = math.max(50, contentSize.Y + 40)  -- Minimum 50px, add padding
+            
+            -- Update content holder size
+            contentHolder.Size = UDim2.new(0, 216, 0, contentSize.Y)
+            
+            -- Update section frame size
+            sectionFrame.Size = UDim2.new(0, 225, 0, newHeight)
+            
+            -- Update section background size
+            sectionBg.Size = UDim2.new(0, 225, 0, newHeight - 10)
+        end
+        
+        -- Connect auto-scaling to content changes
+        contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSectionSize)
+        
         section.frame = sectionFrame
         section.contentHolder = contentHolder
+        section.updateSize = updateSectionSize
         
         table.insert(self.tab.sections, section)
         
@@ -856,6 +911,11 @@ function Library:GetSectionMethods()
             
             callback(state)
         end)
+        
+        -- Trigger section auto-scaling
+        if self.section.updateSize then
+            self.section.updateSize()
+        end
         
         return {
             SetValue = function(value)
@@ -982,6 +1042,11 @@ function Library:GetSectionMethods()
             end
         end)
         
+        -- Trigger section auto-scaling
+        if self.section.updateSize then
+            self.section.updateSize()
+        end
+        
         return {
             SetValue = function(newValue)
                 updateSlider(newValue)
@@ -1009,7 +1074,8 @@ function Library:GetSectionMethods()
         dropdownFrame.TextColor3 = Theme.SubText
         dropdownFrame.TextSize = 15
         dropdownFrame.TextXAlignment = Enum.TextXAlignment.Left
-        CreateStroke(dropdownFrame, Theme.ToggleStroke, 1)
+        dropdownFrame.ZIndex = 1
+        CreateStroke(dropdownFrame, Theme.ToggleStroke, 1)  -- Always visible stroke
         CreateCorner(dropdownFrame, 3)
         
         local arrow = Instance.new("ImageLabel")
@@ -1020,27 +1086,29 @@ function Library:GetSectionMethods()
         arrow.Size = UDim2.new(0, 20, 0, 20)
         arrow.Image = "http://www.roblox.com/asset/?id=6034818372"
         arrow.ImageColor3 = Theme.DisabledText
+        arrow.ZIndex = 2
+        
+        -- Full screen click blocker when dropdown is open
+        local fullScreenBlocker = Instance.new("Frame")
+        fullScreenBlocker.Name = "FullScreenBlocker"
+        fullScreenBlocker.Parent = self.library.ScreenGui
+        fullScreenBlocker.BackgroundTransparency = 1
+        fullScreenBlocker.Position = UDim2.new(0, 0, 0, 0)
+        fullScreenBlocker.Size = UDim2.new(1, 0, 1, 0)
+        fullScreenBlocker.Visible = false
+        fullScreenBlocker.ZIndex = 998
         
         local dropdownHolder = Instance.new("Frame")
         dropdownHolder.Name = "DropdownHolder"
-        dropdownHolder.Parent = dropdownFrame
+        dropdownHolder.Parent = fullScreenBlocker  -- Parent to blocker for proper layering
         dropdownHolder.BackgroundColor3 = Theme.Divider
         dropdownHolder.BorderSizePixel = 0
-        dropdownHolder.Position = UDim2.new(0, 0, 1.35, 0)
+        dropdownHolder.Position = dropdownFrame.Position + UDim2.new(0, 0, 0, 27)  -- Position relative to dropdown
         dropdownHolder.Size = UDim2.new(0, 215, 0, #options * 17)
         dropdownHolder.Visible = false
-        dropdownHolder.ZIndex = 1000  -- Very high z-index to prevent interaction with elements behind
+        dropdownHolder.ZIndex = 1000
         CreateCorner(dropdownHolder, 2)
-        CreateStroke(dropdownHolder, Theme.ToggleStroke, 1)
-        
-        -- Click blocker to prevent interaction with elements behind
-        local clickBlocker = Instance.new("Frame")
-        clickBlocker.Name = "ClickBlocker"
-        clickBlocker.Parent = dropdownHolder
-        clickBlocker.BackgroundTransparency = 1
-        clickBlocker.Position = UDim2.new(-5, 0, -5, 0)
-        clickBlocker.Size = UDim2.new(10, 0, 10, 0)
-        clickBlocker.ZIndex = 999
+        CreateStroke(dropdownHolder, Theme.ToggleStroke, 1)  -- Always visible stroke
         
         local optionLayout = Instance.new("UIListLayout")
         optionLayout.Parent = dropdownHolder
@@ -1049,6 +1117,15 @@ function Library:GetSectionMethods()
         
         local selectedValue = multiSelect and (type(default) == "table" and default or {default}) or default
         local isOpen = false
+        
+        -- Update dropdown position when parent moves
+        local function updateDropdownPosition()
+            if dropdownFrame.Parent and dropdownFrame.Parent.AbsolutePosition then
+                local parentPos = dropdownFrame.Parent.AbsolutePosition
+                local dropdownPos = dropdownFrame.AbsolutePosition
+                dropdownHolder.Position = UDim2.new(0, dropdownPos.X, 0, dropdownPos.Y + 27)
+            end
+        end
         
         for i, option in ipairs(options) do
             local optionButton = Instance.new("TextButton")
@@ -1095,34 +1172,19 @@ function Library:GetSectionMethods()
                         table.insert(selectedValue, option)
                     end
                     
-                    -- Smooth text animation
-                    CreateTween(dropdownFrame, {
-                        TextColor3 = Theme.Text
-                    }, 0.1):Play()
-                    wait(0.1)
                     dropdownFrame.Text = " " .. table.concat(selectedValue, ", ")
-                    CreateTween(dropdownFrame, {
-                        TextColor3 = Theme.SubText
-                    }, 0.1):Play()
                 else
                     selectedValue = option
-                    
-                    -- Smooth text animation
-                    CreateTween(dropdownFrame, {
-                        TextColor3 = Theme.Text
-                    }, 0.1):Play()
-                    wait(0.1)
                     dropdownFrame.Text = " " .. option
-                    CreateTween(dropdownFrame, {
-                        TextColor3 = Theme.SubText
-                    }, 0.1):Play()
                     
+                    -- Close dropdown for single select
+                    fullScreenBlocker.Visible = false
                     dropdownHolder.Visible = false
                     isOpen = false
                     CreateTween(arrow, {Rotation = 0}, 0.2):Play()
                 end
                 
-                -- Update all option appearances with smooth transitions
+                -- Update all option appearances
                 for _, child in ipairs(dropdownHolder:GetChildren()) do
                     if child:IsA("TextButton") then
                         local optName = child.Text:gsub("^%s+", "")
@@ -1134,15 +1196,11 @@ function Library:GetSectionMethods()
                                     break
                                 end
                             end
-                            CreateTween(child, {
-                                TextColor3 = isSelected and Theme.Accent or Theme.DisabledText
-                            }, 0.15):Play()
                             child.Text = (isSelected and "       " or " ") .. optName
+                            child.TextColor3 = isSelected and Theme.Accent or Theme.DisabledText
                         else
-                            CreateTween(child, {
-                                TextColor3 = optName == selectedValue and Theme.Accent or Theme.DisabledText
-                            }, 0.15):Play()
                             child.Text = (optName == selectedValue and "       " or " ") .. optName
+                            child.TextColor3 = optName == selectedValue and Theme.Accent or Theme.DisabledText
                         end
                     end
                 end
@@ -1151,8 +1209,18 @@ function Library:GetSectionMethods()
             end)
         end
         
+        -- Close dropdown when clicking outside
+        fullScreenBlocker.MouseButton1Click:Connect(function()
+            fullScreenBlocker.Visible = false
+            dropdownHolder.Visible = false
+            isOpen = false
+            CreateTween(arrow, {Rotation = 0}, 0.2):Play()
+        end)
+        
         dropdownFrame.MouseButton1Click:Connect(function()
             isOpen = not isOpen
+            updateDropdownPosition()  -- Update position before showing
+            fullScreenBlocker.Visible = isOpen
             dropdownHolder.Visible = isOpen
             
             -- Arrow rotation animation
@@ -1160,6 +1228,11 @@ function Library:GetSectionMethods()
                 Rotation = isOpen and 180 or 0
             }, 0.2):Play()
         end)
+        
+        -- Trigger section auto-scaling
+        if self.section.updateSize then
+            self.section.updateSize()
+        end
         
         return {
             SetValue = function(value)
@@ -1207,6 +1280,11 @@ function Library:GetSectionMethods()
             
             callback()
         end)
+        
+        -- Trigger section auto-scaling
+        if self.section.updateSize then
+            self.section.updateSize()
+        end
         
         return buttonFrame
     end
@@ -1273,6 +1351,11 @@ function Library:GetSectionMethods()
             end
         end)
         
+        -- Trigger section auto-scaling
+        if self.section.updateSize then
+            self.section.updateSize()
+        end
+        
         return {
             SetKey = function(keyCode)
                 currentKey = keyCode.Name
@@ -1331,6 +1414,11 @@ function Library:GetSectionMethods()
             end
         end)
         
+        -- Trigger section auto-scaling
+        if self.section.updateSize then
+            self.section.updateSize()
+        end
+        
         return {
             SetColor = function(color)
                 currentColor = color
@@ -1355,6 +1443,11 @@ function Library:GetSectionMethods()
         labelFrame.TextSize = 15
         labelFrame.TextXAlignment = Enum.TextXAlignment.Center
         
+        -- Trigger section auto-scaling
+        if self.section.updateSize then
+            self.section.updateSize()
+        end
+        
         return {
             SetText = function(newText)
                 labelFrame.Text = newText
@@ -1370,6 +1463,11 @@ function Library:GetSectionMethods()
         dividerFrame.BorderSizePixel = 0
         dividerFrame.Size = UDim2.new(0, 215, 0, 3)
         CreateCorner(dividerFrame, 3)
+        
+        -- Trigger section auto-scaling
+        if self.section.updateSize then
+            self.section.updateSize()
+        end
         
         return dividerFrame
     end
