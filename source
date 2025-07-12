@@ -1088,23 +1088,12 @@ function Library:GetSectionMethods()
         arrow.ImageColor3 = Theme.DisabledText
         arrow.ZIndex = 2
         
-        -- Full screen click blocker when dropdown is open
-        local fullScreenBlocker = Instance.new("TextButton")  -- Changed from Frame to TextButton
-        fullScreenBlocker.Name = "FullScreenBlocker"
-        fullScreenBlocker.Parent = self.library.ScreenGui
-        fullScreenBlocker.BackgroundTransparency = 1
-        fullScreenBlocker.Position = UDim2.new(0, 0, 0, 0)
-        fullScreenBlocker.Size = UDim2.new(1, 0, 1, 0)
-        fullScreenBlocker.Visible = false
-        fullScreenBlocker.ZIndex = 998
-        fullScreenBlocker.Text = ""  -- Empty text for TextButton
-        
         local dropdownHolder = Instance.new("Frame")
         dropdownHolder.Name = "DropdownHolder"
-        dropdownHolder.Parent = fullScreenBlocker  -- Parent to blocker for proper layering
+        dropdownHolder.Parent = self.library.ScreenGui  -- Parent directly to ScreenGui
         dropdownHolder.BackgroundColor3 = Theme.Divider
         dropdownHolder.BorderSizePixel = 0
-        dropdownHolder.Position = dropdownFrame.Position + UDim2.new(0, 0, 0, 27)  -- Position relative to dropdown
+        dropdownHolder.Position = UDim2.new(0, 0, 0, 0)  -- Will be updated dynamically
         dropdownHolder.Size = UDim2.new(0, 215, 0, #options * 17)
         dropdownHolder.Visible = false
         dropdownHolder.ZIndex = 1000
@@ -1119,13 +1108,10 @@ function Library:GetSectionMethods()
         local selectedValue = multiSelect and (type(default) == "table" and default or {default}) or default
         local isOpen = false
         
-        -- Update dropdown position when parent moves
+        -- Update dropdown position when opened
         local function updateDropdownPosition()
-            if dropdownFrame.Parent and dropdownFrame.Parent.AbsolutePosition then
-                local parentPos = dropdownFrame.Parent.AbsolutePosition
-                local dropdownPos = dropdownFrame.AbsolutePosition
-                dropdownHolder.Position = UDim2.new(0, dropdownPos.X, 0, dropdownPos.Y + 27)
-            end
+            local dropdownPos = dropdownFrame.AbsolutePosition
+            dropdownHolder.Position = UDim2.new(0, dropdownPos.X, 0, dropdownPos.Y + 27)
         end
         
         for i, option in ipairs(options) do
@@ -1179,7 +1165,6 @@ function Library:GetSectionMethods()
                     dropdownFrame.Text = " " .. option
                     
                     -- Close dropdown for single select
-                    fullScreenBlocker.Visible = false
                     dropdownHolder.Visible = false
                     isOpen = false
                     CreateTween(arrow, {Rotation = 0}, 0.2):Play()
@@ -1210,24 +1195,53 @@ function Library:GetSectionMethods()
             end)
         end
         
-        -- Close dropdown when clicking outside
-        fullScreenBlocker.MouseButton1Click:Connect(function()
-            fullScreenBlocker.Visible = false
-            dropdownHolder.Visible = false
-            isOpen = false
-            CreateTween(arrow, {Rotation = 0}, 0.2):Play()
-        end)
+        -- Close dropdown when clicking outside (using UserInputService instead of problematic Frame)
+        local function closeDropdown()
+            if isOpen then
+                dropdownHolder.Visible = false
+                isOpen = false
+                CreateTween(arrow, {Rotation = 0}, 0.2):Play()
+            end
+        end
+        
+        -- Global click detection to close dropdown
+        local clickConnection = nil
         
         dropdownFrame.MouseButton1Click:Connect(function()
             isOpen = not isOpen
             updateDropdownPosition()  -- Update position before showing
-            fullScreenBlocker.Visible = isOpen
             dropdownHolder.Visible = isOpen
             
             -- Arrow rotation animation
             CreateTween(arrow, {
                 Rotation = isOpen and 180 or 0
             }, 0.2):Play()
+            
+            if isOpen then
+                -- Set up click detection to close dropdown
+                clickConnection = UserInputService.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        -- Check if click is outside dropdown area
+                        local mousePos = UserInputService:GetMouseLocation()
+                        local dropdownPos = dropdownHolder.AbsolutePosition
+                        local dropdownSize = dropdownHolder.AbsoluteSize
+                        
+                        if mousePos.X < dropdownPos.X or mousePos.X > dropdownPos.X + dropdownSize.X or
+                           mousePos.Y < dropdownPos.Y or mousePos.Y > dropdownPos.Y + dropdownSize.Y then
+                            closeDropdown()
+                            if clickConnection then
+                                clickConnection:Disconnect()
+                                clickConnection = nil
+                            end
+                        end
+                    end
+                end)
+            else
+                if clickConnection then
+                    clickConnection:Disconnect()
+                    clickConnection = nil
+                end
+            end
         end)
         
         -- Trigger section auto-scaling
