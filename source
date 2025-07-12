@@ -254,7 +254,7 @@ function Library:CreateColorPickerFrame()
     self.colorPickerFrame.Visible = false
     self.colorPickerFrame.ZIndex = 100
     CreateCorner(self.colorPickerFrame, 3)
-    CreateStroke(self.colorPickerFrame, Theme.Divider, 1)
+    CreateStroke(self.colorPickerFrame, Theme.ToggleStroke, 1)  -- Always visible border stroke
     
     -- Colorpicker title
     self.colorPickerTitle = Instance.new("TextLabel")
@@ -315,6 +315,7 @@ function Library:CreateColorPickerFrame()
     colorpicker.Size = UDim2.new(0, 150, 0, 150)
     colorpicker.ZIndex = 101
     CreateCorner(colorpicker, 3)
+    CreateStroke(colorpicker, Theme.ToggleStroke, 1)  -- Always visible border stroke
     
     -- Color gradient (using exact same image from original)
     local colorGradient = Instance.new("ImageLabel")
@@ -347,6 +348,7 @@ function Library:CreateColorPickerFrame()
     colorpickerHead.ZIndex = 103
     colorpickerHead.Text = ""
     CreateCorner(colorpickerHead, 12)
+    CreateStroke(colorpickerHead, Theme.ToggleStroke, 1)  -- Always visible border stroke
     
     -- Make colorpicker head draggable within bounds
     local headDragging = false
@@ -392,6 +394,7 @@ function Library:CreateColorPickerFrame()
     hueSlider.Size = UDim2.new(0, 15, 0, 150)
     hueSlider.ZIndex = 101
     CreateCorner(hueSlider, 3)
+    CreateStroke(hueSlider, Theme.ToggleStroke, 1)  -- Always visible border stroke
     
     -- Hue gradient
     local hueGradient = Instance.new("UIGradient")
@@ -418,7 +421,7 @@ function Library:CreateColorPickerFrame()
     hueSliderHead.ZIndex = 103
     hueSliderHead.Text = ""
     CreateCorner(hueSliderHead, 2)
-    CreateStroke(hueSliderHead, Theme.ToggleStroke, 1)
+    CreateStroke(hueSliderHead, Theme.ToggleStroke, 1)  -- Always visible border stroke
     
     local currentHue = 0
     local currentSat = 1
@@ -464,26 +467,26 @@ function Library:CreateColorPickerFrame()
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
     listLayout.Padding = UDim.new(0, 7)
     
-    -- Rainbow toggle (off by default)
+    -- Rainbow toggle (smaller and properly visible)
     local rainbowToggle = Instance.new("TextButton")
     rainbowToggle.Name = "RainbowToggle"
     rainbowToggle.Parent = list
     rainbowToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     rainbowToggle.BackgroundTransparency = 1
     rainbowToggle.BorderSizePixel = 0
-    rainbowToggle.Size = UDim2.new(0, 18, 0, 18)
+    rainbowToggle.Size = UDim2.new(0, 15, 0, 15)  -- Smaller size
     rainbowToggle.Text = ""
     rainbowToggle.ZIndex = 104
     rainbowToggle.LayoutOrder = 2
     CreateCorner(rainbowToggle, 3)
-    CreateStroke(rainbowToggle, Theme.ToggleStroke, 1)
+    CreateStroke(rainbowToggle, Theme.ToggleStroke, 1)  -- Always visible border
     
     local rainbowCheck = Instance.new("ImageLabel")
     rainbowCheck.Name = "Checkmark"
     rainbowCheck.Parent = rainbowToggle
     rainbowCheck.BackgroundTransparency = 1
-    rainbowCheck.Position = UDim2.new(0.111, 0, 0.111, 0)
-    rainbowCheck.Size = UDim2.new(0, 13, 0, 13)
+    rainbowCheck.Position = UDim2.new(0.1, 0, 0.1, 0)
+    rainbowCheck.Size = UDim2.new(0, 11, 0, 11)  -- Smaller checkmark
     rainbowCheck.Image = "http://www.roblox.com/asset/?id=6031094667"
     rainbowCheck.ImageColor3 = Color3.fromRGB(0, 0, 0)
     rainbowCheck.ZIndex = 105
@@ -493,12 +496,12 @@ function Library:CreateColorPickerFrame()
     rainbowTitle.Name = "Title"
     rainbowTitle.Parent = rainbowToggle
     rainbowTitle.BackgroundTransparency = 1
-    rainbowTitle.Position = UDim2.new(1.461, 0, -0.056, 0)
-    rainbowTitle.Size = UDim2.new(0, 100, 0, 20)
+    rainbowTitle.Position = UDim2.new(1.4, 0, 0, 0)  -- Closer to toggle
+    rainbowTitle.Size = UDim2.new(0, 80, 0, 15)
     rainbowTitle.Font = Enum.Font.SourceSansSemibold
     rainbowTitle.Text = "Rainbow"
     rainbowTitle.TextColor3 = Theme.SubText
-    rainbowTitle.TextSize = 15
+    rainbowTitle.TextSize = 12  -- Smaller text
     rainbowTitle.TextXAlignment = Enum.TextXAlignment.Left
     rainbowTitle.ZIndex = 104
     
@@ -530,26 +533,26 @@ function Library:CreateColorPickerFrame()
         end
     end)
     
-    -- Pulse toggle (off by default)
+    -- Pulse toggle (smaller and properly visible)
     local pulseToggle = Instance.new("TextButton")
     pulseToggle.Name = "PulseToggle"
     pulseToggle.Parent = list
     pulseToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     pulseToggle.BackgroundTransparency = 1
     pulseToggle.BorderSizePixel = 0
-    pulseToggle.Size = UDim2.new(0, 18, 0, 18)
+    pulseToggle.Size = UDim2.new(0, 15, 0, 15)  -- Smaller size
     pulseToggle.Text = ""
     pulseToggle.ZIndex = 104
     pulseToggle.LayoutOrder = 3
     CreateCorner(pulseToggle, 3)
-    CreateStroke(pulseToggle, Theme.ToggleStroke, 1)
+    CreateStroke(pulseToggle, Theme.ToggleStroke, 1)  -- Always visible border
     
     local pulseCheck = Instance.new("ImageLabel")
     pulseCheck.Name = "Checkmark"
     pulseCheck.Parent = pulseToggle
     pulseCheck.BackgroundTransparency = 1
-    pulseCheck.Position = UDim2.new(0.111, 0, 0.111, 0)
-    pulseCheck.Size = UDim2.new(0, 13, 0, 13)
+    pulseCheck.Position = UDim2.new(0.1, 0, 0.1, 0)
+    pulseCheck.Size = UDim2.new(0, 11, 0, 11)  -- Smaller checkmark
     pulseCheck.Image = "http://www.roblox.com/asset/?id=6031094667"
     pulseCheck.ImageColor3 = Color3.fromRGB(0, 0, 0)
     pulseCheck.ZIndex = 105
@@ -559,12 +562,12 @@ function Library:CreateColorPickerFrame()
     pulseTitle.Name = "Title"
     pulseTitle.Parent = pulseToggle
     pulseTitle.BackgroundTransparency = 1
-    pulseTitle.Position = UDim2.new(1.461, 0, -0.056, 0)
-    pulseTitle.Size = UDim2.new(0, 100, 0, 20)
+    pulseTitle.Position = UDim2.new(1.4, 0, 0, 0)  -- Closer to toggle
+    pulseTitle.Size = UDim2.new(0, 80, 0, 15)
     pulseTitle.Font = Enum.Font.SourceSansSemibold
     pulseTitle.Text = "Pulse"
     pulseTitle.TextColor3 = Theme.SubText
-    pulseTitle.TextSize = 15
+    pulseTitle.TextSize = 12  -- Smaller text
     pulseTitle.TextXAlignment = Enum.TextXAlignment.Left
     pulseTitle.ZIndex = 104
     
@@ -597,30 +600,34 @@ function Library:CreateColorPickerFrame()
     end)
     
     
-    -- Copy and Paste buttons
+    -- Copy and Paste buttons (repositioned)
     local copyButton = Instance.new("TextButton")
     copyButton.Name = "CopyButton"
     copyButton.Parent = self.colorPickerFrame
     copyButton.BackgroundTransparency = 1
-    copyButton.Position = UDim2.new(0.535, 0, 0.8, 0)
-    copyButton.Size = UDim2.new(0, 63, 0, 20)
+    copyButton.Position = UDim2.new(0.31, 0, 0.85, 0)  -- Better positioned
+    copyButton.Size = UDim2.new(0, 50, 0, 18)  -- Smaller
     copyButton.Font = Enum.Font.SourceSansSemibold
     copyButton.Text = "Copy"
     copyButton.TextColor3 = Theme.Text
-    copyButton.TextSize = 15
+    copyButton.TextSize = 12  -- Smaller text
     copyButton.ZIndex = 102
+    CreateStroke(copyButton, Theme.ToggleStroke, 1)  -- Always visible border
+    CreateCorner(copyButton, 3)
     
     local pasteButton = Instance.new("TextButton")
     pasteButton.Name = "PasteButton"
     pasteButton.Parent = self.colorPickerFrame
     pasteButton.BackgroundTransparency = 1
-    pasteButton.Position = UDim2.new(0.762, 0, 0.8, 0)
-    pasteButton.Size = UDim2.new(0, 63, 0, 20)
+    pasteButton.Position = UDim2.new(0.51, 0, 0.85, 0)  -- Better positioned
+    pasteButton.Size = UDim2.new(0, 50, 0, 18)  -- Smaller
     pasteButton.Font = Enum.Font.SourceSansSemibold
     pasteButton.Text = "Paste"
     pasteButton.TextColor3 = Theme.Text
-    pasteButton.TextSize = 15
+    pasteButton.TextSize = 12  -- Smaller text
     pasteButton.ZIndex = 102
+    CreateStroke(pasteButton, Theme.ToggleStroke, 1)  -- Always visible border
+    CreateCorner(pasteButton, 3)
 end
 
 function Library:CreateTab(name)
@@ -740,7 +747,7 @@ function Library:GetTabMethods()
         sectionBg.Position = UDim2.new(0, 0, 0.022, 0)
         sectionBg.Size = UDim2.new(0, 225, 0, 50)  -- Will auto-scale
         CreateCorner(sectionBg, 3)
-        CreateStroke(sectionBg, Theme.ToggleStroke, 1)  -- Always visible stroke
+        CreateStroke(sectionBg, Theme.ToggleStroke, 1)  -- Always visible border stroke
         
         -- Section title bar - properly aligned with background
         local titleBar = Instance.new("Frame")
@@ -771,12 +778,12 @@ function Library:GetTabMethods()
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
         
-        -- Section content holder
+        -- Section content holder (fixed positioning)
         local contentHolder = Instance.new("Frame")
         contentHolder.Name = "ContentHolder"
         contentHolder.Parent = sectionFrame
         contentHolder.BackgroundTransparency = 1
-        contentHolder.Position = UDim2.new(0.015, 0, 0.067, 0)
+        contentHolder.Position = UDim2.new(0.015, 0, 0.045, 0)  -- Reduced gap from 0.067 to 0.045
         contentHolder.Size = UDim2.new(0, 216, 0, 20)  -- Will auto-scale
         
         local contentLayout = Instance.new("UIListLayout")
@@ -835,7 +842,7 @@ function Library:GetSectionMethods()
         toggleFrame.Size = UDim2.new(0, 18, 0, 18)
         toggleFrame.Text = ""
         CreateCorner(toggleFrame, 3)
-        CreateStroke(toggleFrame, default and Theme.Accent or Theme.ToggleStroke, 1)  -- Always visible stroke
+        CreateStroke(toggleFrame, default and Theme.Accent or Theme.ToggleStroke, 1)  -- Always visible border stroke
         
         local checkmark = Instance.new("ImageLabel")
         checkmark.Name = "Checkmark"
@@ -871,7 +878,7 @@ function Library:GetSectionMethods()
             colorpickerButton.Size = UDim2.new(0, 32, 0, 13)
             colorpickerButton.Text = ""
             CreateCorner(colorpickerButton, 3)
-            CreateStroke(colorpickerButton, Theme.ToggleStroke, 1)  -- Always visible stroke
+            CreateStroke(colorpickerButton, Theme.ToggleStroke, 1)  -- Always visible border stroke
             
             colorpickerButton.MouseButton1Click:Connect(function()
                 self.library.colorPickerFrame.Visible = not self.library.colorPickerFrame.Visible
@@ -1075,7 +1082,7 @@ function Library:GetSectionMethods()
         dropdownFrame.TextSize = 15
         dropdownFrame.TextXAlignment = Enum.TextXAlignment.Left
         dropdownFrame.ZIndex = 1
-        CreateStroke(dropdownFrame, Theme.ToggleStroke, 1)  -- Always visible stroke
+        CreateStroke(dropdownFrame, Theme.ToggleStroke, 1)  -- Always visible border stroke
         CreateCorner(dropdownFrame, 3)
         
         local arrow = Instance.new("ImageLabel")
@@ -1098,7 +1105,7 @@ function Library:GetSectionMethods()
         dropdownHolder.Visible = false
         dropdownHolder.ZIndex = 1000
         CreateCorner(dropdownHolder, 2)
-        CreateStroke(dropdownHolder, Theme.ToggleStroke, 1)  -- Always visible stroke
+        CreateStroke(dropdownHolder, Theme.ToggleStroke, 1)  -- Always visible border stroke
         
         local optionLayout = Instance.new("UIListLayout")
         optionLayout.Parent = dropdownHolder
@@ -1273,7 +1280,7 @@ function Library:GetSectionMethods()
         buttonFrame.Text = name
         buttonFrame.TextColor3 = Theme.Text
         buttonFrame.TextSize = 15
-        CreateStroke(buttonFrame, Theme.ToggleStroke, 1)
+        CreateStroke(buttonFrame, Theme.ToggleStroke, 1)  -- Always visible border stroke
         CreateCorner(buttonFrame, 3)
         
         local isAnimating = false
@@ -1334,7 +1341,7 @@ function Library:GetSectionMethods()
         keybindBox.Text = default ~= "None" and default or "None"
         keybindBox.TextColor3 = Theme.Text
         keybindBox.TextSize = 15
-        CreateStroke(keybindBox, Theme.ToggleStroke, 1)
+        CreateStroke(keybindBox, Theme.ToggleStroke, 1)  -- Always visible border stroke
         CreateCorner(keybindBox, 3)
         
         local currentKey = default
@@ -1414,7 +1421,7 @@ function Library:GetSectionMethods()
         colorButton.Size = UDim2.new(0, 32, 0, 13)
         colorButton.Text = ""
         CreateCorner(colorButton, 3)
-        CreateStroke(colorButton, Theme.ToggleStroke, 1)  -- Always visible stroke
+        CreateStroke(colorButton, Theme.ToggleStroke, 1)  -- Always visible border stroke
         
         local currentColor = default
         
