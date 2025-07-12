@@ -62,6 +62,7 @@ function Library.new(title, gameName, userStatus)
     self.isVisible = false
     self.keybind = Enum.KeyCode.Insert
     self.colorPickerFrame = nil
+    self.currentColorCallback = nil
     self.dragStart = nil
     self.startPos = nil
     
@@ -244,13 +245,41 @@ end
 function Library:CreateColorPickerFrame()
     self.colorPickerFrame = Instance.new("Frame")
     self.colorPickerFrame.Name = "ColorpickerFrame"
-    self.colorPickerFrame.Parent = self.Background
+    self.colorPickerFrame.Parent = self.ScreenGui  -- Parent to ScreenGui for proper layering
     self.colorPickerFrame.BackgroundColor3 = Theme.Background
     self.colorPickerFrame.BorderSizePixel = 0
-    self.colorPickerFrame.Position = UDim2.new(1.149, 0, 0.274, 0)
+    self.colorPickerFrame.Position = UDim2.new(0.65, 0, 0.3, 0)
     self.colorPickerFrame.Size = UDim2.new(0, 321, 0, 225)
     self.colorPickerFrame.Visible = false
+    self.colorPickerFrame.ZIndex = 100
     CreateCorner(self.colorPickerFrame, 3)
+    CreateStroke(self.colorPickerFrame, Theme.Divider, 1)
+    
+    -- Make colorpicker draggable
+    local cpDragToggle = nil
+    local cpDragStart = nil
+    local cpStartPos = nil
+    
+    self.colorPickerFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            cpDragToggle = true
+            cpDragStart = input.Position
+            cpStartPos = self.colorPickerFrame.Position
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if cpDragToggle and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - cpDragStart
+            self.colorPickerFrame.Position = UDim2.new(cpStartPos.X.Scale, cpStartPos.X.Offset + delta.X, cpStartPos.Y.Scale, cpStartPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            cpDragToggle = false
+        end
+    end)
     
     -- Colorpicker main area
     local colorpicker = Instance.new("Frame")
@@ -260,27 +289,30 @@ function Library:CreateColorPickerFrame()
     colorpicker.BorderSizePixel = 0
     colorpicker.Position = UDim2.new(0.034, 0, 0.059, 0)
     colorpicker.Size = UDim2.new(0, 150, 0, 150)
+    colorpicker.ZIndex = 101
     CreateCorner(colorpicker, 3)
     
-    -- Color gradient
+    -- Color gradient (using exact same image from original)
     local colorGradient = Instance.new("ImageLabel")
     colorGradient.Parent = colorpicker
     colorGradient.BackgroundTransparency = 1
     colorGradient.Size = UDim2.new(1, 0, 1, 0)
     colorGradient.Image = "rbxassetid://6976876787"
     colorGradient.ImageColor3 = Color3.fromRGB(255, 1, 1)
+    colorGradient.ZIndex = 101
     CreateCorner(colorGradient, 3)
     
-    -- Saturation overlay
+    -- Saturation overlay (using exact same image from original)
     local saturationOverlay = Instance.new("ImageLabel")
     saturationOverlay.Parent = colorpicker
     saturationOverlay.BackgroundTransparency = 1
     saturationOverlay.Size = UDim2.new(1, 0, 1, 0)
-    saturationOverlay.ZIndex = 2
+    saturationOverlay.ZIndex = 102
     saturationOverlay.Image = "rbxassetid://6941137543"
+    saturationOverlay.ImageColor3 = Color3.fromRGB(0, 0, 0)
     CreateCorner(saturationOverlay, 3)
     
-    -- Colorpicker head
+    -- Colorpicker head (draggable)
     local colorpickerHead = Instance.new("Frame")
     colorpickerHead.Name = "ColorpickerHead"
     colorpickerHead.Parent = colorpicker
@@ -288,8 +320,44 @@ function Library:CreateColorPickerFrame()
     colorpickerHead.BorderSizePixel = 0
     colorpickerHead.Position = UDim2.new(0.46, 0, 0.387, 0)
     colorpickerHead.Size = UDim2.new(0, 12, 0, 12)
-    colorpickerHead.ZIndex = 3
+    colorpickerHead.ZIndex = 103
     CreateCorner(colorpickerHead, 12)
+    
+    -- Make colorpicker head draggable within bounds
+    local headDragging = false
+    
+    colorpickerHead.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            headDragging = true
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if headDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mousePos = input.Position
+            local pickerPos = colorpicker.AbsolutePosition
+            local pickerSize = colorpicker.AbsoluteSize
+            
+            local relativeX = math.clamp((mousePos.X - pickerPos.X) / pickerSize.X, 0, 1)
+            local relativeY = math.clamp((mousePos.Y - pickerPos.Y) / pickerSize.Y, 0, 1)
+            
+            colorpickerHead.Position = UDim2.new(relativeX, -6, relativeY, -6)
+            
+            -- Update color based on position
+            if self.currentColorCallback then
+                local hue = relativeX
+                local sat = 1 - relativeY
+                local color = Color3.fromHSV(hue, sat, 1)
+                self.currentColorCallback(color)
+            end
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            headDragging = false
+        end
+    end)
     
     -- Right side controls
     local list = Instance.new("Frame")
@@ -298,6 +366,7 @@ function Library:CreateColorPickerFrame()
     list.BackgroundTransparency = 1
     list.Position = UDim2.new(0.536, 0, 0.057, 0)
     list.Size = UDim2.new(0, 136, 0, 85)
+    list.ZIndex = 101
     
     local listLayout = Instance.new("UIListLayout")
     listLayout.Parent = list
@@ -312,7 +381,7 @@ function Library:CreateColorPickerFrame()
     rainbowToggle.BorderSizePixel = 0
     rainbowToggle.Size = UDim2.new(0, 18, 0, 18)
     rainbowToggle.Text = ""
-    rainbowToggle.ZIndex = 4
+    rainbowToggle.ZIndex = 104
     CreateCorner(rainbowToggle, 3)
     
     local rainbowCheck = Instance.new("ImageLabel")
@@ -323,6 +392,7 @@ function Library:CreateColorPickerFrame()
     rainbowCheck.Size = UDim2.new(0, 13, 0, 13)
     rainbowCheck.Image = "http://www.roblox.com/asset/?id=6031094667"
     rainbowCheck.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    rainbowCheck.ZIndex = 105
     
     local rainbowTitle = Instance.new("TextLabel")
     rainbowTitle.Name = "Title"
@@ -335,6 +405,15 @@ function Library:CreateColorPickerFrame()
     rainbowTitle.TextColor3 = Theme.Text
     rainbowTitle.TextSize = 15
     rainbowTitle.TextXAlignment = Enum.TextXAlignment.Left
+    rainbowTitle.ZIndex = 104
+    
+    local rainbowEnabled = true
+    rainbowToggle.MouseButton1Click:Connect(function()
+        rainbowEnabled = not rainbowEnabled
+        rainbowToggle.BackgroundColor3 = rainbowEnabled and Theme.Accent or Color3.fromRGB(255, 255, 255)
+        rainbowToggle.BackgroundTransparency = rainbowEnabled and 0 or 1
+        rainbowCheck.Visible = rainbowEnabled
+    end)
     
     -- Pulse toggle
     local pulseToggle = Instance.new("TextButton")
@@ -344,7 +423,7 @@ function Library:CreateColorPickerFrame()
     pulseToggle.BorderSizePixel = 0
     pulseToggle.Size = UDim2.new(0, 18, 0, 18)
     pulseToggle.Text = ""
-    pulseToggle.ZIndex = 4
+    pulseToggle.ZIndex = 104
     CreateCorner(pulseToggle, 3)
     
     local pulseCheck = Instance.new("ImageLabel")
@@ -355,6 +434,7 @@ function Library:CreateColorPickerFrame()
     pulseCheck.Size = UDim2.new(0, 13, 0, 13)
     pulseCheck.Image = "http://www.roblox.com/asset/?id=6031094667"
     pulseCheck.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    pulseCheck.ZIndex = 105
     
     local pulseTitle = Instance.new("TextLabel")
     pulseTitle.Name = "Title"
@@ -367,6 +447,15 @@ function Library:CreateColorPickerFrame()
     pulseTitle.TextColor3 = Theme.Text
     pulseTitle.TextSize = 15
     pulseTitle.TextXAlignment = Enum.TextXAlignment.Left
+    pulseTitle.ZIndex = 104
+    
+    local pulseEnabled = true
+    pulseToggle.MouseButton1Click:Connect(function()
+        pulseEnabled = not pulseEnabled
+        pulseToggle.BackgroundColor3 = pulseEnabled and Theme.Accent or Color3.fromRGB(255, 255, 255)
+        pulseToggle.BackgroundTransparency = pulseEnabled and 0 or 1
+        pulseCheck.Visible = pulseEnabled
+    end)
     
     -- Speed slider
     local speedSlider = Instance.new("Frame")
@@ -374,6 +463,7 @@ function Library:CreateColorPickerFrame()
     speedSlider.Parent = list
     speedSlider.BackgroundTransparency = 1
     speedSlider.Size = UDim2.new(0, 148, 0, 32)
+    speedSlider.ZIndex = 101
     
     local speedTitle = Instance.new("TextLabel")
     speedTitle.Parent = speedSlider
@@ -385,6 +475,7 @@ function Library:CreateColorPickerFrame()
     speedTitle.TextSize = 15
     speedTitle.TextXAlignment = Enum.TextXAlignment.Left
     speedTitle.TextYAlignment = Enum.TextYAlignment.Top
+    speedTitle.ZIndex = 102
     
     local speedValue = Instance.new("TextBox")
     speedValue.Parent = speedSlider
@@ -397,6 +488,7 @@ function Library:CreateColorPickerFrame()
     speedValue.TextColor3 = Theme.DisabledText
     speedValue.TextSize = 16
     speedValue.TextXAlignment = Enum.TextXAlignment.Right
+    speedValue.ZIndex = 102
     
     -- Copy and Paste buttons
     local copyButton = Instance.new("TextButton")
@@ -409,6 +501,7 @@ function Library:CreateColorPickerFrame()
     copyButton.Text = "Copy"
     copyButton.TextColor3 = Theme.Text
     copyButton.TextSize = 15
+    copyButton.ZIndex = 102
     
     local pasteButton = Instance.new("TextButton")
     pasteButton.Name = "PasteButton"
@@ -420,6 +513,7 @@ function Library:CreateColorPickerFrame()
     pasteButton.Text = "Paste"
     pasteButton.TextColor3 = Theme.Text
     pasteButton.TextSize = 15
+    pasteButton.ZIndex = 102
 end
 
 function Library:CreateTab(name)
@@ -530,24 +624,24 @@ function Library:GetTabMethods()
             sectionFrame.Position = UDim2.new(0.498, 4, 0, 0)
         end
         
-        -- Section background with stroke
+        -- Section background with stroke (properly positioned)
         local sectionBg = Instance.new("Frame")
         sectionBg.Name = "SectionBackground"
         sectionBg.Parent = sectionFrame
         sectionBg.BackgroundColor3 = Theme.Background
         sectionBg.BorderSizePixel = 0
-        sectionBg.Position = UDim2.new(0, 0, 0.041, 0)
-        sectionBg.Size = UDim2.new(0, 225, 0, 403)
+        sectionBg.Position = UDim2.new(0, 0, 0.022, 0)  -- Fixed positioning
+        sectionBg.Size = UDim2.new(0, 225, 0, 411)
         CreateCorner(sectionBg, 3)
         CreateStroke(sectionBg, Theme.Divider, 1)
         
-        -- Section title bar - positioned to align with stroke
+        -- Section title bar - properly aligned with background
         local titleBar = Instance.new("Frame")
         titleBar.Name = "TitleBar"
-        titleBar.Parent = sectionFrame
+        titleBar.Parent = sectionBg  -- Parent to background for proper alignment
         titleBar.BackgroundColor3 = Theme.SectionBackground
         titleBar.BorderSizePixel = 0
-        titleBar.Position = UDim2.new(0, 0, 0.041, 0)
+        titleBar.Position = UDim2.new(0, 0, 0, 0)
         titleBar.Size = UDim2.new(0, 225, 0, 15)
         
         local titleFiller = Instance.new("Frame")
@@ -575,7 +669,7 @@ function Library:GetTabMethods()
         contentHolder.Name = "ContentHolder"
         contentHolder.Parent = sectionFrame
         contentHolder.BackgroundTransparency = 1
-        contentHolder.Position = UDim2.new(0.015, 0, 0.107, 0)
+        contentHolder.Position = UDim2.new(0.015, 0, 0.067, 0)  -- Adjusted position
         contentHolder.Size = UDim2.new(0, 216, 0, 383)
         
         local contentLayout = Instance.new("UIListLayout")
@@ -654,8 +748,11 @@ function Library:GetSectionMethods()
             
             colorpickerButton.MouseButton1Click:Connect(function()
                 self.library.colorPickerFrame.Visible = not self.library.colorPickerFrame.Visible
-                if colorpicker.callback then
-                    colorpicker.callback(colorpickerButton.BackgroundColor3)
+                self.library.currentColorCallback = function(color)
+                    colorpickerButton.BackgroundColor3 = color
+                    if colorpicker.callback then
+                        colorpicker.callback(color)
+                    end
                 end
             end)
         end
@@ -858,9 +955,18 @@ function Library:GetSectionMethods()
         dropdownHolder.Position = UDim2.new(0, 0, 1.35, 0)
         dropdownHolder.Size = UDim2.new(0, 215, 0, #options * 17)
         dropdownHolder.Visible = false
-        dropdownHolder.ZIndex = 10
+        dropdownHolder.ZIndex = 1000  -- Very high z-index to prevent interaction with elements behind
         CreateCorner(dropdownHolder, 2)
         CreateStroke(dropdownHolder, Theme.ToggleStroke, 1)
+        
+        -- Click blocker to prevent interaction with elements behind
+        local clickBlocker = Instance.new("Frame")
+        clickBlocker.Name = "ClickBlocker"
+        clickBlocker.Parent = dropdownHolder
+        clickBlocker.BackgroundTransparency = 1
+        clickBlocker.Position = UDim2.new(-5, 0, -5, 0)
+        clickBlocker.Size = UDim2.new(10, 0, 10, 0)
+        clickBlocker.ZIndex = 999
         
         local optionLayout = Instance.new("UIListLayout")
         optionLayout.Parent = dropdownHolder
@@ -880,6 +986,7 @@ function Library:GetSectionMethods()
             optionButton.TextSize = 14
             optionButton.TextXAlignment = Enum.TextXAlignment.Left
             optionButton.LayoutOrder = i
+            optionButton.ZIndex = 1001
             
             local function updateOptionAppearance()
                 if multiSelect then
@@ -938,6 +1045,7 @@ function Library:GetSectionMethods()
                     
                     dropdownHolder.Visible = false
                     isOpen = false
+                    CreateTween(arrow, {Rotation = 0}, 0.2):Play()
                 end
                 
                 -- Update all option appearances with smooth transitions
@@ -1080,6 +1188,12 @@ function Library:GetSectionMethods()
                     keybindBox.Text = keyName
                     listening = false
                     CreateTween(keybindBox.UIStroke, {Color = Theme.ToggleStroke}, 0.2):Play()
+                    
+                    -- If this is the menu keybind, update the library's keybind
+                    if name == "Menu Keybind" then
+                        self.library:SetKeybind(input.KeyCode)
+                    end
+                    
                     callback(input.KeyCode)
                 end
             end
@@ -1089,6 +1203,9 @@ function Library:GetSectionMethods()
             SetKey = function(keyCode)
                 currentKey = keyCode.Name
                 keybindBox.Text = currentKey
+                if name == "Menu Keybind" then
+                    self.library:SetKeybind(keyCode)
+                end
             end,
             GetKey = function()
                 return Enum.KeyCode[currentKey]
@@ -1130,6 +1247,11 @@ function Library:GetSectionMethods()
         
         colorButton.MouseButton1Click:Connect(function()
             self.library.colorPickerFrame.Visible = not self.library.colorPickerFrame.Visible
+            self.library.currentColorCallback = function(color)
+                currentColor = color
+                colorButton.BackgroundColor3 = color
+                callback(color)
+            end
         end)
         
         return {
@@ -1154,7 +1276,7 @@ function Library:GetSectionMethods()
         labelFrame.Text = text
         labelFrame.TextColor3 = Theme.DisabledText
         labelFrame.TextSize = 15
-        labelFrame.TextXAlignment = Enum.TextXAlignment.Center  -- Fixed: Now centered
+        labelFrame.TextXAlignment = Enum.TextXAlignment.Center
         
         return {
             SetText = function(newText)
@@ -1181,30 +1303,21 @@ end
 function Library:SwitchTab(tabIndex)
     if tabIndex == self.currentTab then return end
     
-    -- Hide current tab with animation
+    -- Hide current tab
     if self.tabs[self.currentTab] then
         local currentTab = self.tabs[self.currentTab]
-        CreateTween(currentTab.frame, {BackgroundTransparency = 1}, 0.2):Play()
-        CreateTween(currentTab.selectedLine, {BackgroundTransparency = 1}, 0.2):Play()
-        CreateTween(currentTab.lineGlow, {BackgroundTransparency = 1}, 0.2):Play()
-        CreateTween(currentTab.button, {TextColor3 = Theme.SubText}, 0.2):Play()
-        
-        wait(0.2)
         currentTab.frame.Visible = false
         currentTab.selectedLine.Visible = false
         currentTab.lineGlow.Visible = false
+        CreateTween(currentTab.button, {TextColor3 = Theme.SubText}, 0.2):Play()
     end
     
-    -- Show new tab with animation
+    -- Show new tab
     local newTab = self.tabs[tabIndex]
     if newTab then
         newTab.frame.Visible = true
         newTab.selectedLine.Visible = true
         newTab.lineGlow.Visible = true
-        
-        CreateTween(newTab.frame, {BackgroundTransparency = 0}, 0.2):Play()
-        CreateTween(newTab.selectedLine, {BackgroundTransparency = 0}, 0.2):Play()
-        CreateTween(newTab.lineGlow, {BackgroundTransparency = 0.9}, 0.2):Play()
         CreateTween(newTab.button, {TextColor3 = Theme.Accent}, 0.2):Play()
         
         self.currentTab = tabIndex
