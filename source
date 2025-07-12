@@ -62,6 +62,7 @@ function Library.new(title, gameName, userStatus)
     self.isVisible = false
     self.keybind = Enum.KeyCode.Insert
     self.colorPickerFrame = nil
+    self.colorPickerTitle = nil
     self.currentColorCallback = nil
     self.dragStart = nil
     self.startPos = nil
@@ -255,12 +256,35 @@ function Library:CreateColorPickerFrame()
     CreateCorner(self.colorPickerFrame, 3)
     CreateStroke(self.colorPickerFrame, Theme.Divider, 1)
     
-    -- Make colorpicker draggable
+    -- Colorpicker title
+    self.colorPickerTitle = Instance.new("TextLabel")
+    self.colorPickerTitle.Name = "ColorpickerTitle"
+    self.colorPickerTitle.Parent = self.colorPickerFrame
+    self.colorPickerTitle.BackgroundTransparency = 1
+    self.colorPickerTitle.Position = UDim2.new(0.031, 0, 0.013, 0)
+    self.colorPickerTitle.Size = UDim2.new(0, 200, 0, 20)
+    self.colorPickerTitle.Font = Enum.Font.SourceSansSemibold
+    self.colorPickerTitle.Text = "Color"
+    self.colorPickerTitle.TextColor3 = Theme.Accent
+    self.colorPickerTitle.TextSize = 14
+    self.colorPickerTitle.TextXAlignment = Enum.TextXAlignment.Left
+    self.colorPickerTitle.ZIndex = 101
+    
+    -- Make colorpicker draggable (only from title bar area)
     local cpDragToggle = nil
     local cpDragStart = nil
     local cpStartPos = nil
     
-    self.colorPickerFrame.InputBegan:Connect(function(input)
+    -- Create draggable area (title bar)
+    local titleDragArea = Instance.new("Frame")
+    titleDragArea.Name = "TitleDragArea"
+    titleDragArea.Parent = self.colorPickerFrame
+    titleDragArea.BackgroundTransparency = 1
+    titleDragArea.Position = UDim2.new(0, 0, 0, 0)
+    titleDragArea.Size = UDim2.new(1, 0, 0, 25)
+    titleDragArea.ZIndex = 101
+    
+    titleDragArea.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             cpDragToggle = true
             cpDragStart = input.Position
@@ -287,7 +311,7 @@ function Library:CreateColorPickerFrame()
     colorpicker.Parent = self.colorPickerFrame
     colorpicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     colorpicker.BorderSizePixel = 0
-    colorpicker.Position = UDim2.new(0.034, 0, 0.059, 0)
+    colorpicker.Position = UDim2.new(0.034, 0, 0.111, 0)
     colorpicker.Size = UDim2.new(0, 150, 0, 150)
     colorpicker.ZIndex = 101
     CreateCorner(colorpicker, 3)
@@ -313,7 +337,7 @@ function Library:CreateColorPickerFrame()
     CreateCorner(saturationOverlay, 3)
     
     -- Colorpicker head (draggable)
-    local colorpickerHead = Instance.new("Frame")
+    local colorpickerHead = Instance.new("TextButton")
     colorpickerHead.Name = "ColorpickerHead"
     colorpickerHead.Parent = colorpicker
     colorpickerHead.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -321,15 +345,14 @@ function Library:CreateColorPickerFrame()
     colorpickerHead.Position = UDim2.new(0.46, 0, 0.387, 0)
     colorpickerHead.Size = UDim2.new(0, 12, 0, 12)
     colorpickerHead.ZIndex = 103
+    colorpickerHead.Text = ""
     CreateCorner(colorpickerHead, 12)
     
     -- Make colorpicker head draggable within bounds
     local headDragging = false
     
-    colorpickerHead.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            headDragging = true
-        end
+    colorpickerHead.MouseButton1Down:Connect(function()
+        headDragging = true
     end)
     
     UserInputService.InputChanged:Connect(function(input)
@@ -364,7 +387,7 @@ function Library:CreateColorPickerFrame()
     list.Name = "List"
     list.Parent = self.colorPickerFrame
     list.BackgroundTransparency = 1
-    list.Position = UDim2.new(0.536, 0, 0.057, 0)
+    list.Position = UDim2.new(0.536, 0, 0.111, 0)
     list.Size = UDim2.new(0, 136, 0, 85)
     list.ZIndex = 101
     
@@ -373,16 +396,18 @@ function Library:CreateColorPickerFrame()
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
     listLayout.Padding = UDim.new(0, 7)
     
-    -- Rainbow toggle
+    -- Rainbow toggle (off by default)
     local rainbowToggle = Instance.new("TextButton")
     rainbowToggle.Name = "RainbowToggle"
     rainbowToggle.Parent = list
-    rainbowToggle.BackgroundColor3 = Theme.Accent
+    rainbowToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    rainbowToggle.BackgroundTransparency = 1
     rainbowToggle.BorderSizePixel = 0
     rainbowToggle.Size = UDim2.new(0, 18, 0, 18)
     rainbowToggle.Text = ""
     rainbowToggle.ZIndex = 104
     CreateCorner(rainbowToggle, 3)
+    CreateStroke(rainbowToggle, Theme.ToggleStroke, 1)
     
     local rainbowCheck = Instance.new("ImageLabel")
     rainbowCheck.Name = "Checkmark"
@@ -393,6 +418,7 @@ function Library:CreateColorPickerFrame()
     rainbowCheck.Image = "http://www.roblox.com/asset/?id=6031094667"
     rainbowCheck.ImageColor3 = Color3.fromRGB(0, 0, 0)
     rainbowCheck.ZIndex = 105
+    rainbowCheck.Visible = false
     
     local rainbowTitle = Instance.new("TextLabel")
     rainbowTitle.Name = "Title"
@@ -402,29 +428,51 @@ function Library:CreateColorPickerFrame()
     rainbowTitle.Size = UDim2.new(0, 122, 0, 20)
     rainbowTitle.Font = Enum.Font.SourceSansSemibold
     rainbowTitle.Text = "Rainbow"
-    rainbowTitle.TextColor3 = Theme.Text
+    rainbowTitle.TextColor3 = Theme.SubText
     rainbowTitle.TextSize = 15
     rainbowTitle.TextXAlignment = Enum.TextXAlignment.Left
     rainbowTitle.ZIndex = 104
     
-    local rainbowEnabled = true
+    local rainbowEnabled = false
+    local rainbowConnection = nil
+    
     rainbowToggle.MouseButton1Click:Connect(function()
         rainbowEnabled = not rainbowEnabled
         rainbowToggle.BackgroundColor3 = rainbowEnabled and Theme.Accent or Color3.fromRGB(255, 255, 255)
         rainbowToggle.BackgroundTransparency = rainbowEnabled and 0 or 1
+        rainbowToggle.UIStroke.Color = rainbowEnabled and Theme.Accent or Theme.ToggleStroke
+        rainbowTitle.TextColor3 = rainbowEnabled and Theme.Text or Theme.SubText
         rainbowCheck.Visible = rainbowEnabled
+        
+        -- Rainbow functionality
+        if rainbowEnabled then
+            rainbowConnection = RunService.Heartbeat:Connect(function()
+                if self.currentColorCallback and rainbowEnabled then
+                    local hue = (tick() * 0.5) % 1
+                    local color = Color3.fromHSV(hue, 1, 1)
+                    self.currentColorCallback(color)
+                end
+            end)
+        else
+            if rainbowConnection then
+                rainbowConnection:Disconnect()
+                rainbowConnection = nil
+            end
+        end
     end)
     
-    -- Pulse toggle
+    -- Pulse toggle (off by default)
     local pulseToggle = Instance.new("TextButton")
     pulseToggle.Name = "PulseToggle"
     pulseToggle.Parent = list
-    pulseToggle.BackgroundColor3 = Theme.Accent
+    pulseToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    pulseToggle.BackgroundTransparency = 1
     pulseToggle.BorderSizePixel = 0
     pulseToggle.Size = UDim2.new(0, 18, 0, 18)
     pulseToggle.Text = ""
     pulseToggle.ZIndex = 104
     CreateCorner(pulseToggle, 3)
+    CreateStroke(pulseToggle, Theme.ToggleStroke, 1)
     
     local pulseCheck = Instance.new("ImageLabel")
     pulseCheck.Name = "Checkmark"
@@ -435,6 +483,7 @@ function Library:CreateColorPickerFrame()
     pulseCheck.Image = "http://www.roblox.com/asset/?id=6031094667"
     pulseCheck.ImageColor3 = Color3.fromRGB(0, 0, 0)
     pulseCheck.ZIndex = 105
+    pulseCheck.Visible = false
     
     local pulseTitle = Instance.new("TextLabel")
     pulseTitle.Name = "Title"
@@ -444,17 +493,39 @@ function Library:CreateColorPickerFrame()
     pulseTitle.Size = UDim2.new(0, 122, 0, 20)
     pulseTitle.Font = Enum.Font.SourceSansSemibold
     pulseTitle.Text = "Pulse"
-    pulseTitle.TextColor3 = Theme.Text
+    pulseTitle.TextColor3 = Theme.SubText
     pulseTitle.TextSize = 15
     pulseTitle.TextXAlignment = Enum.TextXAlignment.Left
     pulseTitle.ZIndex = 104
     
-    local pulseEnabled = true
+    local pulseEnabled = false
+    local pulseConnection = nil
+    
     pulseToggle.MouseButton1Click:Connect(function()
         pulseEnabled = not pulseEnabled
         pulseToggle.BackgroundColor3 = pulseEnabled and Theme.Accent or Color3.fromRGB(255, 255, 255)
         pulseToggle.BackgroundTransparency = pulseEnabled and 0 or 1
+        pulseToggle.UIStroke.Color = pulseEnabled and Theme.Accent or Theme.ToggleStroke
+        pulseTitle.TextColor3 = pulseEnabled and Theme.Text or Theme.SubText
         pulseCheck.Visible = pulseEnabled
+        
+        -- Pulse functionality
+        if pulseEnabled then
+            pulseConnection = RunService.Heartbeat:Connect(function()
+                if self.currentColorCallback and pulseEnabled then
+                    local brightness = (math.sin(tick() * 3) + 1) / 2  -- Oscillate between 0 and 1
+                    local currentColor = self.currentColorCallback and self.currentColorCallback.currentColor or Color3.fromRGB(0, 251, 255)
+                    local h, s, v = Color3.toHSV(currentColor)
+                    local color = Color3.fromHSV(h, s, brightness)
+                    self.currentColorCallback(color)
+                end
+            end)
+        else
+            if pulseConnection then
+                pulseConnection:Disconnect()
+                pulseConnection = nil
+            end
+        end
     end)
     
     -- Speed slider
@@ -709,7 +780,7 @@ function Library:GetSectionMethods()
         toggleFrame.Size = UDim2.new(0, 18, 0, 18)
         toggleFrame.Text = ""
         CreateCorner(toggleFrame, 3)
-        CreateStroke(toggleFrame, default and Theme.Accent or Theme.ToggleStroke, 1)
+        CreateStroke(toggleFrame, default and Theme.Accent or Theme.ToggleStroke, 1)  -- Always visible stroke
         
         local checkmark = Instance.new("ImageLabel")
         checkmark.Name = "Checkmark"
@@ -745,9 +816,12 @@ function Library:GetSectionMethods()
             colorpickerButton.Size = UDim2.new(0, 32, 0, 13)
             colorpickerButton.Text = ""
             CreateCorner(colorpickerButton, 3)
+            CreateStroke(colorpickerButton, Theme.ToggleStroke, 1)  -- Always visible stroke
             
             colorpickerButton.MouseButton1Click:Connect(function()
                 self.library.colorPickerFrame.Visible = not self.library.colorPickerFrame.Visible
+                -- Set the title to match the toggle name
+                self.library.colorPickerTitle.Text = name .. " Color"
                 self.library.currentColorCallback = function(color)
                     colorpickerButton.BackgroundColor3 = color
                     if colorpicker.callback then
@@ -768,7 +842,7 @@ function Library:GetSectionMethods()
             }, 0.2)
             
             local strokeTween = CreateTween(toggleFrame.UIStroke, {
-                Color = state and Theme.Accent or Theme.ToggleStroke
+                Color = state and Theme.Accent or Theme.ToggleStroke  -- Color changes but stroke stays visible
             }, 0.2)
             
             local textTween = CreateTween(titleLabel, {
@@ -1242,11 +1316,14 @@ function Library:GetSectionMethods()
         colorButton.Size = UDim2.new(0, 32, 0, 13)
         colorButton.Text = ""
         CreateCorner(colorButton, 3)
+        CreateStroke(colorButton, Theme.ToggleStroke, 1)  -- Always visible stroke
         
         local currentColor = default
         
         colorButton.MouseButton1Click:Connect(function()
             self.library.colorPickerFrame.Visible = not self.library.colorPickerFrame.Visible
+            -- Set the title to match the colorpicker name
+            self.library.colorPickerTitle.Text = name
             self.library.currentColorCallback = function(color)
                 currentColor = color
                 colorButton.BackgroundColor3 = color
