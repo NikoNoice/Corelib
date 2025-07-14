@@ -1,6 +1,6 @@
--- O Bee City UI Library - Overhauled Version
--- Version: 2.0
--- Fixed alignment, consistency, and structure issues
+-- O Bee City UI Library - Overhauled Version (Fixed)
+-- Version: 2.0.1
+-- Fixed alignment, consistency, structure issues, and string concatenation bug
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -52,6 +52,21 @@ local function CreateStroke(parent, color, thickness)
     return stroke
 end
 
+-- Utility function to safely convert values to strings
+local function SafeString(value)
+    if type(value) == "string" then
+        return value
+    elseif type(value) == "number" then
+        return tostring(value)
+    elseif type(value) == "boolean" then
+        return tostring(value)
+    elseif value == nil then
+        return "nil"
+    else
+        return tostring(value)
+    end
+end
+
 -- Layout Constants
 local LAYOUT = {
     WINDOW_SIZE = Vector2.new(470, 581),
@@ -79,9 +94,9 @@ local LAYOUT = {
 function Library.new(title, gameName, userStatus)
     local self = setmetatable({}, Library)
     
-    self.title = title or "o bee city"
-    self.gameName = gameName or "Game Name"
-    self.userStatus = userStatus or "Admin"
+    self.title = SafeString(title or "o bee city")
+    self.gameName = SafeString(gameName or "Game Name")
+    self.userStatus = SafeString(userStatus or "Admin")
     self.tabs = {}
     self.currentTab = 1
     self.isVisible = false
@@ -281,9 +296,10 @@ function Library:SetupDragging()
 end
 
 function Library:CreateTab(name)
+    local safeName = SafeString(name or "Tab")
     local tabIndex = #self.tabs + 1
     local tab = {
-        name = name,
+        name = safeName,
         index = tabIndex,
         sections = {},
         frame = nil,
@@ -300,7 +316,7 @@ function Library:CreateTab(name)
     tabButton.BackgroundTransparency = 1
     tabButton.Size = UDim2.new(0, 50, 0, 32)
     tabButton.Font = Enum.Font.SourceSansSemibold
-    tabButton.Text = name
+    tabButton.Text = safeName
     tabButton.TextSize = 14
     tabButton.LayoutOrder = tabIndex
     
@@ -401,8 +417,9 @@ function Library:GetTabMethods()
     local methods = {}
     
     function methods:CreateSection(name, side)
+        local safeName = SafeString(name or "Section")
         local section = {
-            name = name,
+            name = safeName,
             elements = {},
             frame = nil,
             elementsCount = 0
@@ -424,7 +441,7 @@ function Library:GetTabMethods()
         
         -- Create section frame
         local sectionFrame = Instance.new("Frame")
-        sectionFrame.Name = "Section_" .. name
+        sectionFrame.Name = "Section_" .. safeName
         sectionFrame.Parent = parentColumn
         sectionFrame.BackgroundTransparency = 1
         sectionFrame.Size = UDim2.new(1, 0, 0, 50)
@@ -465,7 +482,7 @@ function Library:GetTabMethods()
         titleLabel.Position = UDim2.new(0, LAYOUT.MARGINS.ELEMENT_SIDE - 2, -0.15, 0)
         titleLabel.Size = UDim2.new(1, -(LAYOUT.MARGINS.ELEMENT_SIDE - 2) * 2, 0, 18)
         titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = name
+        titleLabel.Text = safeName
         titleLabel.TextColor3 = Theme.Accent
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -517,11 +534,12 @@ function Library:GetSectionMethods()
     local methods = {}
     
     function methods:CreateToggle(name, default, callback)
+        local safeName = SafeString(name or "Toggle")
         default = default or false
         callback = callback or function() end
         
         local toggleFrame = Instance.new("TextButton")
-        toggleFrame.Name = "Toggle_" .. name
+        toggleFrame.Name = "Toggle_" .. safeName
         toggleFrame.Parent = self.section.contentHolder
         toggleFrame.BackgroundColor3 = default and Theme.Accent or Color3.fromRGB(255, 255, 255)
         toggleFrame.BackgroundTransparency = default and 0 or 1
@@ -549,7 +567,7 @@ function Library:GetSectionMethods()
         titleLabel.Position = UDim2.new(1.461, 0, -0.056, 0)
         titleLabel.Size = UDim2.new(0, 150, 0, 20)
         titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = name
+        titleLabel.Text = safeName
         titleLabel.TextColor3 = default and Theme.Text or Theme.SubText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -620,13 +638,14 @@ function Library:GetSectionMethods()
     end
     
     function methods:CreateSlider(name, min, max, default, callback)
+        local safeName = SafeString(name or "Slider")
         min = min or 0
         max = max or 1
         default = default or min
         callback = callback or function() end
         
         local sliderFrame = Instance.new("Frame")
-        sliderFrame.Name = "Slider_" .. name
+        sliderFrame.Name = "Slider_" .. safeName
         sliderFrame.Parent = self.section.contentHolder
         sliderFrame.BackgroundTransparency = 1
         sliderFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.SLIDER)
@@ -637,7 +656,7 @@ function Library:GetSectionMethods()
         titleLabel.BackgroundTransparency = 1
         titleLabel.Size = UDim2.new(0, 150, 0, 19)
         titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = name
+        titleLabel.Text = safeName
         titleLabel.TextColor3 = Theme.SubText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -649,8 +668,8 @@ function Library:GetSectionMethods()
         valueBox.Position = UDim2.new(1, -50, 0, 0)
         valueBox.Size = UDim2.new(0, 50, 0, 19)
         valueBox.Font = Enum.Font.SourceSansSemibold
-        valueBox.PlaceholderText = tostring(default)
-        valueBox.Text = tostring(default)
+        valueBox.PlaceholderText = SafeString(default)
+        valueBox.Text = SafeString(default)
         valueBox.TextColor3 = Theme.DisabledText
         valueBox.TextSize = 16
         valueBox.TextXAlignment = Enum.TextXAlignment.Right
@@ -745,15 +764,16 @@ function Library:GetSectionMethods()
     end
     
     function methods:CreateButton(name, callback)
+        local safeName = SafeString(name or "Button")
         callback = callback or function() end
         
         local buttonFrame = Instance.new("TextButton")
-        buttonFrame.Name = "Button_" .. name
+        buttonFrame.Name = "Button_" .. safeName
         buttonFrame.Parent = self.section.contentHolder
         buttonFrame.BackgroundTransparency = 1
         buttonFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.BUTTON)
         buttonFrame.Font = Enum.Font.SourceSansSemibold
-        buttonFrame.Text = name
+        buttonFrame.Text = safeName
         buttonFrame.TextColor3 = Theme.Text
         buttonFrame.TextSize = 15
         buttonFrame.LayoutOrder = self.section.elementsCount + 1
@@ -788,13 +808,15 @@ function Library:GetSectionMethods()
     end
     
     function methods:CreateLabel(text)
+        local safeText = SafeString(text or "Label")
+        
         local labelFrame = Instance.new("TextLabel")
         labelFrame.Name = "Label"
         labelFrame.Parent = self.section.contentHolder
         labelFrame.BackgroundTransparency = 1
         labelFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.LABEL)
         labelFrame.Font = Enum.Font.SourceSansSemibold
-        labelFrame.Text = text
+        labelFrame.Text = safeText
         labelFrame.TextColor3 = Theme.DisabledText
         labelFrame.TextSize = 15
         labelFrame.TextXAlignment = Enum.TextXAlignment.Center
@@ -808,18 +830,19 @@ function Library:GetSectionMethods()
         
         return {
             SetText = function(newText)
-                labelFrame.Text = newText
+                labelFrame.Text = SafeString(newText)
             end
         }
     end
     
     function methods:CreateDropdown(name, options, default, callback)
+        local safeName = SafeString(name or "Dropdown")
         options = options or {}
-        default = default or (options[1] or "None")
+        default = SafeString(default or (options[1] or "None"))
         callback = callback or function() end
         
         local dropdownFrame = Instance.new("Frame")
-        dropdownFrame.Name = "Dropdown_" .. name
+        dropdownFrame.Name = "Dropdown_" .. safeName
         dropdownFrame.Parent = self.section.contentHolder
         dropdownFrame.BackgroundTransparency = 1
         dropdownFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.DROPDOWN)
@@ -830,7 +853,7 @@ function Library:GetSectionMethods()
         titleLabel.BackgroundTransparency = 1
         titleLabel.Size = UDim2.new(1, 0, 0, 19)
         titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = name
+        titleLabel.Text = safeName
         titleLabel.TextColor3 = Theme.SubText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -883,26 +906,28 @@ function Library:GetSectionMethods()
         
         -- Create option buttons
         for i, option in ipairs(options) do
+            local safeOption = SafeString(option)
             local optionButton = Instance.new("TextButton")
-            optionButton.Name = "Option_" .. option
+            optionButton.Name = "Option_" .. safeOption
             optionButton.Parent = dropdownList
             optionButton.BackgroundTransparency = 1
             optionButton.Size = UDim2.new(1, 0, 0, 20)
             optionButton.Font = Enum.Font.SourceSansSemibold
-            optionButton.Text = " " .. option
-            optionButton.TextColor3 = option == selectedValue and Theme.Accent or Theme.DisabledText
+            optionButton.Text = " " .. safeOption
+            optionButton.TextColor3 = safeOption == selectedValue and Theme.Accent or Theme.DisabledText
             optionButton.TextSize = 14
             optionButton.TextXAlignment = Enum.TextXAlignment.Left
             optionButton.LayoutOrder = i
             
             optionButton.MouseButton1Click:Connect(function()
-                selectedValue = option
-                dropdownButton.Text = " " .. option
+                selectedValue = safeOption
+                dropdownButton.Text = " " .. safeOption
                 
                 -- Update all option colors
                 for _, child in ipairs(dropdownList:GetChildren()) do
                     if child:IsA("TextButton") then
-                        child.TextColor3 = child.Text:sub(2) == option and Theme.Accent or Theme.DisabledText
+                        local optionText = child.Text:sub(2)
+                        child.TextColor3 = optionText == safeOption and Theme.Accent or Theme.DisabledText
                     end
                 end
                 
@@ -927,9 +952,10 @@ function Library:GetSectionMethods()
         
         return {
             SetValue = function(value)
-                selectedValue = value
-                dropdownButton.Text = " " .. value
-                callback(value)
+                local safeValue = SafeString(value)
+                selectedValue = safeValue
+                dropdownButton.Text = " " .. safeValue
+                callback(safeValue)
             end,
             GetValue = function()
                 return selectedValue
@@ -938,11 +964,12 @@ function Library:GetSectionMethods()
     end
     
     function methods:CreateKeybind(name, default, callback)
-        default = default or "None"
+        local safeName = SafeString(name or "Keybind")
+        default = SafeString(default or "None")
         callback = callback or function() end
         
         local keybindFrame = Instance.new("Frame")
-        keybindFrame.Name = "Keybind_" .. name
+        keybindFrame.Name = "Keybind_" .. safeName
         keybindFrame.Parent = self.section.contentHolder
         keybindFrame.BackgroundTransparency = 1
         keybindFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.KEYBIND)
@@ -953,7 +980,7 @@ function Library:GetSectionMethods()
         titleLabel.BackgroundTransparency = 1
         titleLabel.Size = UDim2.new(0, 150, 1, 0)
         titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = name
+        titleLabel.Text = safeName
         titleLabel.TextColor3 = Theme.SubText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -984,7 +1011,7 @@ function Library:GetSectionMethods()
         
         UserInputService.InputBegan:Connect(function(input, gameProcessed)
             if listening and not gameProcessed then
-                local keyName = input.KeyCode.Name
+                local keyName = SafeString(input.KeyCode.Name)
                 if keyName ~= "Unknown" then
                     currentKey = keyName
                     keybindBox.Text = "[" .. keyName .. "]"
@@ -1001,8 +1028,9 @@ function Library:GetSectionMethods()
         
         return {
             SetKey = function(keyCode)
-                currentKey = keyCode.Name
-                keybindBox.Text = "[" .. currentKey .. "]"
+                local keyName = SafeString(keyCode.Name)
+                currentKey = keyName
+                keybindBox.Text = "[" .. keyName .. "]"
             end,
             GetKey = function()
                 return Enum.KeyCode[currentKey]
@@ -1011,11 +1039,12 @@ function Library:GetSectionMethods()
     end
     
     function methods:CreateColorpicker(name, default, callback)
+        local safeName = SafeString(name or "Colorpicker")
         default = default or Color3.fromRGB(0, 251, 255)
         callback = callback or function() end
         
         local colorpickerFrame = Instance.new("Frame")
-        colorpickerFrame.Name = "Colorpicker_" .. name
+        colorpickerFrame.Name = "Colorpicker_" .. safeName
         colorpickerFrame.Parent = self.section.contentHolder
         colorpickerFrame.BackgroundTransparency = 1
         colorpickerFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.COLORPICKER)
@@ -1026,7 +1055,7 @@ function Library:GetSectionMethods()
         titleLabel.BackgroundTransparency = 1
         titleLabel.Size = UDim2.new(0, 150, 1, 0)
         titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = name
+        titleLabel.Text = safeName
         titleLabel.TextColor3 = Theme.SubText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1047,7 +1076,7 @@ function Library:GetSectionMethods()
         
         colorButton.MouseButton1Click:Connect(function()
             -- Simple color picker placeholder - you can expand this
-            print("Color picker clicked for:", name)
+            print("Color picker clicked for:", safeName)
             callback(currentColor)
         end)
         
@@ -1068,11 +1097,12 @@ function Library:GetSectionMethods()
     end
     
     function methods:CreateTextbox(name, placeholder, callback)
-        placeholder = placeholder or "Enter text..."
+        local safeName = SafeString(name or "Textbox")
+        placeholder = SafeString(placeholder or "Enter text...")
         callback = callback or function() end
         
         local textboxFrame = Instance.new("Frame")
-        textboxFrame.Name = "Textbox_" .. name
+        textboxFrame.Name = "Textbox_" .. safeName
         textboxFrame.Parent = self.section.contentHolder
         textboxFrame.BackgroundTransparency = 1
         textboxFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.SLIDER)
@@ -1083,7 +1113,7 @@ function Library:GetSectionMethods()
         titleLabel.BackgroundTransparency = 1
         titleLabel.Size = UDim2.new(1, 0, 0, 19)
         titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = name
+        titleLabel.Text = safeName
         titleLabel.TextColor3 = Theme.SubText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1116,7 +1146,7 @@ function Library:GetSectionMethods()
         
         return {
             SetText = function(text)
-                textBox.Text = text
+                textBox.Text = SafeString(text)
             end,
             GetText = function()
                 return textBox.Text
