@@ -1,6 +1,6 @@
--- O Bee City UI Library - Overhauled Version (Fixed)
--- Version: 2.0.1
--- Fixed alignment, consistency, structure issues, and string concatenation bug
+-- O Bee City UI Library - Overhauled Version (Fixed v2)
+-- Version: 2.1.0
+-- Fixed section structure, title bar positioning, sizing, and naming conventions
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -439,75 +439,78 @@ function Library:GetTabMethods()
         local parentColumn = useLeft and self.tab.leftColumn or self.tab.rightColumn
         local sectionsList = useLeft and self.tab.leftSections or self.tab.rightSections
         
-        -- Create section frame
+        -- Create main section frame (transparent container)
         local sectionFrame = Instance.new("Frame")
         sectionFrame.Name = "Section_" .. safeName
         sectionFrame.Parent = parentColumn
         sectionFrame.BackgroundTransparency = 1
-        sectionFrame.Size = UDim2.new(1, 0, 0, 50)
+        sectionFrame.Size = UDim2.new(1, 0, 0, 70)
         sectionFrame.LayoutOrder = #sectionsList + 1
         
-        -- Section background with stroke
+        -- Create section background (like original Section1)
         local sectionBg = Instance.new("Frame")
         sectionBg.Name = "SectionBackground"
         sectionBg.Parent = sectionFrame
         sectionBg.BackgroundColor3 = Theme.Background
         sectionBg.BorderSizePixel = 0
-        sectionBg.Position = UDim2.new(0, 0, 0, LAYOUT.MARGINS.SECTION_TOP)
-        sectionBg.Size = UDim2.new(1, 0, 1, -LAYOUT.MARGINS.SECTION_TOP)
+        sectionBg.Position = UDim2.new(0, 0, 0, 0)
+        sectionBg.Size = UDim2.new(1, 0, 1, 0)
         CreateCorner(sectionBg, 3)
         CreateStroke(sectionBg, Theme.ToggleStroke, 1)
         
-        -- Section title bar - properly contained within borders
+        -- Create title bar (like original Title)
         local titleBar = Instance.new("Frame")
         titleBar.Name = "TitleBar"
         titleBar.Parent = sectionBg
         titleBar.BackgroundColor3 = Theme.SectionBackground
         titleBar.BorderSizePixel = 0
-        titleBar.Position = UDim2.new(0, 2, 0, 2)
-        titleBar.Size = UDim2.new(1, -4, 0, 13)
+        titleBar.Position = UDim2.new(0, 0, 0, math.floor(70 * 0.0219435729))
+        titleBar.Size = UDim2.new(1, 0, 0, 15)
         
+        -- Title rounding filler (like original Roundingfiller)
         local titleFiller = Instance.new("Frame")
         titleFiller.Name = "TitleFiller"
         titleFiller.Parent = titleBar
         titleFiller.BackgroundColor3 = Theme.SectionBackground
         titleFiller.BorderSizePixel = 0
-        titleFiller.Position = UDim2.new(0, -2, -0.3, 0)
-        titleFiller.Size = UDim2.new(1, 4, 0, 6)
+        titleFiller.Position = UDim2.new(0, 0, -0.667, 0)
+        titleFiller.Size = UDim2.new(1, 0, 0, 10)
         CreateCorner(titleFiller, 3)
         
+        -- Title text (like original TextLabel_2)
         local titleLabel = Instance.new("TextLabel")
+        titleLabel.Name = "TitleLabel"
         titleLabel.Parent = titleBar
         titleLabel.BackgroundTransparency = 1
-        titleLabel.Position = UDim2.new(0, LAYOUT.MARGINS.ELEMENT_SIDE - 2, -0.15, 0)
-        titleLabel.Size = UDim2.new(1, -(LAYOUT.MARGINS.ELEMENT_SIDE - 2) * 2, 0, 18)
+        titleLabel.Position = UDim2.new(0, 6, -0.467, 0)
+        titleLabel.Size = UDim2.new(0, 79, 0, 22)
         titleLabel.Font = Enum.Font.SourceSansSemibold
         titleLabel.Text = safeName
         titleLabel.TextColor3 = Theme.Accent
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
         
-        -- Section content holder - adjusted for new title position
+        -- Section content holder (like original SectionHolder)
         local contentHolder = Instance.new("Frame")
-        contentHolder.Name = "ContentHolder"
-        contentHolder.Parent = sectionFrame
+        contentHolder.Name = "SectionHolder"
+        contentHolder.Parent = sectionBg
         contentHolder.BackgroundTransparency = 1
-        contentHolder.Position = UDim2.new(0, LAYOUT.MARGINS.ELEMENT_SIDE, 0, LAYOUT.MARGINS.SECTION_TOP + 18)
-        contentHolder.Size = UDim2.new(1, -LAYOUT.MARGINS.ELEMENT_SIDE * 2, 1, -(LAYOUT.MARGINS.SECTION_TOP + 28))
+        contentHolder.Position = UDim2.new(0, 3, 0, 25)
+        contentHolder.Size = UDim2.new(1, -6, 1, -35)
         
         local contentLayout = Instance.new("UIListLayout")
         contentLayout.Parent = contentHolder
         contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         contentLayout.Padding = UDim.new(0, LAYOUT.ELEMENT_PADDING)
         
-        -- Auto-scaling functionality - adjusted for new positioning
+        -- Auto-scaling functionality
         local function updateSectionSize()
             local contentSize = contentLayout.AbsoluteContentSize.Y
-            local newHeight = math.max(50, contentSize + LAYOUT.MARGINS.SECTION_TOP + 28)
+            local newHeight = math.max(70, contentSize + 35)
             
             sectionFrame.Size = UDim2.new(1, 0, 0, newHeight)
-            sectionBg.Size = UDim2.new(1, 0, 0, newHeight - LAYOUT.MARGINS.SECTION_TOP)
-            contentHolder.Size = UDim2.new(1, -LAYOUT.MARGINS.ELEMENT_SIDE * 2, 0, contentSize)
+            sectionBg.Size = UDim2.new(1, 0, 0, newHeight)
+            contentHolder.Size = UDim2.new(1, -6, 0, contentSize)
         end
         
         contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSectionSize)
@@ -533,17 +536,20 @@ end
 function Library:GetSectionMethods()
     local methods = {}
     
-    function methods:CreateToggle(name, default, callback)
-        local safeName = SafeString(name or "Toggle")
-        default = default or false
-        callback = callback or function() end
+    function methods:CreateToggle(options)
+        options = options or {}
+        local name = SafeString(options.name or options[1] or "Toggle")
+        local default = options.default or options[2] or false
+        local callback = options.callback or options[3] or function() end
+        local flag = options.flag or name:lower():gsub("%s+", "_")
         
         local toggleFrame = Instance.new("TextButton")
-        toggleFrame.Name = "Toggle_" .. safeName
+        toggleFrame.Name = "ToggleButton"
         toggleFrame.Parent = self.section.contentHolder
         toggleFrame.BackgroundColor3 = default and Theme.Accent or Color3.fromRGB(255, 255, 255)
         toggleFrame.BackgroundTransparency = default and 0 or 1
         toggleFrame.BorderSizePixel = 0
+        toggleFrame.Position = UDim2.new(0, 6, 0, 0)
         toggleFrame.Size = UDim2.new(0, LAYOUT.ELEMENT_HEIGHT.TOGGLE, 0, LAYOUT.ELEMENT_HEIGHT.TOGGLE)
         toggleFrame.Text = ""
         toggleFrame.LayoutOrder = self.section.elementsCount + 1
@@ -551,7 +557,7 @@ function Library:GetSectionMethods()
         CreateStroke(toggleFrame, default and Theme.Accent or Theme.ToggleStroke, 1)
         
         local checkmark = Instance.new("ImageLabel")
-        checkmark.Name = "Checkmark"
+        checkmark.Name = "checkmark"
         checkmark.Parent = toggleFrame
         checkmark.BackgroundTransparency = 1
         checkmark.Position = UDim2.new(0.111, 0, 0.111, 0)
@@ -561,13 +567,13 @@ function Library:GetSectionMethods()
         checkmark.Visible = default
         
         local titleLabel = Instance.new("TextLabel")
-        titleLabel.Name = "Title"
+        titleLabel.Name = "title"
         titleLabel.Parent = toggleFrame
         titleLabel.BackgroundTransparency = 1
         titleLabel.Position = UDim2.new(1.461, 0, -0.056, 0)
-        titleLabel.Size = UDim2.new(0, 150, 0, 20)
+        titleLabel.Size = UDim2.new(0, 188, 0, 20)
         titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = safeName
+        titleLabel.Text = name
         titleLabel.TextColor3 = default and Theme.Text or Theme.SubText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -618,37 +624,20 @@ function Library:GetSectionMethods()
         }
     end
     
-    function methods:CreateDivider()
-        local dividerFrame = Instance.new("Frame")
-        dividerFrame.Name = "Divider"
-        dividerFrame.Parent = self.section.contentHolder
-        dividerFrame.BackgroundColor3 = Theme.Accent
-        dividerFrame.BorderSizePixel = 0
-        dividerFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.DIVIDER)
-        dividerFrame.LayoutOrder = self.section.elementsCount + 1
-        CreateCorner(dividerFrame, 3)
-        
-        self.section.elementsCount = self.section.elementsCount + 1
-        
-        if self.section.updateSize then
-            self.section.updateSize()
-        end
-        
-        return dividerFrame
-    end
-    
-    function methods:CreateSlider(name, min, max, default, callback)
-        local safeName = SafeString(name or "Slider")
-        min = min or 0
-        max = max or 1
-        default = default or min
-        callback = callback or function() end
+    function methods:CreateSlider(options)
+        options = options or {}
+        local name = SafeString(options.name or options[1] or "Slider")
+        local min = options.min or options[2] or 0
+        local max = options.max or options[3] or 1
+        local default = options.default or options[4] or min
+        local callback = options.callback or options[5] or function() end
+        local flag = options.flag or name:lower():gsub("%s+", "_")
         
         local sliderFrame = Instance.new("Frame")
-        sliderFrame.Name = "Slider_" .. safeName
+        sliderFrame.Name = "Slider"
         sliderFrame.Parent = self.section.contentHolder
         sliderFrame.BackgroundTransparency = 1
-        sliderFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.SLIDER)
+        sliderFrame.Size = UDim2.new(1, -12, 0, LAYOUT.ELEMENT_HEIGHT.SLIDER)
         sliderFrame.LayoutOrder = self.section.elementsCount + 1
         
         local titleLabel = Instance.new("TextLabel")
@@ -656,16 +645,17 @@ function Library:GetSectionMethods()
         titleLabel.BackgroundTransparency = 1
         titleLabel.Size = UDim2.new(0, 150, 0, 19)
         titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = safeName
+        titleLabel.Text = name
         titleLabel.TextColor3 = Theme.SubText
         titleLabel.TextSize = 15
         titleLabel.TextXAlignment = Enum.TextXAlignment.Left
         titleLabel.TextYAlignment = Enum.TextYAlignment.Top
         
         local valueBox = Instance.new("TextBox")
+        valueBox.Name = "SliderValue"
         valueBox.Parent = sliderFrame
         valueBox.BackgroundTransparency = 1
-        valueBox.Position = UDim2.new(1, -50, 0, 0)
+        valueBox.Position = UDim2.new(0.765, 0, 0, 0)
         valueBox.Size = UDim2.new(0, 50, 0, 19)
         valueBox.Font = Enum.Font.SourceSansSemibold
         valueBox.PlaceholderText = SafeString(default)
@@ -676,15 +666,14 @@ function Library:GetSectionMethods()
         
         -- Slider track
         local sliderTrack = Instance.new("Frame")
-        sliderTrack.Name = "Track"
+        sliderTrack.Name = "Slider"
         sliderTrack.Parent = sliderFrame
-        sliderTrack.BackgroundColor3 = Theme.ToggleStroke
-        sliderTrack.BorderSizePixel = 0
+        sliderTrack.BackgroundTransparency = 1
         sliderTrack.Position = UDim2.new(0, 0, 0, 22)
-        sliderTrack.Size = UDim2.new(1, -5, 0, 2)
+        sliderTrack.Size = UDim2.new(0, 214, 0, 2)
         
         local sliderFill = Instance.new("Frame")
-        sliderFill.Name = "Fill"
+        sliderFill.Name = "Filler"
         sliderFill.Parent = sliderTrack
         sliderFill.BackgroundColor3 = Theme.Accent
         sliderFill.BorderSizePixel = 0
@@ -694,11 +683,11 @@ function Library:GetSectionMethods()
         CreateCorner(sliderFill, 2)
         
         local sliderHead = Instance.new("TextButton")
-        sliderHead.Name = "Head"
+        sliderHead.Name = "SliderHead"
         sliderHead.Parent = sliderFill
         sliderHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
         sliderHead.BorderSizePixel = 0
-        sliderHead.Position = UDim2.new(1, -5, -0.75, 0)
+        sliderHead.Position = UDim2.new(0.9, 0, -0.75, 0)
         sliderHead.Size = UDim2.new(0, 10, 0, 10)
         sliderHead.Text = ""
         CreateCorner(sliderHead, 10)
@@ -763,22 +752,32 @@ function Library:GetSectionMethods()
         }
     end
     
-    function methods:CreateButton(name, callback)
-        local safeName = SafeString(name or "Button")
-        callback = callback or function() end
+    function methods:CreateButton(options)
+        options = options or {}
+        local name = SafeString(options.name or options[1] or "Button")
+        local callback = options.callback or options[2] or function() end
+        local side = options.side or "left"
+        local flag = options.flag or name:lower():gsub("%s+", "_")
         
         local buttonFrame = Instance.new("TextButton")
-        buttonFrame.Name = "Button_" .. safeName
+        buttonFrame.Name = "Button"
         buttonFrame.Parent = self.section.contentHolder
         buttonFrame.BackgroundTransparency = 1
-        buttonFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.BUTTON)
+        buttonFrame.Size = UDim2.new(0, 100, 0, LAYOUT.ELEMENT_HEIGHT.BUTTON)
         buttonFrame.Font = Enum.Font.SourceSansSemibold
-        buttonFrame.Text = safeName
+        buttonFrame.Text = name
         buttonFrame.TextColor3 = Theme.Text
         buttonFrame.TextSize = 15
         buttonFrame.LayoutOrder = self.section.elementsCount + 1
         CreateStroke(buttonFrame, Theme.ToggleStroke, 1)
         CreateCorner(buttonFrame, 3)
+        
+        -- Position button based on side
+        if side:lower() == "right" then
+            buttonFrame.Position = UDim2.new(0, 114, 0, 0)
+        else
+            buttonFrame.Position = UDim2.new(0, 0, 0, 0)
+        end
         
         local isAnimating = false
         self.section.elementsCount = self.section.elementsCount + 1
@@ -807,16 +806,17 @@ function Library:GetSectionMethods()
         return buttonFrame
     end
     
-    function methods:CreateLabel(text)
-        local safeText = SafeString(text or "Label")
+    function methods:CreateLabel(options)
+        options = options or {}
+        local text = SafeString(options.text or options[1] or "Label")
         
         local labelFrame = Instance.new("TextLabel")
         labelFrame.Name = "Label"
         labelFrame.Parent = self.section.contentHolder
         labelFrame.BackgroundTransparency = 1
-        labelFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.LABEL)
+        labelFrame.Size = UDim2.new(1, -12, 0, LAYOUT.ELEMENT_HEIGHT.LABEL)
         labelFrame.Font = Enum.Font.SourceSansSemibold
-        labelFrame.Text = safeText
+        labelFrame.Text = text
         labelFrame.TextColor3 = Theme.DisabledText
         labelFrame.TextSize = 15
         labelFrame.TextXAlignment = Enum.TextXAlignment.Center
@@ -835,323 +835,23 @@ function Library:GetSectionMethods()
         }
     end
     
-    function methods:CreateDropdown(name, options, default, callback)
-        local safeName = SafeString(name or "Dropdown")
-        options = options or {}
-        default = SafeString(default or (options[1] or "None"))
-        callback = callback or function() end
+    function methods:CreateDivider()
+        local dividerFrame = Instance.new("Frame")
+        dividerFrame.Name = "Divider"
+        dividerFrame.Parent = self.section.contentHolder
+        dividerFrame.BackgroundColor3 = Theme.Accent
+        dividerFrame.BorderSizePixel = 0
+        dividerFrame.Size = UDim2.new(1, -12, 0, LAYOUT.ELEMENT_HEIGHT.DIVIDER)
+        dividerFrame.LayoutOrder = self.section.elementsCount + 1
+        CreateCorner(dividerFrame, 3)
         
-        local dropdownFrame = Instance.new("Frame")
-        dropdownFrame.Name = "Dropdown_" .. safeName
-        dropdownFrame.Parent = self.section.contentHolder
-        dropdownFrame.BackgroundTransparency = 1
-        dropdownFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.DROPDOWN)
-        dropdownFrame.LayoutOrder = self.section.elementsCount + 1
-        
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Parent = dropdownFrame
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Size = UDim2.new(1, 0, 0, 19)
-        titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = safeName
-        titleLabel.TextColor3 = Theme.SubText
-        titleLabel.TextSize = 15
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.TextYAlignment = Enum.TextYAlignment.Top
-        
-        local dropdownButton = Instance.new("TextButton")
-        dropdownButton.Name = "DropdownButton"
-        dropdownButton.Parent = dropdownFrame
-        dropdownButton.BackgroundTransparency = 1
-        dropdownButton.Position = UDim2.new(0, 0, 0, 22)
-        dropdownButton.Size = UDim2.new(1, -5, 0, 18)
-        dropdownButton.Font = Enum.Font.SourceSansSemibold
-        dropdownButton.Text = " " .. default
-        dropdownButton.TextColor3 = Theme.SubText
-        dropdownButton.TextSize = 15
-        dropdownButton.TextXAlignment = Enum.TextXAlignment.Left
-        CreateStroke(dropdownButton, Theme.ToggleStroke, 1)
-        CreateCorner(dropdownButton, 3)
-        
-        local arrow = Instance.new("TextLabel")
-        arrow.Name = "Arrow"
-        arrow.Parent = dropdownButton
-        arrow.BackgroundTransparency = 1
-        arrow.Position = UDim2.new(1, -20, 0, 0)
-        arrow.Size = UDim2.new(0, 20, 1, 0)
-        arrow.Text = "+"
-        arrow.TextColor3 = Theme.DisabledText
-        arrow.TextSize = 14
-        arrow.Font = Enum.Font.SourceSansBold
-        
-        local selectedValue = default
-        local isOpen = false
         self.section.elementsCount = self.section.elementsCount + 1
-        
-        -- Create dropdown list (will be shown/hidden)
-        local dropdownList = Instance.new("Frame")
-        dropdownList.Name = "DropdownList"
-        dropdownList.Parent = dropdownFrame
-        dropdownList.BackgroundColor3 = Theme.Background
-        dropdownList.Position = UDim2.new(0, 0, 0, 42)
-        dropdownList.Size = UDim2.new(1, -5, 0, math.min(#options * 20, 100))
-        dropdownList.Visible = false
-        dropdownList.ZIndex = 10
-        CreateStroke(dropdownList, Theme.ToggleStroke, 1)
-        CreateCorner(dropdownList, 3)
-        
-        local listLayout = Instance.new("UIListLayout")
-        listLayout.Parent = dropdownList
-        listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        
-        -- Create option buttons
-        for i, option in ipairs(options) do
-            local safeOption = SafeString(option)
-            local optionButton = Instance.new("TextButton")
-            optionButton.Name = "Option_" .. safeOption
-            optionButton.Parent = dropdownList
-            optionButton.BackgroundTransparency = 1
-            optionButton.Size = UDim2.new(1, 0, 0, 20)
-            optionButton.Font = Enum.Font.SourceSansSemibold
-            optionButton.Text = " " .. safeOption
-            optionButton.TextColor3 = safeOption == selectedValue and Theme.Accent or Theme.DisabledText
-            optionButton.TextSize = 14
-            optionButton.TextXAlignment = Enum.TextXAlignment.Left
-            optionButton.LayoutOrder = i
-            
-            optionButton.MouseButton1Click:Connect(function()
-                selectedValue = safeOption
-                dropdownButton.Text = " " .. safeOption
-                
-                -- Update all option colors
-                for _, child in ipairs(dropdownList:GetChildren()) do
-                    if child:IsA("TextButton") then
-                        local optionText = child.Text:sub(2)
-                        child.TextColor3 = optionText == safeOption and Theme.Accent or Theme.DisabledText
-                    end
-                end
-                
-                -- Close dropdown
-                isOpen = false
-                dropdownList.Visible = false
-                arrow.Text = "+"
-                
-                callback(selectedValue)
-            end)
-        end
-        
-        dropdownButton.MouseButton1Click:Connect(function()
-            isOpen = not isOpen
-            dropdownList.Visible = isOpen
-            arrow.Text = isOpen and "-" or "+"
-        end)
         
         if self.section.updateSize then
             self.section.updateSize()
         end
         
-        return {
-            SetValue = function(value)
-                local safeValue = SafeString(value)
-                selectedValue = safeValue
-                dropdownButton.Text = " " .. safeValue
-                callback(safeValue)
-            end,
-            GetValue = function()
-                return selectedValue
-            end
-        }
-    end
-    
-    function methods:CreateKeybind(name, default, callback)
-        local safeName = SafeString(name or "Keybind")
-        default = SafeString(default or "None")
-        callback = callback or function() end
-        
-        local keybindFrame = Instance.new("Frame")
-        keybindFrame.Name = "Keybind_" .. safeName
-        keybindFrame.Parent = self.section.contentHolder
-        keybindFrame.BackgroundTransparency = 1
-        keybindFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.KEYBIND)
-        keybindFrame.LayoutOrder = self.section.elementsCount + 1
-        
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Parent = keybindFrame
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Size = UDim2.new(0, 150, 1, 0)
-        titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = safeName
-        titleLabel.TextColor3 = Theme.SubText
-        titleLabel.TextSize = 15
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        
-        local keybindBox = Instance.new("TextButton")
-        keybindBox.Name = "KeybindBox"
-        keybindBox.Parent = keybindFrame
-        keybindBox.BackgroundTransparency = 1
-        keybindBox.Position = UDim2.new(1, -50, 0, 0)
-        keybindBox.Size = UDim2.new(0, 50, 1, 0)
-        keybindBox.Font = Enum.Font.SourceSansSemibold
-        keybindBox.Text = "[" .. default .. "]"
-        keybindBox.TextColor3 = Theme.Text
-        keybindBox.TextSize = 15
-        CreateStroke(keybindBox, Theme.ToggleStroke, 1)
-        CreateCorner(keybindBox, 3)
-        
-        local currentKey = default
-        local listening = false
-        self.section.elementsCount = self.section.elementsCount + 1
-        
-        keybindBox.MouseButton1Click:Connect(function()
-            if listening then return end
-            listening = true
-            keybindBox.Text = "[...]"
-            CreateTween(keybindBox.UIStroke, {Color = Theme.Accent}, 0.2):Play()
-        end)
-        
-        UserInputService.InputBegan:Connect(function(input, gameProcessed)
-            if listening and not gameProcessed then
-                local keyName = SafeString(input.KeyCode.Name)
-                if keyName ~= "Unknown" then
-                    currentKey = keyName
-                    keybindBox.Text = "[" .. keyName .. "]"
-                    listening = false
-                    CreateTween(keybindBox.UIStroke, {Color = Theme.ToggleStroke}, 0.2):Play()
-                    callback(input.KeyCode)
-                end
-            end
-        end)
-        
-        if self.section.updateSize then
-            self.section.updateSize()
-        end
-        
-        return {
-            SetKey = function(keyCode)
-                local keyName = SafeString(keyCode.Name)
-                currentKey = keyName
-                keybindBox.Text = "[" .. keyName .. "]"
-            end,
-            GetKey = function()
-                return Enum.KeyCode[currentKey]
-            end
-        }
-    end
-    
-    function methods:CreateColorpicker(name, default, callback)
-        local safeName = SafeString(name or "Colorpicker")
-        default = default or Color3.fromRGB(0, 251, 255)
-        callback = callback or function() end
-        
-        local colorpickerFrame = Instance.new("Frame")
-        colorpickerFrame.Name = "Colorpicker_" .. safeName
-        colorpickerFrame.Parent = self.section.contentHolder
-        colorpickerFrame.BackgroundTransparency = 1
-        colorpickerFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.COLORPICKER)
-        colorpickerFrame.LayoutOrder = self.section.elementsCount + 1
-        
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Parent = colorpickerFrame
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Size = UDim2.new(0, 150, 1, 0)
-        titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = safeName
-        titleLabel.TextColor3 = Theme.SubText
-        titleLabel.TextSize = 15
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        
-        local colorButton = Instance.new("TextButton")
-        colorButton.Name = "ColorButton"
-        colorButton.Parent = colorpickerFrame
-        colorButton.BackgroundColor3 = default
-        colorButton.BorderSizePixel = 0
-        colorButton.Position = UDim2.new(1, -32, 0, 3)
-        colorButton.Size = UDim2.new(0, 29, 0, 14)
-        colorButton.Text = ""
-        CreateCorner(colorButton, 3)
-        CreateStroke(colorButton, Theme.ToggleStroke, 1)
-        
-        local currentColor = default
-        self.section.elementsCount = self.section.elementsCount + 1
-        
-        colorButton.MouseButton1Click:Connect(function()
-            -- Simple color picker placeholder - you can expand this
-            print("Color picker clicked for:", safeName)
-            callback(currentColor)
-        end)
-        
-        if self.section.updateSize then
-            self.section.updateSize()
-        end
-        
-        return {
-            SetColor = function(color)
-                currentColor = color
-                colorButton.BackgroundColor3 = color
-                callback(color)
-            end,
-            GetColor = function()
-                return currentColor
-            end
-        }
-    end
-    
-    function methods:CreateTextbox(name, placeholder, callback)
-        local safeName = SafeString(name or "Textbox")
-        placeholder = SafeString(placeholder or "Enter text...")
-        callback = callback or function() end
-        
-        local textboxFrame = Instance.new("Frame")
-        textboxFrame.Name = "Textbox_" .. safeName
-        textboxFrame.Parent = self.section.contentHolder
-        textboxFrame.BackgroundTransparency = 1
-        textboxFrame.Size = UDim2.new(1, 0, 0, LAYOUT.ELEMENT_HEIGHT.SLIDER)
-        textboxFrame.LayoutOrder = self.section.elementsCount + 1
-        
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Parent = textboxFrame
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Size = UDim2.new(1, 0, 0, 19)
-        titleLabel.Font = Enum.Font.SourceSansSemibold
-        titleLabel.Text = safeName
-        titleLabel.TextColor3 = Theme.SubText
-        titleLabel.TextSize = 15
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        titleLabel.TextYAlignment = Enum.TextYAlignment.Top
-        
-        local textBox = Instance.new("TextBox")
-        textBox.Name = "TextBox"
-        textBox.Parent = textboxFrame
-        textBox.BackgroundTransparency = 1
-        textBox.Position = UDim2.new(0, 0, 0, 22)
-        textBox.Size = UDim2.new(1, -5, 0, 18)
-        textBox.Font = Enum.Font.SourceSansSemibold
-        textBox.PlaceholderText = placeholder
-        textBox.Text = ""
-        textBox.TextColor3 = Theme.Text
-        textBox.TextSize = 15
-        textBox.TextXAlignment = Enum.TextXAlignment.Left
-        CreateStroke(textBox, Theme.ToggleStroke, 1)
-        CreateCorner(textBox, 3)
-        
-        self.section.elementsCount = self.section.elementsCount + 1
-        
-        textBox.FocusLost:Connect(function()
-            callback(textBox.Text)
-        end)
-        
-        if self.section.updateSize then
-            self.section.updateSize()
-        end
-        
-        return {
-            SetText = function(text)
-                textBox.Text = SafeString(text)
-            end,
-            GetText = function()
-                return textBox.Text
-            end
-        }
+        return dividerFrame
     end
     
     return methods
