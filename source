@@ -47,6 +47,7 @@ local function CreateStroke(parent, color, thickness)
     local stroke = Instance.new("UIStroke")
     stroke.Color = color or Theme.Divider
     stroke.Thickness = thickness or 1
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent = parent
     return stroke
 end
@@ -179,14 +180,17 @@ function Library:CreateTopbar()
     self.TabsHolder.Name = "TabsHolder"
     self.TabsHolder.Parent = topbar
     self.TabsHolder.BackgroundTransparency = 1
-    self.TabsHolder.Position = UDim2.new(0.506, 0, -0.176, 0)
-    self.TabsHolder.Size = UDim2.new(0, 232, 0, 36)
+    self.TabsHolder.Position = UDim2.new(0.25, 0, -0.176, 0)
+    self.TabsHolder.Size = UDim2.new(0, 350, 0, 36)
     
     local tabLayout = Instance.new("UIListLayout")
     tabLayout.Parent = self.TabsHolder
     tabLayout.FillDirection = Enum.FillDirection.Horizontal
     tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
     tabLayout.Padding = UDim.new(0, 8)
+    tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    
+    self.TabLayout = tabLayout
 end
 
 function Library:CreateUnderBar()
@@ -385,6 +389,7 @@ function Library:CreateTab(name)
     
     table.insert(self.tabs, tab)
     self:UpdateTabColors()
+    self:UpdateTabPositioning()
     
     return setmetatable({
         tab = tab,
@@ -433,23 +438,23 @@ function Library:GetTabMethods()
         titleBar.Parent = sectionBg
         titleBar.BackgroundColor3 = Theme.SectionBackground
         titleBar.BorderSizePixel = 0
-        titleBar.Position = UDim2.new(0, 0, 0, 0)
-        titleBar.Size = UDim2.new(1, 0, 0, 15)
+        titleBar.Position = UDim2.new(0, 1, 0, 1)
+        titleBar.Size = UDim2.new(1, -2, 0, 15)
         
         local titleFiller = Instance.new("Frame")
         titleFiller.Name = "TitleFiller"
         titleFiller.Parent = titleBar
         titleFiller.BackgroundColor3 = Theme.SectionBackground
         titleFiller.BorderSizePixel = 0
-        titleFiller.Position = UDim2.new(0, 0, -0.667, 0)
-        titleFiller.Size = UDim2.new(1, 0, 0, 10)
+        titleFiller.Position = UDim2.new(0, -1, -0.4, 0)
+        titleFiller.Size = UDim2.new(1, 2, 0, 8)
         CreateCorner(titleFiller, 3)
         
         local titleLabel = Instance.new("TextLabel")
         titleLabel.Parent = titleBar
         titleLabel.BackgroundTransparency = 1
-        titleLabel.Position = UDim2.new(0, LAYOUT.MARGINS.ELEMENT_SIDE, -0.467, 0)
-        titleLabel.Size = UDim2.new(1, -LAYOUT.MARGINS.ELEMENT_SIDE * 2, 0, 22)
+        titleLabel.Position = UDim2.new(0, LAYOUT.MARGINS.ELEMENT_SIDE - 1, -0.267, 0)
+        titleLabel.Size = UDim2.new(1, -(LAYOUT.MARGINS.ELEMENT_SIDE - 1) * 2, 0, 22)
         titleLabel.Font = Enum.Font.SourceSansSemibold
         titleLabel.Text = name
         titleLabel.TextColor3 = Theme.Accent
@@ -824,6 +829,37 @@ function Library:SwitchTab(tabIndex)
         
         self.currentTab = tabIndex
     end
+end
+
+function Library:UpdateTabPositioning()
+    local tabCount = #self.tabs
+    if tabCount == 0 then return end
+    
+    -- Use spawn to avoid blocking
+    task.spawn(function()
+        task.wait(0.01) -- Small delay to ensure layout is calculated
+        
+        -- Calculate approximate width per tab (50px base + text width estimate)
+        local avgTabWidth = 60 -- Base estimate
+        local totalTabWidth = (avgTabWidth * tabCount) + ((tabCount - 1) * 8) -- Add padding between tabs
+        
+        -- Position tabs based on count
+        if tabCount == 1 then
+            -- Single tab - position at left side
+            self.TabsHolder.Position = UDim2.new(0, 25, -0.176, 0)
+            self.TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        elseif tabCount == 2 then
+            -- Two tabs - position slightly left of center
+            local leftOffset = math.max(25, (LAYOUT.WINDOW_SIZE.X - totalTabWidth) / 3)
+            self.TabsHolder.Position = UDim2.new(0, leftOffset, -0.176, 0)
+            self.TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        else
+            -- Multiple tabs - center them
+            local leftOffset = math.max(25, (LAYOUT.WINDOW_SIZE.X - totalTabWidth) / 2)
+            self.TabsHolder.Position = UDim2.new(0, leftOffset, -0.176, 0)
+            self.TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        end
+    end)
 end
 
 function Library:UpdateTabColors()
