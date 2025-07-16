@@ -83,6 +83,12 @@ function Library:CreateWindow(config)
     coresploit.Enabled = true
     coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
+    local overlay = Instance.new("ScreenGui")
+    overlay.Name           = "coresploitOverlay"
+    overlay.Parent         = LocalPlayer.PlayerGui
+    overlay.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    overlay.DisplayOrder   = 1   -- sits above your main GUI
+    Library.OverlayGui     = overlay
 
     Background.Name = "Background"
     Background.Parent = coresploit
@@ -1094,9 +1100,27 @@ function Library:CreateWindow(config)
                 
                 Library:CreateConnection(DropdownButton.MouseButton1Click, function()
                     Dropdown.Open = not Dropdown.Open
+                    if Dropdown.Open then
+                        -- 1) reparent to the overlay:
+                        DropdownHolder.Parent = Library.OverlayGui
+                
+                        -- 2) position absolutely under the button:
+                        local absPos = DropdownButton.AbsolutePosition
+                        local absSize = DropdownButton.AbsoluteSize
+                        DropdownHolder.Position = UDim2.new(0,
+                            absPos.X,
+                            0,
+                            absPos.Y + absSize.Y
+                        )
+                    else
+                        -- close: send it back under its section so Refresh()/cleanup still works
+                        DropdownHolder.Parent = SectionHolder
+                        DropdownHolder.Position = UDim2.new(0, 0, 1.35, 0)
+                    end
+                
                     DropdownHolder.Visible = Dropdown.Open
                 end)
-                
+
                 Dropdown:Refresh()
                 Dropdown:SetValue(Dropdown.Default)
                 return Dropdown
