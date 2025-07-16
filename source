@@ -655,12 +655,11 @@ function Library:GetSectionMethods()
         sliderTrack.Parent = sliderFrame
         sliderTrack.BackgroundColor3 = Theme.ToggleStroke
         sliderTrack.BorderSizePixel = 0
-        -- center it vertically in the slider
-        sliderTrack.Position = UDim2.new(0, 0, 0.5, -LAYOUT.ELEMENT_HEIGHT.SLIDER * 0.1)
-        -- make height = 20% of slider height
-        local trackHeight = math.floor(LAYOUT.ELEMENT_HEIGHT.SLIDER * 0.2)
-        sliderTrack.Size = UDim2.new(1, -12, 0, trackHeight)
-        CreateCorner(sliderTrack, trackHeight/2)
+        SliderTrack.BackgroundTransparency = 1
+        sliderTrack.Position = UDim2.new(0, 0, 0, 25)
+        sliderTrack.Size = UDim2.new(0, 214, 0, 2)
+        CreateCorner(sliderTrack, 2)
+        CreateStroke(sliderTrack, Theme.ToggleStroke, 1)
         
         local sliderFill = Instance.new("Frame")
         sliderFill.Name = "Filler"
