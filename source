@@ -39,6 +39,7 @@ function Library:CreateStroke(parent, color, thickness)
     stroke.Color = color or Color3.fromRGB(50, 50, 50)
     stroke.Thickness = thickness or 1
     stroke.LineJoinMode = Enum.LineJoinMode.Miter
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     return stroke
 end
 
@@ -163,11 +164,13 @@ function Library:CreateWindow(config)
     GameName.BackgroundTransparency = 1.000
     GameName.BorderColor3 = Color3.fromRGB(0, 0, 0)
     GameName.BorderSizePixel = 0
-    GameName.Size = UDim2.new(0, 150, 0, 21)
+    GameName.Position = UDim2.new(0, 5, 0, 0)
+    GameName.Size = UDim2.new(0, 300, 0, 21)
     GameName.Font = Enum.Font.SourceSansSemibold
-    GameName.Text = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+    GameName.Text = "Game: " .. (game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name or "Unknown")
     GameName.TextColor3 = Color3.fromRGB(66, 255, 249)
     GameName.TextSize = 14.000
+    GameName.TextXAlignment = Enum.TextXAlignment.Left
 
     UserStatus.Name = "UserStatus"
     UserStatus.Parent = UnderBar
@@ -464,6 +467,8 @@ function Library:CreateWindow(config)
             Title.BorderSizePixel = 0
             Title.Position = UDim2.new(0, 0, 0.0219435729, 0)
             Title.Size = UDim2.new(0, 225, 0, 15)
+            
+            -- Add stroke to section title
             Library:CreateStroke(Title, Color3.fromRGB(50, 50, 50), 1)
             
             Roundingfiller.Name = "Roundingfiller"
@@ -532,10 +537,12 @@ function Library:CreateWindow(config)
                 ToggleButton.Text = ""
                 ToggleButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 ToggleButton.TextSize = 14.000
-                Library:CreateStroke(ToggleButton, Color3.fromRGB(50, 50, 50), 1)
                 
                 UICorner.CornerRadius = UDim.new(0, 3)
                 UICorner.Parent = ToggleButton
+                
+                -- Add stroke to toggle button
+                Library:CreateStroke(ToggleButton, Color3.fromRGB(50, 50, 50), 1)
                 
                 title.Name = "title"
                 title.Parent = ToggleButton
@@ -602,10 +609,12 @@ function Library:CreateWindow(config)
                     ColorpickerButton.Text = ""
                     ColorpickerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                     ColorpickerButton.TextSize = 14.000
-                    Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
                     
                     UICorner.CornerRadius = UDim.new(0, 3)
                     UICorner.Parent = ColorpickerButton
+                    
+                    -- Add stroke to colorpicker button
+                    Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
                     
                     function Colorpicker:SetValue(color)
                         Colorpicker.Value = color
@@ -648,6 +657,8 @@ function Library:CreateWindow(config)
                     KeybindBox.Text = Keybind.Default
                     KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                     KeybindBox.TextSize = 15.000
+                    
+                    -- Add stroke to keybind box
                     Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
                     
                     function Keybind:SetValue(key)
@@ -657,24 +668,26 @@ function Library:CreateWindow(config)
                         Keybind.Callback(key)
                     end
                     
-                    Library:CreateConnection(KeybindBox.MouseButton2Click, function()
-                        Window.KeybindModeFrame.Visible = true
-                        Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
-                        
-                        for i, btn in pairs(Window.KeybindModeButtons) do
-                            Library:CreateConnection(btn.MouseButton1Click, function()
-                                Keybind.Mode = btn.Text
-                                Window.KeybindModeFrame.Visible = false
-                                
-                                -- Update button colors
-                                for j, b in pairs(Window.KeybindModeButtons) do
-                                    if b == btn then
-                                        b.TextColor3 = Color3.fromRGB(253, 247, 255)
-                                    else
-                                        b.TextColor3 = Color3.fromRGB(124, 121, 125)
+                    Library:CreateConnection(KeybindBox.InputBegan, function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                            Window.KeybindModeFrame.Visible = true
+                            Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
+                            
+                            for i, btn in pairs(Window.KeybindModeButtons) do
+                                Library:CreateConnection(btn.MouseButton1Click, function()
+                                    Keybind.Mode = btn.Text
+                                    Window.KeybindModeFrame.Visible = false
+                                    
+                                    -- Update button colors
+                                    for j, b in pairs(Window.KeybindModeButtons) do
+                                        if b == btn then
+                                            b.TextColor3 = Color3.fromRGB(253, 247, 255)
+                                        else
+                                            b.TextColor3 = Color3.fromRGB(124, 121, 125)
+                                        end
                                     end
-                                end
-                            end)
+                                end)
+                            end
                         end
                     end)
                     
@@ -731,6 +744,8 @@ function Library:CreateWindow(config)
                 SliderBar.BorderSizePixel = 0
                 SliderBar.Position = UDim2.new(0, 0, 0.800000012, 0)
                 SliderBar.Size = UDim2.new(0, 214, 0, 2)
+                
+                -- Add stroke to slider bar
                 Library:CreateStroke(SliderBar, Color3.fromRGB(50, 50, 50), 1)
                 
                 Filler.Name = "Filler"
@@ -756,10 +771,12 @@ function Library:CreateWindow(config)
                 SliderHead.Text = ""
                 SliderHead.TextColor3 = Color3.fromRGB(0, 0, 0)
                 SliderHead.TextSize = 14.000
-                Library:CreateStroke(SliderHead, Color3.fromRGB(50, 50, 50), 1)
                 
                 UICorner_2.CornerRadius = UDim.new(1, 0)
                 UICorner_2.Parent = SliderHead
+                
+                -- Add stroke to slider head
+                Library:CreateStroke(SliderHead, Color3.fromRGB(50, 50, 50), 1)
                 
                 SliderValue.Name = "SliderValue"
                 SliderValue.Parent = SliderFrame
@@ -850,6 +867,8 @@ function Library:CreateWindow(config)
                 DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                 DropdownButton.TextSize = 15.000
                 DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- Add stroke to dropdown button
                 Library:CreateStroke(DropdownButton, Color3.fromRGB(50, 50, 50), 1)
                 
                 Arrow.Name = "Arrow"
@@ -870,10 +889,12 @@ function Library:CreateWindow(config)
                 DropdownHolder.Size = UDim2.new(0, 215, 0, 54)
                 DropdownHolder.ZIndex = 2
                 DropdownHolder.Visible = false
-                Library:CreateStroke(DropdownHolder, Color3.fromRGB(50, 50, 50), 1)
                 
                 UICorner.CornerRadius = UDim.new(0, 2)
                 UICorner.Parent = DropdownHolder
+                
+                -- Add stroke to dropdown holder
+                Library:CreateStroke(DropdownHolder, Color3.fromRGB(50, 50, 50), 1)
                 
                 UIListLayout.Parent = DropdownHolder
                 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -987,10 +1008,12 @@ function Library:CreateWindow(config)
                 ColorpickerButton.Text = ""
                 ColorpickerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 ColorpickerButton.TextSize = 14.000
-                Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
                 
                 UICorner.CornerRadius = UDim.new(0, 3)
                 UICorner.Parent = ColorpickerButton
+                
+                -- Add stroke to standalone colorpicker button
+                Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
                 
                 function Colorpicker:SetValue(color)
                     Colorpicker.Value = color
@@ -1047,6 +1070,8 @@ function Library:CreateWindow(config)
                 KeybindBox.Text = ""
                 KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                 KeybindBox.TextSize = 15.000
+                
+                -- Add stroke to standalone keybind box
                 Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
                 
                 function Keybind:SetValue(key)
@@ -1083,6 +1108,8 @@ function Library:CreateWindow(config)
                 ButtonFrame.Text = Button.Name
                 ButtonFrame.TextColor3 = Color3.fromRGB(255, 255, 255)
                 ButtonFrame.TextSize = 15.000
+                
+                -- Add stroke to button
                 Library:CreateStroke(ButtonFrame, Color3.fromRGB(50, 50, 50), 1)
                 
                 Library:CreateConnection(ButtonFrame.MouseButton1Click, function()
