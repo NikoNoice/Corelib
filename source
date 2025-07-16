@@ -55,10 +55,10 @@ function Library:BringDropdownToFront(dropdown)
     end
     
     -- Set this dropdown to highest Z-index
-    dropdown.DropdownHolder.ZIndex = 60
+    dropdown.DropdownHolder.ZIndex = 15
     for _, child in pairs(dropdown.DropdownHolder:GetChildren()) do
         if child:IsA("GuiObject") then
-            child.ZIndex = 61
+            child.ZIndex = 16
         end
     end
 end
@@ -105,7 +105,7 @@ function Library:CreateWindow(config)
     coresploit.Name = "coresploit"
     coresploit.Parent = LocalPlayer:WaitForChild("PlayerGui")
     coresploit.Enabled = true
-    coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
     Background.Name = "Background"
     Background.Parent = coresploit
@@ -162,7 +162,7 @@ function Library:CreateWindow(config)
     Roundingfiller.ClipsDescendants = true
     Roundingfiller.Position = UDim2.new(0, 0, -0.209804028, 0)
     Roundingfiller.Size = UDim2.new(0, 470, 0, 7)
-    Roundingfiller.ZIndex = 0
+    Roundingfiller.ZIndex = 1
 
     UICorner_2.CornerRadius = UDim.new(0, 3)
     UICorner_2.Parent = Roundingfiller
@@ -237,7 +237,7 @@ function Library:CreateWindow(config)
     KeybindModeFrame.Position = UDim2.new(0.351444304, 0, 0.550614119, 0)
     KeybindModeFrame.Size = UDim2.new(0, 98, 0, 68)
     KeybindModeFrame.Visible = false
-    KeybindModeFrame.ZIndex = 70 -- High Z-index for mode selection
+    KeybindModeFrame.ZIndex = 20 -- High Z-index for mode selection
     Library:CreateStroke(KeybindModeFrame, Color3.fromRGB(50, 50, 50), 1)
 
     Frame_2.Parent = KeybindModeFrame
@@ -255,7 +255,7 @@ function Library:CreateWindow(config)
     TextButton.BorderSizePixel = 0
     TextButton.Position = UDim2.new(0, 0, 0.0399999991, 0)
     TextButton.Size = UDim2.new(0, 88, 0, 14)
-    TextButton.ZIndex = 71
+    TextButton.ZIndex = 21
     TextButton.Font = Enum.Font.SourceSansSemibold
     TextButton.Text = "Hold"
     TextButton.TextColor3 = Color3.fromRGB(253, 247, 255)
@@ -269,7 +269,7 @@ function Library:CreateWindow(config)
     TextButton_2.BorderSizePixel = 0
     TextButton_2.Position = UDim2.new(0, 0, 0.00722045917, 0)
     TextButton_2.Size = UDim2.new(0, 88, 0, 14)
-    TextButton_2.ZIndex = 71
+    TextButton_2.ZIndex = 21
     TextButton_2.Font = Enum.Font.SourceSansSemibold
     TextButton_2.Text = "Toggle"
     TextButton_2.TextColor3 = Color3.fromRGB(124, 121, 125)
@@ -283,7 +283,7 @@ function Library:CreateWindow(config)
     TextButton_3.BorderSizePixel = 0
     TextButton_3.Position = UDim2.new(0.0500000007, 0, 0.144117743, 0)
     TextButton_3.Size = UDim2.new(0, 88, 0, 14)
-    TextButton_3.ZIndex = 71
+    TextButton_3.ZIndex = 21
     TextButton_3.Font = Enum.Font.SourceSansSemibold
     TextButton_3.Text = "Always"
     TextButton_3.TextColor3 = Color3.fromRGB(124, 121, 125)
@@ -306,7 +306,7 @@ function Library:CreateWindow(config)
     TextLabel_4.TextColor3 = Color3.fromRGB(66, 255, 249)
     TextLabel_4.TextSize = 14.000
     TextLabel_4.TextXAlignment = Enum.TextXAlignment.Left
-    TextLabel_4.ZIndex = 71
+    TextLabel_4.ZIndex = 21
 
     Frame_3.Parent = TextLabel_4
     Frame_3.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
@@ -352,41 +352,16 @@ function Library:CreateWindow(config)
         end
     end)
     
-    -- Close keybind mode frame when clicking elsewhere
+    -- Close keybind mode frame when clicking elsewhere  
     Library:CreateConnection(UserInputService.InputBegan, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            -- Close keybind mode frame
-            if KeybindModeFrame.Visible then
-                local mousePos = Vector2.new(Mouse.X, Mouse.Y)
-                local framePos = KeybindModeFrame.AbsolutePosition
-                local frameSize = KeybindModeFrame.AbsoluteSize
-                
-                if mousePos.X < framePos.X or mousePos.X > framePos.X + frameSize.X or
-                   mousePos.Y < framePos.Y or mousePos.Y > framePos.Y + frameSize.Y then
-                    KeybindModeFrame.Visible = false
-                end
-            end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and KeybindModeFrame.Visible then
+            local mousePos = Vector2.new(Mouse.X, Mouse.Y)
+            local framePos = KeybindModeFrame.AbsolutePosition
+            local frameSize = KeybindModeFrame.AbsoluteSize
             
-            -- Close any open dropdowns when clicking outside
-            for _, dropdown in pairs(Library.OpenDropdowns) do
-                if dropdown.DropdownHolder.Visible then
-                    local mousePos = Vector2.new(Mouse.X, Mouse.Y)
-                    local buttonPos = dropdown.DropdownButton.AbsolutePosition
-                    local buttonSize = dropdown.DropdownButton.AbsoluteSize
-                    local holderPos = dropdown.DropdownHolder.AbsolutePosition
-                    local holderSize = dropdown.DropdownHolder.AbsoluteSize
-                    
-                    -- Check if click is outside both button and holder
-                    local outsideButton = mousePos.X < buttonPos.X or mousePos.X > buttonPos.X + buttonSize.X or
-                                         mousePos.Y < buttonPos.Y or mousePos.Y > buttonPos.Y + buttonSize.Y
-                    local outsideHolder = mousePos.X < holderPos.X or mousePos.X > holderPos.X + holderSize.X or
-                                         mousePos.Y < holderPos.Y or mousePos.Y > holderPos.Y + holderSize.Y
-                    
-                    if outsideButton and outsideHolder then
-                        dropdown.DropdownHolder.Visible = false
-                        dropdown.Open = false
-                    end
-                end
+            if mousePos.X < framePos.X or mousePos.X > framePos.X + frameSize.X or
+               mousePos.Y < framePos.Y or mousePos.Y > framePos.Y + frameSize.Y then
+                KeybindModeFrame.Visible = false
             end
         end
     end)
@@ -645,7 +620,7 @@ function Library:CreateWindow(config)
                 ToggleButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ToggleButton.BorderSizePixel = 0
                 ToggleButton.Size = UDim2.new(0, 18, 0, 18)
-                ToggleButton.ZIndex = 0
+                ToggleButton.ZIndex = 1
                 ToggleButton.Font = Enum.Font.SourceSans
                 ToggleButton.Text = ""
                 ToggleButton.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -826,7 +801,8 @@ function Library:CreateWindow(config)
                         
                         KeybindBox.Text = displayName
                         KeybindBox.Size = UDim2.new(0, calculatedWidth, 0, 20)
-                        KeybindBox.Position = UDim2.new(13.5, 0, 0, 0) -- Position it to the right like other elements
+                        -- Position it to the right of the colorpicker (which is at X position 10.2222223 * 18 = ~184)
+                        KeybindBox.Position = UDim2.new(0, 184 + 35, 0, 0) -- After colorpicker + some spacing
                         
                         Keybind.Callback(key)
                     end
@@ -1015,6 +991,7 @@ function Library:CreateWindow(config)
                 SliderHead.BorderSizePixel = 0
                 SliderHead.Position = UDim2.new(0.899999976, 0, -0.75, 0)
                 SliderHead.Size = UDim2.new(0, 10, 0, 10)
+                SliderHead.ZIndex = 3
                 SliderHead.Font = Enum.Font.SourceSans
                 SliderHead.Text = ""
                 SliderHead.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -1134,13 +1111,13 @@ function Library:CreateWindow(config)
                 Arrow.Image = "http://www.roblox.com/asset/?id=6034818372"
                 
                 DropdownHolder.Name = "DropdownHolder"
-                DropdownHolder.Parent = coresploit -- Parent to ScreenGui for proper layering
+                DropdownHolder.Parent = DropdownButton
                 DropdownHolder.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
                 DropdownHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownHolder.BorderSizePixel = 0
                 DropdownHolder.Position = UDim2.new(0, 0, 1.35000002, 0)
                 DropdownHolder.Size = UDim2.new(0, 215, 0, 54)
-                DropdownHolder.ZIndex = 50
+                DropdownHolder.ZIndex = 15
                 DropdownHolder.Visible = false
                 
                 UICorner.CornerRadius = UDim.new(0, 2)
@@ -1189,6 +1166,12 @@ function Library:CreateWindow(config)
                         end
                     end
                     
+                    -- Calculate dropdown height based on number of options
+                    local optionHeight = 16
+                    local padding = 1
+                    local totalHeight = (#Dropdown.Options * optionHeight) + ((#Dropdown.Options - 1) * padding)
+                    DropdownHolder.Size = UDim2.new(0, 215, 0, math.min(totalHeight, 120)) -- Max height of 120
+                    
                     -- Create new options
                     for _, option in pairs(Dropdown.Options) do
                         local OptionLabel = Instance.new("TextLabel")
@@ -1199,13 +1182,13 @@ function Library:CreateWindow(config)
                         OptionLabel.BackgroundTransparency = 1.000
                         OptionLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
                         OptionLabel.BorderSizePixel = 0
-                        OptionLabel.Size = UDim2.new(0, 215, 0, 16)
+                        OptionLabel.Size = UDim2.new(0, 215, 0, optionHeight)
                         OptionLabel.Font = Enum.Font.SourceSansSemibold
                         OptionLabel.Text = " " .. option
                         OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
                         OptionLabel.TextSize = 14.000
                         OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
-                        OptionLabel.ZIndex = 61 -- Higher than dropdown holder
+                        OptionLabel.ZIndex = 16 -- Higher than dropdown holder
                         
                         -- Check if this option is selected and update appearance
                         local isSelected = false
@@ -1269,11 +1252,6 @@ function Library:CreateWindow(config)
                     if Dropdown.Open then
                         -- Bring this dropdown to front when opened
                         Library:BringDropdownToFront(Dropdown)
-                        
-                        -- Position dropdown holder relative to button since it's now parented to ScreenGui
-                        local buttonPos = DropdownButton.AbsolutePosition
-                        local buttonSize = DropdownButton.AbsoluteSize
-                        DropdownHolder.Position = UDim2.new(0, buttonPos.X, 0, buttonPos.Y + buttonSize.Y + 2)
                     end
                 end)
                 
