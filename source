@@ -81,12 +81,12 @@ function Library:CreateWindow(config)
     coresploit.Name = "coresploit"
     coresploit.Parent = LocalPlayer:WaitForChild("PlayerGui")
     coresploit.Enabled = true
-    coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
     local overlay = Instance.new("ScreenGui")
     overlay.Name           = "coresploitOverlay"
     overlay.Parent         = LocalPlayer.PlayerGui
-    overlay.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    overlay.ZIndexBehavior = Enum.ZIndexBehavior.Global
     overlay.DisplayOrder   = 1   -- sits above your main GUI
     Library.OverlayGui     = overlay
 
@@ -145,7 +145,7 @@ function Library:CreateWindow(config)
     Roundingfiller.ClipsDescendants = true
     Roundingfiller.Position = UDim2.new(0, 0, -0.209804028, 0)
     Roundingfiller.Size = UDim2.new(0, 470, 0, 7)
-    Roundingfiller.ZIndex = 0
+    Roundingfiller.ZIndex = 1
 
     UICorner_2.CornerRadius = UDim.new(0, 3)
     UICorner_2.Parent = Roundingfiller
@@ -204,7 +204,7 @@ function Library:CreateWindow(config)
     MenuGlow.BorderSizePixel = 0
     MenuGlow.Position = UDim2.new(-0.047340557, 0, -0.0366644785, 0)
     MenuGlow.Size = UDim2.new(0, 513, 0, 623)
-    MenuGlow.ZIndex = 0
+    MenuGlow.ZIndex = 1
     MenuGlow.Image = "rbxassetid://18245826428"
     MenuGlow.ImageColor3 = Color3.fromRGB(66, 255, 249)
     MenuGlow.ImageTransparency = 0.740
@@ -548,7 +548,7 @@ function Library:CreateWindow(config)
                 ToggleButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ToggleButton.BorderSizePixel = 0
                 ToggleButton.Size = UDim2.new(0, 18, 0, 18)
-                ToggleButton.ZIndex = 0
+                ToggleButton.ZIndex = 1
                 ToggleButton.Font = Enum.Font.SourceSans
                 ToggleButton.Text = ""
                 ToggleButton.TextColor3 = Color3.fromRGB(0, 0, 0)
