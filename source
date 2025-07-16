@@ -718,7 +718,7 @@ function Library:CreateWindow(config)
                         
                         -- Auto-scale size based on text
                         local textSize = game:GetService("TextService"):GetTextSize(displayName, 15, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
-                        KeybindBox.Size = UDim2.new(0, math.max(20, textSize.X + 10), 0, 20)
+                        KeybindBox.Size = UDim2.new(0, math.max(20, textSize.X + -10), 0, 20)
                         
                         Keybind.Callback(key)
                     end
@@ -728,7 +728,7 @@ function Library:CreateWindow(config)
                         if not Keybind.Listening then
                             Keybind.Listening = true
                             KeybindBox.Text = "..."
-                            KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 0)
+                            KeybindBox.TextColor3 = Color3.fromRGB(124, 121, 125)
                             
                             local connection
                             connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
@@ -1199,7 +1199,7 @@ function Library:CreateWindow(config)
                 KeybindBox.Text = Keybind.Default
                 KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                 KeybindBox.TextSize = 15.000
-                KeybindBox.TextScaled = true
+                KeybindBox.TextScaled = false
                 KeybindBox.AutoButtonColor = false
                 
                 -- Add stroke to standalone keybind box
