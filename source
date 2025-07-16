@@ -157,6 +157,9 @@ function Library:CreateWindow(config)
     UnderBar.BorderSizePixel = 0
     UnderBar.Position = UDim2.new(0.00212765951, 0, 0.963855445, 0)
     UnderBar.Size = UDim2.new(0, 468, 0, 21)
+    
+    -- Add stroke to UnderBar
+    Library:CreateStroke(UnderBar, Color3.fromRGB(50, 50, 50), 1)
 
     GameName.Name = "GameName"
     GameName.Parent = UnderBar
@@ -388,8 +391,10 @@ function Library:CreateWindow(config)
         Section1.Position = UDim2.new(0.0112055354, 0, 0.0730183199, 0)
         Section1.Size = UDim2.new(0, 225, 0, 420)
         Section1.Visible = false
+        
+        -- Add stroke to Section1
         Library:CreateStroke(Section1, Color3.fromRGB(50, 50, 50), 1)
-
+        
         -- Section 2 (Right)
         Section2.Name = "Section2"
         Section2.Parent = Background
@@ -400,8 +405,10 @@ function Library:CreateWindow(config)
         Section2.Position = UDim2.new(0.497872353, 4, 0.0730183199, 0)
         Section2.Size = UDim2.new(0, 225, 0, 420)
         Section2.Visible = false
+        
+        -- Add stroke to Section2
         Library:CreateStroke(Section2, Color3.fromRGB(50, 50, 50), 1)
-
+        
         Page.Section1 = Section1
         Page.Section2 = Section2
         Page.TabButton = title
@@ -642,8 +649,9 @@ function Library:CreateWindow(config)
                     Keybind.Callback = config.Callback or function() end
                     Keybind.Value = Keybind.Default
                     Keybind.Mode = "Toggle"
+                    Keybind.Listening = false
                     
-                    local KeybindBox = Instance.new("TextBox")
+                    local KeybindBox = Instance.new("TextLabel")
                     
                     KeybindBox.Name = "KeybindBinded"
                     KeybindBox.Parent = ToggleButton
@@ -654,8 +662,6 @@ function Library:CreateWindow(config)
                     KeybindBox.Position = UDim2.new(10.8000002, 0, 0, 0)
                     KeybindBox.Size = UDim2.new(0, 20, 0, 20)
                     KeybindBox.Font = Enum.Font.SourceSansSemibold
-                    KeybindBox.PlaceholderColor3 = Color3.fromRGB(178, 178, 178)
-                    KeybindBox.PlaceholderText = "None"
                     KeybindBox.Text = Keybind.Default
                     KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                     KeybindBox.TextSize = 15.000
@@ -663,15 +669,78 @@ function Library:CreateWindow(config)
                     -- Add stroke to keybind box
                     Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
                     
+                    -- Key name mapping
+                    local KeyNames = {
+                        [Enum.KeyCode.LeftShift] = "LShift",
+                        [Enum.KeyCode.RightShift] = "RShift",
+                        [Enum.KeyCode.LeftControl] = "LCtrl",
+                        [Enum.KeyCode.RightControl] = "RCtrl",
+                        [Enum.KeyCode.LeftAlt] = "LAlt",
+                        [Enum.KeyCode.RightAlt] = "RAlt",
+                        [Enum.KeyCode.Space] = "Space",
+                        [Enum.KeyCode.Return] = "Enter",
+                        [Enum.KeyCode.BackSlash] = "\\",
+                        [Enum.KeyCode.Slash] = "/",
+                        [Enum.KeyCode.Period] = ".",
+                        [Enum.KeyCode.Comma] = ",",
+                        [Enum.KeyCode.Semicolon] = ";",
+                        [Enum.KeyCode.Quote] = "'",
+                        [Enum.KeyCode.LeftBracket] = "[",
+                        [Enum.KeyCode.RightBracket] = "]",
+                        [Enum.KeyCode.Minus] = "-",
+                        [Enum.KeyCode.Equals] = "=",
+                        [Enum.KeyCode.Backquote] = "`",
+                        [Enum.KeyCode.Tab] = "Tab",
+                        [Enum.KeyCode.CapsLock] = "Caps",
+                        [Enum.UserInputType.MouseButton1] = "MB1",
+                        [Enum.UserInputType.MouseButton2] = "MB2",
+                        [Enum.UserInputType.MouseButton3] = "MB3"
+                    }
+                    
                     function Keybind:SetValue(key)
                         Keybind.Value = key
                         Library.Flags[Keybind.Flag] = key
-                        KeybindBox.Text = key
+                        
+                        local displayName = key
+                        if KeyNames[key] then
+                            displayName = KeyNames[key]
+                        elseif typeof(key) == "EnumItem" then
+                            displayName = key.Name
+                        end
+                        
+                        KeybindBox.Text = displayName
                         Keybind.Callback(key)
                     end
                     
                     Library:CreateConnection(KeybindBox.InputBegan, function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                            if not Keybind.Listening then
+                                Keybind.Listening = true
+                                KeybindBox.Text = "..."
+                                KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 0)
+                                
+                                local connection
+                                connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
+                                    if gameProcessed then return end
+                                    
+                                    local key = nil
+                                    if input2.UserInputType == Enum.UserInputType.Keyboard then
+                                        key = input2.KeyCode
+                                    elseif input2.UserInputType == Enum.UserInputType.MouseButton1 or 
+                                           input2.UserInputType == Enum.UserInputType.MouseButton2 or 
+                                           input2.UserInputType == Enum.UserInputType.MouseButton3 then
+                                        key = input2.UserInputType
+                                    end
+                                    
+                                    if key then
+                                        Keybind:SetValue(key)
+                                        KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                        Keybind.Listening = false
+                                        connection:Disconnect()
+                                    end
+                                end)
+                            end
+                        elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
                             Window.KeybindModeFrame.Visible = true
                             Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
                             
@@ -802,7 +871,12 @@ function Library:CreateWindow(config)
                     Library.Flags[Slider.Flag] = value
                     
                     local percent = (value - Slider.Min) / (Slider.Max - Slider.Min)
-                    Filler.Size = UDim2.new(0, 214 * percent, 0, 4)
+                    local fillWidth = 214 * percent
+                    Filler.Size = UDim2.new(0, fillWidth, 0, 4)
+                    
+                    -- Fix slider head position to follow the fill properly
+                    SliderHead.Position = UDim2.new(0, fillWidth - 5, -0.75, 0)
+                    
                     SliderValue.Text = tostring(value)
                     
                     Slider.Callback(value)
@@ -889,7 +963,7 @@ function Library:CreateWindow(config)
                 DropdownHolder.BorderSizePixel = 0
                 DropdownHolder.Position = UDim2.new(0, 0, 1.35000002, 0)
                 DropdownHolder.Size = UDim2.new(0, 215, 0, 54)
-                DropdownHolder.ZIndex = 2
+                DropdownHolder.ZIndex = 10
                 DropdownHolder.Visible = false
                 
                 UICorner.CornerRadius = UDim.new(0, 2)
@@ -943,10 +1017,24 @@ function Library:CreateWindow(config)
                         OptionLabel.BorderSizePixel = 0
                         OptionLabel.Size = UDim2.new(0, 215, 0, 16)
                         OptionLabel.Font = Enum.Font.SourceSansSemibold
-                        OptionLabel.Text = "       " .. option
+                        OptionLabel.Text = " " .. option
                         OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
                         OptionLabel.TextSize = 14.000
                         OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
+                        OptionLabel.ZIndex = 11
+                        
+                        -- Check if this option is selected and update appearance
+                        local isSelected = false
+                        if Dropdown.Multi then
+                            isSelected = Dropdown.Value and table.find(Dropdown.Value, option)
+                        else
+                            isSelected = Dropdown.Value == option
+                        end
+                        
+                        if isSelected then
+                            OptionLabel.Text = "       " .. option
+                            OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                        end
                         
                         Library:CreateConnection(OptionLabel.InputBegan, function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -960,13 +1048,27 @@ function Library:CreateWindow(config)
                                     local index = table.find(selected, option)
                                     if index then
                                         table.remove(selected, index)
+                                        OptionLabel.Text = " " .. option
                                         OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
                                     else
                                         table.insert(selected, option)
+                                        OptionLabel.Text = "       " .. option
                                         OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
                                     end
                                     Dropdown:SetValue(selected)
                                 else
+                                    -- Update all options to unselected first
+                                    for _, child in pairs(DropdownHolder:GetChildren()) do
+                                        if child:IsA("TextLabel") and child.Name == "Option" then
+                                            child.Text = " " .. child.Text:gsub("^%s*", "")
+                                            child.TextColor3 = Color3.fromRGB(111, 108, 112)
+                                        end
+                                    end
+                                    
+                                    -- Update selected option
+                                    OptionLabel.Text = "       " .. option
+                                    OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                                    
                                     Dropdown:SetValue(option)
                                     DropdownHolder.Visible = false
                                     Dropdown.Open = false
@@ -1054,9 +1156,10 @@ function Library:CreateWindow(config)
                 Keybind.Flag = config.Flag or Keybind.Name
                 Keybind.Callback = config.Callback or function() end
                 Keybind.Value = Keybind.Default
+                Keybind.Listening = false
                 
                 local KeybindFrame = Instance.new("TextLabel")
-                local KeybindBox = Instance.new("TextBox")
+                local KeybindBox = Instance.new("TextLabel")
                 
                 KeybindFrame.Name = "Keybind"
                 KeybindFrame.Parent = SectionHolder
@@ -1080,24 +1183,85 @@ function Library:CreateWindow(config)
                 KeybindBox.Position = UDim2.new(0.813953459, 0, 0, 0)
                 KeybindBox.Size = UDim2.new(0, 40, 0, 20)
                 KeybindBox.Font = Enum.Font.SourceSansSemibold
-                KeybindBox.PlaceholderColor3 = Color3.fromRGB(178, 178, 178)
-                KeybindBox.PlaceholderText = "None"
-                KeybindBox.Text = ""
+                KeybindBox.Text = Keybind.Default
                 KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                 KeybindBox.TextSize = 15.000
                 
                 -- Add stroke to standalone keybind box
                 Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
                 
+                -- Key name mapping
+                local KeyNames = {
+                    [Enum.KeyCode.LeftShift] = "LShift",
+                    [Enum.KeyCode.RightShift] = "RShift",
+                    [Enum.KeyCode.LeftControl] = "LCtrl",
+                    [Enum.KeyCode.RightControl] = "RCtrl",
+                    [Enum.KeyCode.LeftAlt] = "LAlt",
+                    [Enum.KeyCode.RightAlt] = "RAlt",
+                    [Enum.KeyCode.Space] = "Space",
+                    [Enum.KeyCode.Return] = "Enter",
+                    [Enum.KeyCode.BackSlash] = "\\",
+                    [Enum.KeyCode.Slash] = "/",
+                    [Enum.KeyCode.Period] = ".",
+                    [Enum.KeyCode.Comma] = ",",
+                    [Enum.KeyCode.Semicolon] = ";",
+                    [Enum.KeyCode.Quote] = "'",
+                    [Enum.KeyCode.LeftBracket] = "[",
+                    [Enum.KeyCode.RightBracket] = "]",
+                    [Enum.KeyCode.Minus] = "-",
+                    [Enum.KeyCode.Equals] = "=",
+                    [Enum.KeyCode.Backquote] = "`",
+                    [Enum.KeyCode.Tab] = "Tab",
+                    [Enum.KeyCode.CapsLock] = "Caps",
+                    [Enum.UserInputType.MouseButton1] = "MB1",
+                    [Enum.UserInputType.MouseButton2] = "MB2",
+                    [Enum.UserInputType.MouseButton3] = "MB3"
+                }
+                
                 function Keybind:SetValue(key)
                     Keybind.Value = key
                     Library.Flags[Keybind.Flag] = key
-                    KeybindBox.Text = key
+                    
+                    local displayName = key
+                    if KeyNames[key] then
+                        displayName = KeyNames[key]
+                    elseif typeof(key) == "EnumItem" then
+                        displayName = key.Name
+                    end
+                    
+                    KeybindBox.Text = displayName
                     Keybind.Callback(key)
                 end
                 
-                Library:CreateConnection(KeybindBox.FocusLost, function()
-                    Keybind:SetValue(KeybindBox.Text)
+                Library:CreateConnection(KeybindBox.InputBegan, function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if not Keybind.Listening then
+                            Keybind.Listening = true
+                            KeybindBox.Text = "..."
+                            KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 0)
+                            
+                            local connection
+                            connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
+                                if gameProcessed then return end
+                                
+                                local key = nil
+                                if input2.UserInputType == Enum.UserInputType.Keyboard then
+                                    key = input2.KeyCode
+                                elseif input2.UserInputType == Enum.UserInputType.MouseButton1 or 
+                                       input2.UserInputType == Enum.UserInputType.MouseButton2 or 
+                                       input2.UserInputType == Enum.UserInputType.MouseButton3 then
+                                    key = input2.UserInputType
+                                end
+                                
+                                if key then
+                                    Keybind:SetValue(key)
+                                    KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                    Keybind.Listening = false
+                                    connection:Disconnect()
+                                end
+                            end)
+                        end
+                    end
                 end)
                 
                 Keybind:SetValue(Keybind.Default)
