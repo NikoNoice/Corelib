@@ -98,6 +98,8 @@ function Library:CreateWindow(config)
     mask.BackgroundTransparency = 1
     mask.AutoButtonColor = false
     mask.Visible = false
+    mask.ZIndex = 0
+
     -- clicking outside closes all open dropdowns
     mask.MouseButton1Click:Connect(function()
         for _, dd in ipairs(Library.OpenDropdowns or {}) do
@@ -346,11 +348,12 @@ function Library:CreateWindow(config)
             Background.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
             
             -- reposition any open dropdowns
-            for _, dd in ipairs(Library.OpenDropdowns or {}) do
-                local p = dd.Button.AbsolutePosition
-                local s = dd.Button.AbsoluteSize
-                dd.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y)
+            -- inside your InputChanged drag callback, after you set Background.Position:
+            for _, dd in ipairs(Library.OpenDropdowns) do
+              local p, s = dd.Button.AbsolutePosition, dd.Button.AbsoluteSize
+              dd.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y)
             end
+
         end
     end)
     
@@ -1125,20 +1128,27 @@ function Library:CreateWindow(config)
                 end
                 
                 -- give dropdown object helper methods
-                function Dropdown:OpenMenu()
-                    Dropdown.Open = true
-                    -- mask on
-                    Library.Mask.Visible = true
-                    -- reparent & position
-                    DropdownHolder.Parent = Library.OverlayGui
-                    DropdownHolder.ZIndex = 50
-                    local p = DropdownButton.AbsolutePosition
-                    local s = DropdownButton.AbsoluteSize
-                    DropdownHolder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y)
-                    DropdownHolder.Visible = true
-                    -- track it
-                    table.insert(Library.OpenDropdowns, Dropdown)
-                end
+               function Dropdown:OpenMenu()
+                Dropdown.Open = true
+                Library.Mask.Visible = true
+            
+                -- 1) reparent into the overlay
+                DropdownHolder.Parent = Library.OverlayGui
+                DropdownHolder.ZIndex = 50
+            
+                -- 2) re‑build & auto‑size
+                Dropdown:Refresh()
+                local contentH = UIListLayout.AbsoluteContentSize.Y
+                DropdownHolder.Size = UDim2.new(0, DropdownHolder.Size.X.Offset, 0, contentH)
+                
+                -- 3) position under the button
+                local p, s = DropdownButton.AbsolutePosition, DropdownButton.AbsoluteSize
+                DropdownHolder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y)
+                DropdownHolder.Visible = true
+            
+                table.insert(Library.OpenDropdowns, Dropdown)
+            end
+
                 
                 function Dropdown:Close()
                     Dropdown.Open = false
