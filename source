@@ -672,7 +672,7 @@ function Library:GetSectionMethods()
         sliderFill.ZIndex = 2
         CreateCorner(sliderFill, 2)
         
-        local sliderHead = Instance.new("Frame")
+        local sliderHead = Instance.new("TextButton")
         sliderHead.Name = "SliderHead"
         sliderHead.Parent = sliderFill
         sliderHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
