@@ -789,16 +789,16 @@ function Library:GetSectionMethods()
         arrow.ImageColor3 = Theme.SubText
         arrow.ZIndex = 2
         
-        -- Create overlay blocker that prevents interaction with elements underneath
-        local overlayBlocker = Instance.new("Frame")
+        local overlayBlocker = Instance.new("TextButton")
         overlayBlocker.Name = "OverlayBlocker"
         overlayBlocker.Parent = self.library.ScreenGui
         overlayBlocker.BackgroundTransparency = 1
+        overlayBlocker.AutoButtonColor = false    -- avoid hover/press visuals
+        overlayBlocker.Text = ""
         overlayBlocker.Size = UDim2.new(1, 0, 1, 0)
         overlayBlocker.Position = UDim2.new(0, 0, 0, 0)
         overlayBlocker.Visible = false
-        overlayBlocker.ZIndex = 100
-        overlayBlocker.Active = true
+        overlayBlocker.ZIndex = 100               -- just below the dropdown
         
         -- Create dropdown holder that appears above everything
         local dropdownHolder = Instance.new("Frame")
@@ -808,7 +808,7 @@ function Library:GetSectionMethods()
         dropdownHolder.BorderSizePixel = 0
         dropdownHolder.Size = UDim2.new(0, 215, 0, #list * 17)
         dropdownHolder.Visible = false
-        dropdownHolder.ZIndex = 101
+        dropdownHolder.ZIndex = 101               -- highest layer
         CreateCorner(dropdownHolder, 2)
         CreateStroke(dropdownHolder, Theme.ToggleStroke, 1)
         
@@ -820,6 +820,13 @@ function Library:GetSectionMethods()
         local isOpen = false
         local selectedOptions = multi and {} or default
         
+        dropdownHolder:GetDescendants()
+        for _, child in ipairs(dropdownHolder:GetDescendants()) do
+            if child:IsA("GuiObject") then
+                child.ZIndex = 101 + (child.LayoutOrder or 1)
+            end
+        end
+
         local function updateDisplay()
             if multi then
                 local text = ""
@@ -852,32 +859,30 @@ function Library:GetSectionMethods()
             end
         end
         
-        local function toggleDropdown()
+           local function toggleDropdown()
             isOpen = not isOpen
-            dropdownHolder.Visible = isOpen
             overlayBlocker.Visible = isOpen
-            
+            dropdownHolder.Visible = isOpen
+        
             if isOpen then
+                -- position & animate in
                 updateDropdownPosition()
                 CreateTween(arrow, {Rotation = 180}, 0.2):Play()
                 CreateTween(dropdownButton, {TextColor3 = Theme.Text}, 0.2):Play()
                 CreateTween(arrow, {ImageColor3 = Theme.Text}, 0.2):Play()
-                
-                -- Animate dropdown appearance
                 dropdownHolder.Size = UDim2.new(0, 215, 0, 0)
                 CreateTween(dropdownHolder, {Size = UDim2.new(0, 215, 0, #list * 17)}, 0.2):Play()
             else
+                -- animate out
                 CreateTween(arrow, {Rotation = 0}, 0.2):Play()
                 CreateTween(dropdownButton, {TextColor3 = Theme.SubText}, 0.2):Play()
                 CreateTween(arrow, {ImageColor3 = Theme.SubText}, 0.2):Play()
-                
-                -- Animate dropdown disappearance
                 local closeTween = CreateTween(dropdownHolder, {Size = UDim2.new(0, 215, 0, 0)}, 0.2)
                 closeTween:Play()
                 closeTween.Completed:Connect(function()
                     if not isOpen then
-                        dropdownHolder.Visible = false
                         overlayBlocker.Visible = false
+                        dropdownHolder.Visible = false
                     end
                 end)
             end
@@ -889,7 +894,7 @@ function Library:GetSectionMethods()
                 toggleDropdown()
             end
         end)
-        
+                
         -- Create options
         for i, option in ipairs(list) do
             local optionButton = Instance.new("TextButton")
