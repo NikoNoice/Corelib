@@ -655,7 +655,7 @@ function Library:GetSectionMethods()
         sliderTrack.Parent = sliderFrame
         sliderTrack.BackgroundColor3 = Theme.ToggleStroke
         sliderTrack.BorderSizePixel = 0
-        SliderTrack.BackgroundTransparency = 1
+        sliderTrack.BackgroundTransparency = 1
         sliderTrack.Position = UDim2.new(0, 0, 0, 25)
         sliderTrack.Size = UDim2.new(0, 214, 0, 2)
         CreateCorner(sliderTrack, 2)
