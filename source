@@ -787,17 +787,30 @@ function Library:GetSectionMethods()
         arrow.Size = UDim2.new(0, 20, 0, 20)
         arrow.Image = "http://www.roblox.com/asset/?id=6034818372"
         arrow.ImageColor3 = Theme.SubText
+        arrow.ZIndex = 2
         
+        -- Create overlay blocker that prevents interaction with elements underneath
+        local overlayBlocker = Instance.new("Frame")
+        overlayBlocker.Name = "OverlayBlocker"
+        overlayBlocker.Parent = self.library.ScreenGui
+        overlayBlocker.BackgroundTransparency = 1
+        overlayBlocker.Size = UDim2.new(1, 0, 1, 0)
+        overlayBlocker.Position = UDim2.new(0, 0, 0, 0)
+        overlayBlocker.Visible = false
+        overlayBlocker.ZIndex = 100
+        overlayBlocker.Active = true
+        
+        -- Create dropdown holder that appears above everything
         local dropdownHolder = Instance.new("Frame")
         dropdownHolder.Name = "DropdownHolder"
-        dropdownHolder.Parent = dropdownButton
+        dropdownHolder.Parent = self.library.ScreenGui
         dropdownHolder.BackgroundColor3 = Theme.DropdownBG
         dropdownHolder.BorderSizePixel = 0
-        dropdownHolder.Position = UDim2.new(0, 0, 1, 7)
-        dropdownHolder.Size = UDim2.new(1, 0, 0, #list * 17)
+        dropdownHolder.Size = UDim2.new(0, 215, 0, #list * 17)
         dropdownHolder.Visible = false
-        dropdownHolder.ZIndex = 3
+        dropdownHolder.ZIndex = 101
         CreateCorner(dropdownHolder, 2)
+        CreateStroke(dropdownHolder, Theme.ToggleStroke, 1)
         
         local dropdownLayout = Instance.new("UIListLayout")
         dropdownLayout.Parent = dropdownHolder
@@ -820,20 +833,62 @@ function Library:GetSectionMethods()
             end
         end
         
+        local function updateDropdownPosition()
+            if dropdownButton.Parent and dropdownButton.Parent.Parent then
+                local buttonPos = dropdownButton.AbsolutePosition
+                local buttonSize = dropdownButton.AbsoluteSize
+                
+                -- Position dropdown below the button
+                dropdownHolder.Position = UDim2.new(0, buttonPos.X, 0, buttonPos.Y + buttonSize.Y + 7)
+                
+                -- Check if dropdown would go off screen and adjust if needed
+                local screenSize = workspace.CurrentCamera.ViewportSize
+                local dropdownBottom = buttonPos.Y + buttonSize.Y + 7 + dropdownHolder.AbsoluteSize.Y
+                
+                if dropdownBottom > screenSize.Y then
+                    -- Position above the button instead
+                    dropdownHolder.Position = UDim2.new(0, buttonPos.X, 0, buttonPos.Y - dropdownHolder.AbsoluteSize.Y - 7)
+                end
+            end
+        end
+        
         local function toggleDropdown()
             isOpen = not isOpen
             dropdownHolder.Visible = isOpen
+            overlayBlocker.Visible = isOpen
             
             if isOpen then
+                updateDropdownPosition()
                 CreateTween(arrow, {Rotation = 180}, 0.2):Play()
                 CreateTween(dropdownButton, {TextColor3 = Theme.Text}, 0.2):Play()
                 CreateTween(arrow, {ImageColor3 = Theme.Text}, 0.2):Play()
+                
+                -- Animate dropdown appearance
+                dropdownHolder.Size = UDim2.new(0, 215, 0, 0)
+                CreateTween(dropdownHolder, {Size = UDim2.new(0, 215, 0, #list * 17)}, 0.2):Play()
             else
                 CreateTween(arrow, {Rotation = 0}, 0.2):Play()
                 CreateTween(dropdownButton, {TextColor3 = Theme.SubText}, 0.2):Play()
                 CreateTween(arrow, {ImageColor3 = Theme.SubText}, 0.2):Play()
+                
+                -- Animate dropdown disappearance
+                local closeTween = CreateTween(dropdownHolder, {Size = UDim2.new(0, 215, 0, 0)}, 0.2)
+                closeTween:Play()
+                closeTween.Completed:Connect(function()
+                    if not isOpen then
+                        dropdownHolder.Visible = false
+                        overlayBlocker.Visible = false
+                    end
+                end)
             end
         end
+        
+        -- Close dropdown when clicking outside
+        overlayBlocker.MouseButton1Click:Connect(function()
+            if isOpen then
+                toggleDropdown()
+            end
+        end)
         
         -- Create options
         for i, option in ipairs(list) do
@@ -847,8 +902,26 @@ function Library:GetSectionMethods()
             optionButton.TextColor3 = Theme.DisabledText
             optionButton.TextSize = 14
             optionButton.TextXAlignment = Enum.TextXAlignment.Left
-            optionButton.ZIndex = 3
+            optionButton.ZIndex = 102
             optionButton.LayoutOrder = i
+            
+            -- Check if option is selected and update color
+            local function updateOptionColor()
+                if multi then
+                    local isSelected = false
+                    for _, selected in ipairs(selectedOptions) do
+                        if selected == option then
+                            isSelected = true
+                            break
+                        end
+                    end
+                    optionButton.TextColor3 = isSelected and Theme.Accent or Theme.DisabledText
+                else
+                    optionButton.TextColor3 = (selectedOptions == option) and Theme.Accent or Theme.DisabledText
+                end
+            end
+            
+            updateOptionColor()
             
             optionButton.MouseButton1Click:Connect(function()
                 if multi then
@@ -864,13 +937,31 @@ function Library:GetSectionMethods()
                         table.insert(selectedOptions, option)
                     end
                     updateDisplay()
+                    updateOptionColor()
                     callback(selectedOptions)
                 else
                     selectedOptions = option
                     updateDisplay()
+                    -- Update all option colors
+                    for _, child in pairs(dropdownHolder:GetChildren()) do
+                        if child:IsA("TextButton") and child.Name:find("Option") then
+                            child.TextColor3 = Theme.DisabledText
+                        end
+                    end
+                    updateOptionColor()
                     toggleDropdown()
                     callback(selectedOptions)
                 end
+            end)
+            
+            -- Hover effect
+            optionButton.MouseEnter:Connect(function()
+                CreateTween(optionButton, {BackgroundTransparency = 0.95}, 0.1):Play()
+                optionButton.BackgroundColor3 = Theme.Accent
+            end)
+            
+            optionButton.MouseLeave:Connect(function()
+                CreateTween(optionButton, {BackgroundTransparency = 1}, 0.1):Play()
             end)
         end
         
@@ -886,6 +977,24 @@ function Library:GetSectionMethods()
             SetValue = function(value)
                 selectedOptions = value
                 updateDisplay()
+                -- Update option colors
+                for _, child in pairs(dropdownHolder:GetChildren()) do
+                    if child:IsA("TextButton") and child.Name:find("Option") then
+                        local optionText = child.Text:gsub("^%s*", "")
+                        if multi then
+                            local isSelected = false
+                            for _, selected in ipairs(selectedOptions) do
+                                if selected == optionText then
+                                    isSelected = true
+                                    break
+                                end
+                            end
+                            child.TextColor3 = isSelected and Theme.Accent or Theme.DisabledText
+                        else
+                            child.TextColor3 = (selectedOptions == optionText) and Theme.Accent or Theme.DisabledText
+                        end
+                    end
+                end
             end,
             GetValue = function()
                 return selectedOptions
