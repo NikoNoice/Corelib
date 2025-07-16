@@ -38,7 +38,7 @@ function Library:CreateStroke(parent, color, thickness)
     stroke.Parent = parent
     stroke.Color = color or Color3.fromRGB(50, 50, 50)
     stroke.Thickness = thickness or 1
-    stroke.LineJoinMode = Enum.LineJoinMode.Miter
+    stroke.LineJoinMode = Enum.LineJoinMode.Round
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     return stroke
 end
@@ -388,7 +388,8 @@ function Library:CreateWindow(config)
         Section1.Position = UDim2.new(0.0112055354, 0, 0.0730183199, 0)
         Section1.Size = UDim2.new(0, 225, 0, 420)
         Section1.Visible = false
-        
+        Library:CreateStroke(Section1, Color3.fromRGB(50, 50, 50), 1)
+
         -- Section 2 (Right)
         Section2.Name = "Section2"
         Section2.Parent = Background
@@ -399,7 +400,8 @@ function Library:CreateWindow(config)
         Section2.Position = UDim2.new(0.497872353, 4, 0.0730183199, 0)
         Section2.Size = UDim2.new(0, 225, 0, 420)
         Section2.Visible = false
-        
+        Library:CreateStroke(Section2, Color3.fromRGB(50, 50, 50), 1)
+
         Page.Section1 = Section1
         Page.Section2 = Section2
         Page.TabButton = title
