@@ -485,7 +485,7 @@ function Library:CreateWindow(config)
             Roundingfiller.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
             Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Roundingfiller.BorderSizePixel = 0
-            Roundingfiller.Position = UDim2.new(0, 0, -0.666666687, 0)
+            Roundingfiller.Position = UDim2.new(0, 0, -0.667, 0)
             Roundingfiller.Size = UDim2.new(0, 225, 0, 10)
             
             UICorner_2.CornerRadius = UDim.new(0, 3)
