@@ -651,7 +651,7 @@ function Library:CreateWindow(config)
                     Keybind.Mode = "Toggle"
                     Keybind.Listening = false
                     
-                    local KeybindBox = Instance.new("TextLabel")
+                    local KeybindBox = Instance.new("TextButton")
                     
                     KeybindBox.Name = "KeybindBinded"
                     KeybindBox.Parent = ToggleButton
@@ -665,6 +665,8 @@ function Library:CreateWindow(config)
                     KeybindBox.Text = Keybind.Default
                     KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                     KeybindBox.TextSize = 15.000
+                    KeybindBox.TextScaled = true
+                    KeybindBox.AutoButtonColor = false
                     
                     -- Add stroke to keybind box
                     Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
@@ -701,64 +703,75 @@ function Library:CreateWindow(config)
                         Keybind.Value = key
                         Library.Flags[Keybind.Flag] = key
                         
-                        local displayName = key
-                        if KeyNames[key] then
-                            displayName = KeyNames[key]
-                        elseif typeof(key) == "EnumItem" then
-                            displayName = key.Name
+                        local displayName = "None"
+                        if key and key ~= "None" then
+                            if KeyNames[key] then
+                                displayName = KeyNames[key]
+                            elseif typeof(key) == "EnumItem" then
+                                displayName = key.Name
+                            else
+                                displayName = tostring(key)
+                            end
                         end
                         
                         KeybindBox.Text = displayName
+                        
+                        -- Auto-scale size based on text
+                        local textSize = game:GetService("TextService"):GetTextSize(displayName, 15, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
+                        KeybindBox.Size = UDim2.new(0, math.max(20, textSize.X + 10), 0, 20)
+                        
                         Keybind.Callback(key)
                     end
                     
-                    Library:CreateConnection(KeybindBox.InputBegan, function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                            if not Keybind.Listening then
-                                Keybind.Listening = true
-                                KeybindBox.Text = "..."
-                                KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 0)
-                                
-                                local connection
-                                connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
-                                    if gameProcessed then return end
-                                    
-                                    local key = nil
-                                    if input2.UserInputType == Enum.UserInputType.Keyboard then
-                                        key = input2.KeyCode
-                                    elseif input2.UserInputType == Enum.UserInputType.MouseButton1 or 
-                                           input2.UserInputType == Enum.UserInputType.MouseButton2 or 
-                                           input2.UserInputType == Enum.UserInputType.MouseButton3 then
-                                        key = input2.UserInputType
-                                    end
-                                    
-                                    if key then
-                                        Keybind:SetValue(key)
-                                        KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-                                        Keybind.Listening = false
-                                        connection:Disconnect()
-                                    end
-                                end)
-                            end
-                        elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-                            Window.KeybindModeFrame.Visible = true
-                            Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
+                    -- Left click to bind key
+                    Library:CreateConnection(KeybindBox.MouseButton1Click, function()
+                        if not Keybind.Listening then
+                            Keybind.Listening = true
+                            KeybindBox.Text = "..."
+                            KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 0)
                             
-                            for i, btn in pairs(Window.KeybindModeButtons) do
-                                Library:CreateConnection(btn.MouseButton1Click, function()
-                                    Keybind.Mode = btn.Text
-                                    Window.KeybindModeFrame.Visible = false
-                                    
-                                    -- Update button colors
-                                    for j, b in pairs(Window.KeybindModeButtons) do
-                                        if b == btn then
-                                            b.TextColor3 = Color3.fromRGB(253, 247, 255)
-                                        else
-                                            b.TextColor3 = Color3.fromRGB(124, 121, 125)
-                                        end
+                            local connection
+                            connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
+                                if gameProcessed then return end
+                                
+                                local key = nil
+                                if input2.UserInputType == Enum.UserInputType.Keyboard then
+                                    key = input2.KeyCode
+                                elseif input2.UserInputType == Enum.UserInputType.MouseButton1 or 
+                                       input2.UserInputType == Enum.UserInputType.MouseButton2 or 
+                                       input2.UserInputType == Enum.UserInputType.MouseButton3 then
+                                    key = input2.UserInputType
+                                end
+                                
+                                if key then
+                                    Keybind:SetValue(key)
+                                    KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                    Keybind.Listening = false
+                                    connection:Disconnect()
+                                end
+                            end)
+                        end
+                    end)
+                    
+                    -- Right click for mode selection
+                    Library:CreateConnection(KeybindBox.MouseButton2Click, function()
+                        Window.KeybindModeFrame.Visible = true
+                        Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
+                        
+                        for i, btn in pairs(Window.KeybindModeButtons) do
+                            Library:CreateConnection(btn.MouseButton1Click, function()
+                                Keybind.Mode = btn.Text
+                                Window.KeybindModeFrame.Visible = false
+                                
+                                -- Update button colors
+                                for j, b in pairs(Window.KeybindModeButtons) do
+                                    if b == btn then
+                                        b.TextColor3 = Color3.fromRGB(253, 247, 255)
+                                    else
+                                        b.TextColor3 = Color3.fromRGB(124, 121, 125)
                                     end
-                                end)
-                            end
+                                end
+                            end)
                         end
                     end)
                     
@@ -1159,7 +1172,7 @@ function Library:CreateWindow(config)
                 Keybind.Listening = false
                 
                 local KeybindFrame = Instance.new("TextLabel")
-                local KeybindBox = Instance.new("TextLabel")
+                local KeybindBox = Instance.new("TextButton")
                 
                 KeybindFrame.Name = "Keybind"
                 KeybindFrame.Parent = SectionHolder
@@ -1186,6 +1199,8 @@ function Library:CreateWindow(config)
                 KeybindBox.Text = Keybind.Default
                 KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                 KeybindBox.TextSize = 15.000
+                KeybindBox.TextScaled = true
+                KeybindBox.AutoButtonColor = false
                 
                 -- Add stroke to standalone keybind box
                 Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
@@ -1222,45 +1237,56 @@ function Library:CreateWindow(config)
                     Keybind.Value = key
                     Library.Flags[Keybind.Flag] = key
                     
-                    local displayName = key
-                    if KeyNames[key] then
-                        displayName = KeyNames[key]
-                    elseif typeof(key) == "EnumItem" then
-                        displayName = key.Name
+                    local displayName = "None"
+                    if key and key ~= "None" then
+                        if KeyNames[key] then
+                            displayName = KeyNames[key]
+                        elseif typeof(key) == "EnumItem" then
+                            displayName = key.Name
+                        else
+                            displayName = tostring(key)
+                        end
                     end
                     
                     KeybindBox.Text = displayName
+                    
+                    -- Auto-scale size based on text
+                    local textSize = game:GetService("TextService"):GetTextSize(displayName, 15, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
+                    KeybindBox.Size = UDim2.new(0, math.max(40, textSize.X + 10), 0, 20)
+                    
+                    -- Adjust position to keep it right-aligned
+                    local newPosX = 215 - KeybindBox.Size.X.Offset
+                    KeybindBox.Position = UDim2.new(0, newPosX, 0, 0)
+                    
                     Keybind.Callback(key)
                 end
                 
-                Library:CreateConnection(KeybindBox.InputBegan, function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        if not Keybind.Listening then
-                            Keybind.Listening = true
-                            KeybindBox.Text = "..."
-                            KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 0)
+                Library:CreateConnection(KeybindBox.MouseButton1Click, function()
+                    if not Keybind.Listening then
+                        Keybind.Listening = true
+                        KeybindBox.Text = "..."
+                        KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 0)
+                        
+                        local connection
+                        connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
+                            if gameProcessed then return end
                             
-                            local connection
-                            connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
-                                if gameProcessed then return end
-                                
-                                local key = nil
-                                if input2.UserInputType == Enum.UserInputType.Keyboard then
-                                    key = input2.KeyCode
-                                elseif input2.UserInputType == Enum.UserInputType.MouseButton1 or 
-                                       input2.UserInputType == Enum.UserInputType.MouseButton2 or 
-                                       input2.UserInputType == Enum.UserInputType.MouseButton3 then
-                                    key = input2.UserInputType
-                                end
-                                
-                                if key then
-                                    Keybind:SetValue(key)
-                                    KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-                                    Keybind.Listening = false
-                                    connection:Disconnect()
-                                end
-                            end)
-                        end
+                            local key = nil
+                            if input2.UserInputType == Enum.UserInputType.Keyboard then
+                                key = input2.KeyCode
+                            elseif input2.UserInputType == Enum.UserInputType.MouseButton1 or 
+                                   input2.UserInputType == Enum.UserInputType.MouseButton2 or 
+                                   input2.UserInputType == Enum.UserInputType.MouseButton3 then
+                                key = input2.UserInputType
+                            end
+                            
+                            if key then
+                                Keybind:SetValue(key)
+                                KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                Keybind.Listening = false
+                                connection:Disconnect()
+                            end
+                        end)
                     end
                 end)
                 
