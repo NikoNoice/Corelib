@@ -81,7 +81,7 @@ function Library:CreateWindow(config)
     coresploit.Name = "coresploit"
     coresploit.Parent = LocalPlayer:WaitForChild("PlayerGui")
     coresploit.Enabled = true
-    coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
     local overlay = Instance.new("ScreenGui")
     overlay.Name           = "coresploitOverlay"
