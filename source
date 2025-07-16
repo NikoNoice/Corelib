@@ -672,17 +672,20 @@ function Library:GetSectionMethods()
         sliderFill.ZIndex = 2
         CreateCorner(sliderFill, 2)
         
-        local sliderHead = Instance.new("TextButton")
+        -- Circular head (must be a button to get MouseButton1Down)
+        +local sliderHead = Instance.new("TextButton")
         sliderHead.Name = "SliderHead"
-        sliderHead.Parent = sliderFill
-        sliderHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
-        sliderHead.BorderSizePixel = 0
-        local headSize = trackHeight * 1.8  -- slightly larger than the track
-        sliderHead.Size = UDim2.new(0, headSize, 0, headSize)
-        -- center on the fill’s right edge
-        sliderHead.Position = UDim2.new(1, -headSize/2, 0.5, -headSize/2)
-        CreateCorner(sliderHead, headSize/2)
-        
+            sliderHead.Parent = sliderFill
+            sliderHead.AutoButtonColor = false    -- turn off default press highlight
+            sliderHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+            sliderHead.BorderSizePixel = 0
+           local headSize = trackHeight * 1.8   -- slightly larger than the track
+            sliderHead.Size = UDim2.new(0, headSize, 0, headSize)
+            -- center it on the right edge of the fill
+            sliderHead.Position = UDim2.new(1, -headSize/2, 0.5, -headSize/2)
+            sliderHead.Text = ""                 -- no label
+            sliderHead.ZIndex = sliderFill.ZIndex + 1
+            CreateCorner(sliderHead, headSize/2)
         
         local value = default
         local dragging = false
