@@ -443,6 +443,7 @@ function Library:GetTabMethods()
         sectionBg.BorderSizePixel = 0
         sectionBg.Size = UDim2.new(1, 0, 1, 0)
         CreateCorner(sectionBg, 3)
+        CreateStroke(sectionBg, Theme.Divider, 1)
         
         -- Create title bar
         local titleBar = Instance.new("Frame")
@@ -654,9 +655,12 @@ function Library:GetSectionMethods()
         sliderTrack.Parent = sliderFrame
         sliderTrack.BackgroundColor3 = Theme.ToggleStroke
         sliderTrack.BorderSizePixel = 0
-        sliderTrack.Position = UDim2.new(0, 0, 0, 25)
-        sliderTrack.Size = UDim2.new(0, 214, 0, 2)
-        CreateCorner(sliderTrack, 2)
+        -- center it vertically in the slider
+        sliderTrack.Position = UDim2.new(0, 0, 0.5, -LAYOUT.ELEMENT_HEIGHT.SLIDER * 0.1)
+        -- make height = 20% of slider height
+        local trackHeight = math.floor(LAYOUT.ELEMENT_HEIGHT.SLIDER * 0.2)
+        sliderTrack.Size = UDim2.new(1, -12, 0, trackHeight)
+        CreateCorner(sliderTrack, trackHeight/2)
         
         local sliderFill = Instance.new("Frame")
         sliderFill.Name = "Filler"
@@ -668,15 +672,17 @@ function Library:GetSectionMethods()
         sliderFill.ZIndex = 2
         CreateCorner(sliderFill, 2)
         
-        local sliderHead = Instance.new("TextButton")
+        local sliderHead = Instance.new("Frame")
         sliderHead.Name = "SliderHead"
         sliderHead.Parent = sliderFill
         sliderHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
         sliderHead.BorderSizePixel = 0
-        sliderHead.Position = UDim2.new(1, -5, -2, 0)
-        sliderHead.Size = UDim2.new(0, 10, 0, 6)
-        sliderHead.Text = ""
-        CreateCorner(sliderHead, 10)
+        local headSize = trackHeight * 1.8  -- slightly larger than the track
+        sliderHead.Size = UDim2.new(0, headSize, 0, headSize)
+        -- center on the fill’s right edge
+        sliderHead.Position = UDim2.new(1, -headSize/2, 0.5, -headSize/2)
+        CreateCorner(sliderHead, headSize/2)
+        
         
         local value = default
         local dragging = false
@@ -766,6 +772,7 @@ function Library:GetSectionMethods()
         dropdownFrame.BackgroundTransparency = 1
         dropdownFrame.Size = UDim2.new(1, -12, 0, LAYOUT.ELEMENT_HEIGHT.DROPDOWN)
         dropdownFrame.LayoutOrder = self.section.elementsCount + 1
+        CreateStroke(dropdownFrame, Theme.Divider, 1)
         
         local dropdownButton = Instance.new("TextButton")
         dropdownButton.Name = "DropdownButton"
@@ -1042,6 +1049,7 @@ function Library:GetSectionMethods()
         keybindBox.TextColor3 = Theme.Text
         keybindBox.TextSize = 15
         keybindBox.TextXAlignment = Enum.TextXAlignment.Center
+        CreateStroke(keybindBox, Theme.Divider, 1)
         
         local currentKey = default
         local isBinding = false
