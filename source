@@ -665,7 +665,7 @@ function Library:CreateWindow(config)
                     KeybindBox.Text = Keybind.Default
                     KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                     KeybindBox.TextSize = 15.000
-                    KeybindBox.TextScaled = true
+                    KeybindBox.TextScaled = false
                     KeybindBox.AutoButtonColor = false
                     
                     -- Add stroke to keybind box
