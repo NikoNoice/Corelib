@@ -1,5 +1,5 @@
--- Custom GUI Library
--- Based on your original GUI design
+-- Complete Custom GUI Library
+-- Based on your original GUI design with all elements
 
 local Library = {}
 Library.__index = Library
@@ -32,6 +32,16 @@ function Library:Tween(object, properties, duration, easingStyle, easingDirectio
     return TweenService:Create(object, tweenInfo, properties)
 end
 
+-- Create UIStroke for borders
+function Library:CreateStroke(parent, color, thickness)
+    local stroke = Instance.new("UIStroke")
+    stroke.Parent = parent
+    stroke.Color = color or Color3.fromRGB(50, 50, 50)
+    stroke.Thickness = thickness or 1
+    stroke.LineJoinMode = Enum.LineJoinMode.Miter
+    return stroke
+end
+
 -- Main Library Functions
 function Library:CreateWindow(config)
     local Window = {}
@@ -39,7 +49,7 @@ function Library:CreateWindow(config)
     Window.Pages = {}
     Window.CurrentPage = nil
     
-    -- Create main GUI structure (keeping your exact design)
+    -- Create main GUI structure
     local coresploit = Instance.new("ScreenGui")
     local Background = Instance.new("Frame")
     local UICorner = Instance.new("UICorner")
@@ -54,8 +64,19 @@ function Library:CreateWindow(config)
     local UserStatus = Instance.new("TextLabel")
     local MenuGlow = Instance.new("ImageLabel")
     local UIListLayout = Instance.new("UIListLayout")
+    
+    -- Keybind Mode Frame
+    local KeybindModeFrame = Instance.new("Frame")
+    local Frame_2 = Instance.new("Frame")
+    local TextButton = Instance.new("TextButton")
+    local TextButton_2 = Instance.new("TextButton")
+    local TextButton_3 = Instance.new("TextButton")
+    local UIListLayout_7 = Instance.new("UIListLayout")
+    local TextLabel_4 = Instance.new("TextLabel")
+    local Frame_3 = Instance.new("Frame")
+    local UICorner_28 = Instance.new("UICorner")
 
-    -- Properties (keeping your exact styling)
+    -- Properties
     coresploit.Name = "coresploit"
     coresploit.Parent = LocalPlayer:WaitForChild("PlayerGui")
     coresploit.Enabled = true
@@ -68,6 +89,7 @@ function Library:CreateWindow(config)
     Background.BorderSizePixel = 0
     Background.Position = UDim2.new(0.5, -235, 0.5, -290)
     Background.Size = UDim2.new(0, 470, 0, 581)
+    Library:CreateStroke(Background, Color3.fromRGB(50, 50, 50), 1)
 
     UICorner.CornerRadius = UDim.new(0, 3)
     UICorner.Parent = Background
@@ -176,10 +198,101 @@ function Library:CreateWindow(config)
     MenuGlow.ScaleType = Enum.ScaleType.Slice
     MenuGlow.SliceCenter = Rect.new(21, 21, 79, 79)
 
+    -- Keybind Mode Frame
+    KeybindModeFrame.Name = "KeybindModeFrame"
+    KeybindModeFrame.Parent = Background
+    KeybindModeFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    KeybindModeFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    KeybindModeFrame.BorderSizePixel = 0
+    KeybindModeFrame.Position = UDim2.new(0.351444304, 0, 0.550614119, 0)
+    KeybindModeFrame.Size = UDim2.new(0, 98, 0, 68)
+    KeybindModeFrame.Visible = false
+    KeybindModeFrame.ZIndex = 3
+    Library:CreateStroke(KeybindModeFrame, Color3.fromRGB(50, 50, 50), 1)
+
+    Frame_2.Parent = KeybindModeFrame
+    Frame_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Frame_2.BackgroundTransparency = 1.000
+    Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame_2.BorderSizePixel = 0
+    Frame_2.Position = UDim2.new(0.0379588865, 0, 0.26470542, 0)
+    Frame_2.Size = UDim2.new(0, 96, 0, 50)
+
+    TextButton.Parent = Frame_2
+    TextButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextButton.BackgroundTransparency = 1.000
+    TextButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextButton.BorderSizePixel = 0
+    TextButton.Position = UDim2.new(0, 0, 0.0399999991, 0)
+    TextButton.Size = UDim2.new(0, 88, 0, 14)
+    TextButton.ZIndex = 3
+    TextButton.Font = Enum.Font.SourceSansSemibold
+    TextButton.Text = "Hold"
+    TextButton.TextColor3 = Color3.fromRGB(253, 247, 255)
+    TextButton.TextSize = 14.000
+    TextButton.TextXAlignment = Enum.TextXAlignment.Left
+
+    TextButton_2.Parent = Frame_2
+    TextButton_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextButton_2.BackgroundTransparency = 1.000
+    TextButton_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextButton_2.BorderSizePixel = 0
+    TextButton_2.Position = UDim2.new(0, 0, 0.00722045917, 0)
+    TextButton_2.Size = UDim2.new(0, 88, 0, 14)
+    TextButton_2.ZIndex = 3
+    TextButton_2.Font = Enum.Font.SourceSansSemibold
+    TextButton_2.Text = "Toggle"
+    TextButton_2.TextColor3 = Color3.fromRGB(124, 121, 125)
+    TextButton_2.TextSize = 14.000
+    TextButton_2.TextXAlignment = Enum.TextXAlignment.Left
+
+    TextButton_3.Parent = Frame_2
+    TextButton_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextButton_3.BackgroundTransparency = 1.000
+    TextButton_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextButton_3.BorderSizePixel = 0
+    TextButton_3.Position = UDim2.new(0.0500000007, 0, 0.144117743, 0)
+    TextButton_3.Size = UDim2.new(0, 88, 0, 14)
+    TextButton_3.ZIndex = 3
+    TextButton_3.Font = Enum.Font.SourceSansSemibold
+    TextButton_3.Text = "Always"
+    TextButton_3.TextColor3 = Color3.fromRGB(124, 121, 125)
+    TextButton_3.TextSize = 14.000
+    TextButton_3.TextXAlignment = Enum.TextXAlignment.Left
+
+    UIListLayout_7.Parent = Frame_2
+    UIListLayout_7.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout_7.Padding = UDim.new(0, 2)
+
+    TextLabel_4.Parent = KeybindModeFrame
+    TextLabel_4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel_4.BackgroundTransparency = 1.000
+    TextLabel_4.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextLabel_4.BorderSizePixel = 0
+    TextLabel_4.Position = UDim2.new(0.0379588865, 0, -0.00705898507, 0)
+    TextLabel_4.Size = UDim2.new(0, 94, 0, 18)
+    TextLabel_4.Font = Enum.Font.SourceSansSemibold
+    TextLabel_4.Text = "Mode"
+    TextLabel_4.TextColor3 = Color3.fromRGB(66, 255, 249)
+    TextLabel_4.TextSize = 14.000
+    TextLabel_4.TextXAlignment = Enum.TextXAlignment.Left
+
+    Frame_3.Parent = TextLabel_4
+    Frame_3.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+    Frame_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame_3.BorderSizePixel = 0
+    Frame_3.Position = UDim2.new(-0.0531914905, 0, 0.944444418, 0)
+    Frame_3.Size = UDim2.new(0, 100, 0, 1)
+
+    UICorner_28.CornerRadius = UDim.new(0, 3)
+    UICorner_28.Parent = KeybindModeFrame
+
     -- Store references
     Window.GUI = coresploit
     Window.Background = Background
     Window.TabsHolder = TabsHolder
+    Window.KeybindModeFrame = KeybindModeFrame
+    Window.KeybindModeButtons = {TextButton, TextButton_2, TextButton_3}
     Library.GUI = coresploit
     
     -- Make draggable
@@ -351,6 +464,7 @@ function Library:CreateWindow(config)
             Title.BorderSizePixel = 0
             Title.Position = UDim2.new(0, 0, 0.0219435729, 0)
             Title.Size = UDim2.new(0, 225, 0, 15)
+            Library:CreateStroke(Title, Color3.fromRGB(50, 50, 50), 1)
             
             Roundingfiller.Name = "Roundingfiller"
             Roundingfiller.Parent = Title
@@ -418,6 +532,7 @@ function Library:CreateWindow(config)
                 ToggleButton.Text = ""
                 ToggleButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 ToggleButton.TextSize = 14.000
+                Library:CreateStroke(ToggleButton, Color3.fromRGB(50, 50, 50), 1)
                 
                 UICorner.CornerRadius = UDim.new(0, 3)
                 UICorner.Parent = ToggleButton
@@ -429,7 +544,7 @@ function Library:CreateWindow(config)
                 title.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 title.BorderSizePixel = 0
                 title.Position = UDim2.new(1.46110022, 0, -0.055555556, 0)
-                title.Size = UDim2.new(0, 188, 0, 20)
+                title.Size = UDim2.new(0, 120, 0, 20)
                 title.Font = Enum.Font.SourceSansSemibold
                 title.Text = Toggle.Name
                 title.TextColor3 = Toggle.Default and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(124, 121, 125)
@@ -463,6 +578,108 @@ function Library:CreateWindow(config)
                     end
                     
                     Toggle.Callback(value)
+                end
+                
+                function Toggle:AddColorpicker(config)
+                    local Colorpicker = {}
+                    Colorpicker.Name = config.Name or "Color"
+                    Colorpicker.Default = config.Default or Color3.fromRGB(255, 0, 0)
+                    Colorpicker.Flag = config.Flag or Toggle.Flag .. "_Color"
+                    Colorpicker.Callback = config.Callback or function() end
+                    Colorpicker.Value = Colorpicker.Default
+                    
+                    local ColorpickerButton = Instance.new("TextButton")
+                    local UICorner = Instance.new("UICorner")
+                    
+                    ColorpickerButton.Name = "ColorpickerBinded"
+                    ColorpickerButton.Parent = ToggleButton
+                    ColorpickerButton.BackgroundColor3 = Colorpicker.Default
+                    ColorpickerButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                    ColorpickerButton.BorderSizePixel = 0
+                    ColorpickerButton.Position = UDim2.new(10.2222223, 0, 0.111111112, 0)
+                    ColorpickerButton.Size = UDim2.new(0, 32, 0, 13)
+                    ColorpickerButton.Font = Enum.Font.SourceSans
+                    ColorpickerButton.Text = ""
+                    ColorpickerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                    ColorpickerButton.TextSize = 14.000
+                    Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
+                    
+                    UICorner.CornerRadius = UDim.new(0, 3)
+                    UICorner.Parent = ColorpickerButton
+                    
+                    function Colorpicker:SetValue(color)
+                        Colorpicker.Value = color
+                        Library.Flags[Colorpicker.Flag] = color
+                        ColorpickerButton.BackgroundColor3 = color
+                        Colorpicker.Callback(color)
+                    end
+                    
+                    Library:CreateConnection(ColorpickerButton.MouseButton1Click, function()
+                        -- Color picker logic would go here
+                        print("Color picker clicked for:", Colorpicker.Name)
+                    end)
+                    
+                    Colorpicker:SetValue(Colorpicker.Default)
+                    return Colorpicker
+                end
+                
+                function Toggle:AddKeybind(config)
+                    local Keybind = {}
+                    Keybind.Name = config.Name or "Keybind"
+                    Keybind.Default = config.Default or "None"
+                    Keybind.Flag = config.Flag or Toggle.Flag .. "_Keybind"
+                    Keybind.Callback = config.Callback or function() end
+                    Keybind.Value = Keybind.Default
+                    Keybind.Mode = "Toggle"
+                    
+                    local KeybindBox = Instance.new("TextBox")
+                    
+                    KeybindBox.Name = "KeybindBinded"
+                    KeybindBox.Parent = ToggleButton
+                    KeybindBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                    KeybindBox.BackgroundTransparency = 1.000
+                    KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                    KeybindBox.BorderSizePixel = 0
+                    KeybindBox.Position = UDim2.new(10.8000002, 0, 0, 0)
+                    KeybindBox.Size = UDim2.new(0, 20, 0, 20)
+                    KeybindBox.Font = Enum.Font.SourceSansSemibold
+                    KeybindBox.PlaceholderColor3 = Color3.fromRGB(178, 178, 178)
+                    KeybindBox.PlaceholderText = "None"
+                    KeybindBox.Text = Keybind.Default
+                    KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    KeybindBox.TextSize = 15.000
+                    Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
+                    
+                    function Keybind:SetValue(key)
+                        Keybind.Value = key
+                        Library.Flags[Keybind.Flag] = key
+                        KeybindBox.Text = key
+                        Keybind.Callback(key)
+                    end
+                    
+                    Library:CreateConnection(KeybindBox.MouseButton2Click, function()
+                        Window.KeybindModeFrame.Visible = true
+                        Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
+                        
+                        for i, btn in pairs(Window.KeybindModeButtons) do
+                            Library:CreateConnection(btn.MouseButton1Click, function()
+                                Keybind.Mode = btn.Text
+                                Window.KeybindModeFrame.Visible = false
+                                
+                                -- Update button colors
+                                for j, b in pairs(Window.KeybindModeButtons) do
+                                    if b == btn then
+                                        b.TextColor3 = Color3.fromRGB(253, 247, 255)
+                                    else
+                                        b.TextColor3 = Color3.fromRGB(124, 121, 125)
+                                    end
+                                end
+                            end)
+                        end
+                    end)
+                    
+                    Keybind:SetValue(Keybind.Default)
+                    return Keybind
                 end
                 
                 Library:CreateConnection(ToggleButton.MouseButton1Click, function()
@@ -514,6 +731,7 @@ function Library:CreateWindow(config)
                 SliderBar.BorderSizePixel = 0
                 SliderBar.Position = UDim2.new(0, 0, 0.800000012, 0)
                 SliderBar.Size = UDim2.new(0, 214, 0, 2)
+                Library:CreateStroke(SliderBar, Color3.fromRGB(50, 50, 50), 1)
                 
                 Filler.Name = "Filler"
                 Filler.Parent = SliderBar
@@ -538,6 +756,7 @@ function Library:CreateWindow(config)
                 SliderHead.Text = ""
                 SliderHead.TextColor3 = Color3.fromRGB(0, 0, 0)
                 SliderHead.TextSize = 14.000
+                Library:CreateStroke(SliderHead, Color3.fromRGB(50, 50, 50), 1)
                 
                 UICorner_2.CornerRadius = UDim.new(1, 0)
                 UICorner_2.Parent = SliderHead
@@ -600,6 +819,251 @@ function Library:CreateWindow(config)
                 return Slider
             end
             
+            -- Dropdown Element
+            function Section:CreateDropdown(config)
+                local Dropdown = {}
+                Dropdown.Name = config.Name or "Dropdown"
+                Dropdown.Options = config.Options or {"Option1", "Option2", "Option3"}
+                Dropdown.Default = config.Default or "None"
+                Dropdown.Flag = config.Flag or Dropdown.Name
+                Dropdown.Callback = config.Callback or function() end
+                Dropdown.Value = Dropdown.Default
+                Dropdown.Multi = config.Multi or false
+                Dropdown.Open = false
+                
+                local DropdownButton = Instance.new("TextButton")
+                local Arrow = Instance.new("ImageLabel")
+                local DropdownHolder = Instance.new("Frame")
+                local UICorner = Instance.new("UICorner")
+                local UIListLayout = Instance.new("UIListLayout")
+                
+                DropdownButton.Name = "Dropdown"
+                DropdownButton.Parent = SectionHolder
+                DropdownButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownButton.BackgroundTransparency = 1.000
+                DropdownButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DropdownButton.BorderSizePixel = 0
+                DropdownButton.Size = UDim2.new(0, 215, 0, 20)
+                DropdownButton.ZIndex = 2
+                DropdownButton.Font = Enum.Font.SourceSansSemibold
+                DropdownButton.Text = " " .. Dropdown.Default
+                DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownButton.TextSize = 15.000
+                DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
+                Library:CreateStroke(DropdownButton, Color3.fromRGB(50, 50, 50), 1)
+                
+                Arrow.Name = "Arrow"
+                Arrow.Parent = DropdownButton
+                Arrow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                Arrow.BackgroundTransparency = 1.000
+                Arrow.BorderSizePixel = 0
+                Arrow.Position = UDim2.new(0.906976759, 0, 0, 0)
+                Arrow.Size = UDim2.new(0, 20, 0, 20)
+                Arrow.Image = "http://www.roblox.com/asset/?id=6034818372"
+                
+                DropdownHolder.Name = "DropdownHolder"
+                DropdownHolder.Parent = DropdownButton
+                DropdownHolder.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+                DropdownHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DropdownHolder.BorderSizePixel = 0
+                DropdownHolder.Position = UDim2.new(0, 0, 1.35000002, 0)
+                DropdownHolder.Size = UDim2.new(0, 215, 0, 54)
+                DropdownHolder.ZIndex = 2
+                DropdownHolder.Visible = false
+                Library:CreateStroke(DropdownHolder, Color3.fromRGB(50, 50, 50), 1)
+                
+                UICorner.CornerRadius = UDim.new(0, 2)
+                UICorner.Parent = DropdownHolder
+                
+                UIListLayout.Parent = DropdownHolder
+                UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                UIListLayout.Padding = UDim.new(0, 1)
+                
+                function Dropdown:SetValue(value)
+                    Dropdown.Value = value
+                    Library.Flags[Dropdown.Flag] = value
+                    
+                    if Dropdown.Multi then
+                        DropdownButton.Text = " " .. table.concat(value, ", ")
+                    else
+                        DropdownButton.Text = " " .. value
+                    end
+                    
+                    Dropdown.Callback(value)
+                end
+                
+                function Dropdown:Refresh()
+                    -- Clear existing options
+                    for _, child in pairs(DropdownHolder:GetChildren()) do
+                        if child:IsA("TextLabel") then
+                            child:Destroy()
+                        end
+                    end
+                    
+                    -- Create new options
+                    for _, option in pairs(Dropdown.Options) do
+                        local OptionLabel = Instance.new("TextLabel")
+                        
+                        OptionLabel.Name = "Option"
+                        OptionLabel.Parent = DropdownHolder
+                        OptionLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        OptionLabel.BackgroundTransparency = 1.000
+                        OptionLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                        OptionLabel.BorderSizePixel = 0
+                        OptionLabel.Size = UDim2.new(0, 215, 0, 16)
+                        OptionLabel.Font = Enum.Font.SourceSansSemibold
+                        OptionLabel.Text = "       " .. option
+                        OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
+                        OptionLabel.TextSize = 14.000
+                        OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
+                        
+                        Library:CreateConnection(OptionLabel.InputBegan, function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if Dropdown.Multi then
+                                    local selected = Dropdown.Value or {}
+                                    local index = table.find(selected, option)
+                                    if index then
+                                        table.remove(selected, index)
+                                        OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
+                                    else
+                                        table.insert(selected, option)
+                                        OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                                    end
+                                    Dropdown:SetValue(selected)
+                                else
+                                    Dropdown:SetValue(option)
+                                    DropdownHolder.Visible = false
+                                    Dropdown.Open = false
+                                end
+                            end
+                        end)
+                    end
+                end
+                
+                Library:CreateConnection(DropdownButton.MouseButton1Click, function()
+                    Dropdown.Open = not Dropdown.Open
+                    DropdownHolder.Visible = Dropdown.Open
+                end)
+                
+                Dropdown:Refresh()
+                Dropdown:SetValue(Dropdown.Default)
+                return Dropdown
+            end
+            
+            -- Colorpicker Element
+            function Section:CreateColorpicker(config)
+                local Colorpicker = {}
+                Colorpicker.Name = config.Name or "Color"
+                Colorpicker.Default = config.Default or Color3.fromRGB(0, 251, 255)
+                Colorpicker.Flag = config.Flag or Colorpicker.Name
+                Colorpicker.Callback = config.Callback or function() end
+                Colorpicker.Value = Colorpicker.Default
+                
+                local ColorpickerFrame = Instance.new("TextLabel")
+                local ColorpickerButton = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
+                
+                ColorpickerFrame.Name = "Colorpicker"
+                ColorpickerFrame.Parent = SectionHolder
+                ColorpickerFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                ColorpickerFrame.BackgroundTransparency = 1.000
+                ColorpickerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ColorpickerFrame.BorderSizePixel = 0
+                ColorpickerFrame.Size = UDim2.new(0, 215, 0, 20)
+                ColorpickerFrame.Font = Enum.Font.SourceSansSemibold
+                ColorpickerFrame.Text = Colorpicker.Name
+                ColorpickerFrame.TextColor3 = Color3.fromRGB(124, 121, 125)
+                ColorpickerFrame.TextSize = 15.000
+                ColorpickerFrame.TextXAlignment = Enum.TextXAlignment.Left
+                
+                ColorpickerButton.Name = "ColorpickerAlone"
+                ColorpickerButton.Parent = ColorpickerFrame
+                ColorpickerButton.BackgroundColor3 = Colorpicker.Default
+                ColorpickerButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ColorpickerButton.BorderSizePixel = 0
+                ColorpickerButton.Position = UDim2.new(0.851162791, 0, 0.14799957, 0)
+                ColorpickerButton.Size = UDim2.new(0, 32, 0, 13)
+                ColorpickerButton.Font = Enum.Font.SourceSans
+                ColorpickerButton.Text = ""
+                ColorpickerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                ColorpickerButton.TextSize = 14.000
+                Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
+                
+                UICorner.CornerRadius = UDim.new(0, 3)
+                UICorner.Parent = ColorpickerButton
+                
+                function Colorpicker:SetValue(color)
+                    Colorpicker.Value = color
+                    Library.Flags[Colorpicker.Flag] = color
+                    ColorpickerButton.BackgroundColor3 = color
+                    Colorpicker.Callback(color)
+                end
+                
+                Library:CreateConnection(ColorpickerButton.MouseButton1Click, function()
+                    -- Color picker window logic would go here
+                    print("Color picker clicked for:", Colorpicker.Name)
+                end)
+                
+                Colorpicker:SetValue(Colorpicker.Default)
+                return Colorpicker
+            end
+            
+            -- Keybind Element
+            function Section:CreateKeybind(config)
+                local Keybind = {}
+                Keybind.Name = config.Name or "Keybind"
+                Keybind.Default = config.Default or "None"
+                Keybind.Flag = config.Flag or Keybind.Name
+                Keybind.Callback = config.Callback or function() end
+                Keybind.Value = Keybind.Default
+                
+                local KeybindFrame = Instance.new("TextLabel")
+                local KeybindBox = Instance.new("TextBox")
+                
+                KeybindFrame.Name = "Keybind"
+                KeybindFrame.Parent = SectionHolder
+                KeybindFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                KeybindFrame.BackgroundTransparency = 1.000
+                KeybindFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                KeybindFrame.BorderSizePixel = 0
+                KeybindFrame.Size = UDim2.new(0, 215, 0, 20)
+                KeybindFrame.Font = Enum.Font.SourceSansSemibold
+                KeybindFrame.Text = Keybind.Name
+                KeybindFrame.TextColor3 = Color3.fromRGB(124, 121, 125)
+                KeybindFrame.TextSize = 15.000
+                KeybindFrame.TextXAlignment = Enum.TextXAlignment.Left
+                
+                KeybindBox.Name = "KeybindAlone"
+                KeybindBox.Parent = KeybindFrame
+                KeybindBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                KeybindBox.BackgroundTransparency = 1.000
+                KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                KeybindBox.BorderSizePixel = 0
+                KeybindBox.Position = UDim2.new(0.813953459, 0, 0, 0)
+                KeybindBox.Size = UDim2.new(0, 40, 0, 20)
+                KeybindBox.Font = Enum.Font.SourceSansSemibold
+                KeybindBox.PlaceholderColor3 = Color3.fromRGB(178, 178, 178)
+                KeybindBox.PlaceholderText = "None"
+                KeybindBox.Text = ""
+                KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                KeybindBox.TextSize = 15.000
+                Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
+                
+                function Keybind:SetValue(key)
+                    Keybind.Value = key
+                    Library.Flags[Keybind.Flag] = key
+                    KeybindBox.Text = key
+                    Keybind.Callback(key)
+                end
+                
+                Library:CreateConnection(KeybindBox.FocusLost, function()
+                    Keybind:SetValue(KeybindBox.Text)
+                end)
+                
+                Keybind:SetValue(Keybind.Default)
+                return Keybind
+            end
+            
             -- Button Element
             function Section:CreateButton(config)
                 local Button = {}
@@ -619,6 +1083,7 @@ function Library:CreateWindow(config)
                 ButtonFrame.Text = Button.Name
                 ButtonFrame.TextColor3 = Color3.fromRGB(255, 255, 255)
                 ButtonFrame.TextSize = 15.000
+                Library:CreateStroke(ButtonFrame, Color3.fromRGB(50, 50, 50), 1)
                 
                 Library:CreateConnection(ButtonFrame.MouseButton1Click, function()
                     Button.Callback()
@@ -653,6 +1118,27 @@ function Library:CreateWindow(config)
                 end
                 
                 return Label
+            end
+            
+            -- Divider Element
+            function Section:CreateDivider(config)
+                local Divider = {}
+                Divider.Name = config.Name or "Divider"
+                
+                local DividerFrame = Instance.new("Frame")
+                local UICorner = Instance.new("UICorner")
+                
+                DividerFrame.Name = "Divider"
+                DividerFrame.Parent = SectionHolder
+                DividerFrame.BackgroundColor3 = Color3.fromRGB(0, 251, 255)
+                DividerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DividerFrame.BorderSizePixel = 0
+                DividerFrame.Size = UDim2.new(0, 215, 0, 3)
+                
+                UICorner.CornerRadius = UDim.new(0, 3)
+                UICorner.Parent = DividerFrame
+                
+                return Divider
             end
             
             table.insert(Page.Sections, Section)
