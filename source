@@ -673,7 +673,7 @@ function Library:GetSectionMethods()
         CreateCorner(sliderFill, 2)
         
         -- Circular head (must be a button to get MouseButton1Down)
-        +local sliderHead = Instance.new("TextButton")
+        local sliderHead = Instance.new("TextButton")
         sliderHead.Name = "SliderHead"
             sliderHead.Parent = sliderFill
             sliderHead.AutoButtonColor = false    -- turn off default press highlight
