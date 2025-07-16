@@ -1,5 +1,5 @@
--- Complete Custom GUI Library
--- Based on your original GUI design with all elements
+-- Complete Custom GUI Library - FIXED VERSION
+-- Fixed dropdown Z-index, keybind resizing, and added keybind mode logic
 
 local Library = {}
 Library.__index = Library
@@ -19,6 +19,7 @@ Library.Connections = {}
 Library.Pages = {}
 Library.CurrentPage = nil
 Library.GUI = nil
+Library.OpenDropdowns = {} -- Track open dropdowns for Z-index management
 
 -- Utility Functions
 function Library:CreateConnection(signal, callback)
@@ -41,6 +42,29 @@ function Library:CreateStroke(parent, color, thickness)
     stroke.LineJoinMode = Enum.LineJoinMode.Round
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     return stroke
+end
+
+-- Dropdown Z-index management
+function Library:BringDropdownToFront(dropdown)
+    -- Close other dropdowns first
+    for i, openDropdown in pairs(self.OpenDropdowns) do
+        if openDropdown ~= dropdown and openDropdown.DropdownHolder.Visible then
+            openDropdown.DropdownHolder.Visible = false
+            openDropdown.Open = false
+        end
+    end
+    
+    -- Set this dropdown to highest Z-index
+    dropdown.DropdownHolder.ZIndex = 15
+    for _, child in pairs(dropdown.DropdownHolder:GetChildren()) do
+        if child:IsA("GuiObject") then
+            child.ZIndex = 16
+        end
+    end
+end
+
+function Library:RegisterDropdown(dropdown)
+    table.insert(self.OpenDropdowns, dropdown)
 end
 
 -- Main Library Functions
@@ -213,7 +237,7 @@ function Library:CreateWindow(config)
     KeybindModeFrame.Position = UDim2.new(0.351444304, 0, 0.550614119, 0)
     KeybindModeFrame.Size = UDim2.new(0, 98, 0, 68)
     KeybindModeFrame.Visible = false
-    KeybindModeFrame.ZIndex = 3
+    KeybindModeFrame.ZIndex = 20 -- High Z-index for mode selection
     Library:CreateStroke(KeybindModeFrame, Color3.fromRGB(50, 50, 50), 1)
 
     Frame_2.Parent = KeybindModeFrame
@@ -231,7 +255,7 @@ function Library:CreateWindow(config)
     TextButton.BorderSizePixel = 0
     TextButton.Position = UDim2.new(0, 0, 0.0399999991, 0)
     TextButton.Size = UDim2.new(0, 88, 0, 14)
-    TextButton.ZIndex = 3
+    TextButton.ZIndex = 21
     TextButton.Font = Enum.Font.SourceSansSemibold
     TextButton.Text = "Hold"
     TextButton.TextColor3 = Color3.fromRGB(253, 247, 255)
@@ -245,7 +269,7 @@ function Library:CreateWindow(config)
     TextButton_2.BorderSizePixel = 0
     TextButton_2.Position = UDim2.new(0, 0, 0.00722045917, 0)
     TextButton_2.Size = UDim2.new(0, 88, 0, 14)
-    TextButton_2.ZIndex = 3
+    TextButton_2.ZIndex = 21
     TextButton_2.Font = Enum.Font.SourceSansSemibold
     TextButton_2.Text = "Toggle"
     TextButton_2.TextColor3 = Color3.fromRGB(124, 121, 125)
@@ -259,7 +283,7 @@ function Library:CreateWindow(config)
     TextButton_3.BorderSizePixel = 0
     TextButton_3.Position = UDim2.new(0.0500000007, 0, 0.144117743, 0)
     TextButton_3.Size = UDim2.new(0, 88, 0, 14)
-    TextButton_3.ZIndex = 3
+    TextButton_3.ZIndex = 21
     TextButton_3.Font = Enum.Font.SourceSansSemibold
     TextButton_3.Text = "Always"
     TextButton_3.TextColor3 = Color3.fromRGB(124, 121, 125)
@@ -282,6 +306,7 @@ function Library:CreateWindow(config)
     TextLabel_4.TextColor3 = Color3.fromRGB(66, 255, 249)
     TextLabel_4.TextSize = 14.000
     TextLabel_4.TextXAlignment = Enum.TextXAlignment.Left
+    TextLabel_4.ZIndex = 21
 
     Frame_3.Parent = TextLabel_4
     Frame_3.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
@@ -324,6 +349,20 @@ function Library:CreateWindow(config)
     Library:CreateConnection(UserInputService.InputEnded, function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
+        end
+    end)
+    
+    -- Close keybind mode frame when clicking elsewhere
+    Library:CreateConnection(UserInputService.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and KeybindModeFrame.Visible then
+            local mousePos = Vector2.new(Mouse.X, Mouse.Y)
+            local framePos = KeybindModeFrame.AbsolutePosition
+            local frameSize = KeybindModeFrame.AbsoluteSize
+            
+            if mousePos.X < framePos.X or mousePos.X > framePos.X + frameSize.X or
+               mousePos.Y < framePos.Y or mousePos.Y > framePos.Y + frameSize.Y then
+                KeybindModeFrame.Visible = false
+            end
         end
     end)
     
@@ -520,6 +559,42 @@ function Library:CreateWindow(config)
             Section.Frame = SectionFrame
             Section.SectionHolder = SectionHolder
             
+            -- Function to get proper keybind size and position
+            local function getKeybindSizeAndPosition(text, containerWidth, rightOffset)
+                local textService = game:GetService("TextService")
+                local textSize = textService:GetTextSize(text, 15, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
+                local minWidth = 20
+                local maxWidth = 60
+                local calculatedWidth = math.clamp(textSize.X + 10, minWidth, maxWidth)
+                
+                local xPosition = containerWidth - calculatedWidth - rightOffset
+                
+                return calculatedWidth, xPosition
+            end
+            
+            -- Keybind mode logic handler
+            local function handleKeybindMode(keybind, key, isPressed)
+                if not key or key == "None" then return end
+                
+                if keybind.Mode == "Hold" then
+                    if isPressed then
+                        keybind.Callback(true)
+                    else
+                        keybind.Callback(false)
+                    end
+                elseif keybind.Mode == "Toggle" then
+                    if isPressed then
+                        keybind.Value = not keybind.Value
+                        Library.Flags[keybind.Flag] = keybind.Value
+                        keybind.Callback(keybind.Value)
+                    end
+                elseif keybind.Mode == "Always" then
+                    if isPressed then
+                        keybind.Callback(true)
+                    end
+                end
+            end
+            
             -- Toggle Element
             function Section:CreateToggle(config)
                 local Toggle = {}
@@ -650,6 +725,7 @@ function Library:CreateWindow(config)
                     Keybind.Value = Keybind.Default
                     Keybind.Mode = "Toggle"
                     Keybind.Listening = false
+                    Keybind.Toggle = Toggle -- Reference to parent toggle
                     
                     local KeybindBox = Instance.new("TextButton")
                     
@@ -714,14 +790,56 @@ function Library:CreateWindow(config)
                             end
                         end
                         
-                        KeybindBox.Text = displayName
+                        -- Fixed keybind sizing and positioning
+                        local calculatedWidth, xPosition = getKeybindSizeAndPosition(displayName, 216, 5)
                         
-                        -- Auto-scale size based on text
-                        local textSize = game:GetService("TextService"):GetTextSize(displayName, 15, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
-                        KeybindBox.Size = UDim2.new(0, math.max(20, textSize.X + -10), 0, 20)
+                        KeybindBox.Text = displayName
+                        KeybindBox.Size = UDim2.new(0, calculatedWidth, 0, 20)
+                        KeybindBox.Position = UDim2.new(0, xPosition - 165, 0, 0) -- Adjust for toggle position
                         
                         Keybind.Callback(key)
                     end
+                    
+                    -- Global keybind handling
+                    Library:CreateConnection(UserInputService.InputBegan, function(input, gameProcessed)
+                        if gameProcessed or Keybind.Listening then return end
+                        
+                        local pressedKey = nil
+                        if input.UserInputType == Enum.UserInputType.Keyboard then
+                            pressedKey = input.KeyCode
+                        elseif input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                               input.UserInputType == Enum.UserInputType.MouseButton2 or 
+                               input.UserInputType == Enum.UserInputType.MouseButton3 then
+                            pressedKey = input.UserInputType
+                        end
+                        
+                        if pressedKey == Keybind.Value then
+                            if Keybind.Mode == "Toggle" then
+                                Keybind.Toggle:SetValue(not Keybind.Toggle.Value)
+                            elseif Keybind.Mode == "Hold" then
+                                Keybind.Toggle:SetValue(true)
+                            elseif Keybind.Mode == "Always" then
+                                Keybind.Toggle:SetValue(true)
+                            end
+                        end
+                    end)
+                    
+                    Library:CreateConnection(UserInputService.InputEnded, function(input, gameProcessed)
+                        if gameProcessed or Keybind.Listening then return end
+                        
+                        local releasedKey = nil
+                        if input.UserInputType == Enum.UserInputType.Keyboard then
+                            releasedKey = input.KeyCode
+                        elseif input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                               input.UserInputType == Enum.UserInputType.MouseButton2 or 
+                               input.UserInputType == Enum.UserInputType.MouseButton3 then
+                            releasedKey = input.UserInputType
+                        end
+                        
+                        if releasedKey == Keybind.Value and Keybind.Mode == "Hold" then
+                            Keybind.Toggle:SetValue(false)
+                        end
+                    end)
                     
                     -- Left click to bind key
                     Library:CreateConnection(KeybindBox.MouseButton1Click, function()
@@ -758,8 +876,18 @@ function Library:CreateWindow(config)
                         Window.KeybindModeFrame.Visible = true
                         Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
                         
+                        -- Update button colors based on current mode
                         for i, btn in pairs(Window.KeybindModeButtons) do
-                            Library:CreateConnection(btn.MouseButton1Click, function()
+                            if btn.Text == Keybind.Mode then
+                                btn.TextColor3 = Color3.fromRGB(253, 247, 255)
+                            else
+                                btn.TextColor3 = Color3.fromRGB(124, 121, 125)
+                            end
+                        end
+                        
+                        local connections = {}
+                        for i, btn in pairs(Window.KeybindModeButtons) do
+                            connections[i] = btn.MouseButton1Click:Connect(function()
                                 Keybind.Mode = btn.Text
                                 Window.KeybindModeFrame.Visible = false
                                 
@@ -770,6 +898,11 @@ function Library:CreateWindow(config)
                                     else
                                         b.TextColor3 = Color3.fromRGB(124, 121, 125)
                                     end
+                                end
+                                
+                                -- Disconnect all connections
+                                for _, conn in pairs(connections) do
+                                    conn:Disconnect()
                                 end
                             end)
                         end
@@ -989,6 +1122,13 @@ function Library:CreateWindow(config)
                 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 UIListLayout.Padding = UDim.new(0, 1)
                 
+                -- Store dropdown reference
+                Dropdown.DropdownHolder = DropdownHolder
+                Dropdown.DropdownButton = DropdownButton
+                
+                -- Register this dropdown for Z-index management
+                Library:RegisterDropdown(Dropdown)
+                
                 function Dropdown:SetValue(value)
                     Dropdown.Value = value
                     Library.Flags[Dropdown.Flag] = value
@@ -1034,7 +1174,7 @@ function Library:CreateWindow(config)
                         OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
                         OptionLabel.TextSize = 14.000
                         OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
-                        OptionLabel.ZIndex = 11
+                        OptionLabel.ZIndex = 16 -- Higher than dropdown holder
                         
                         -- Check if this option is selected and update appearance
                         local isSelected = false
@@ -1094,6 +1234,11 @@ function Library:CreateWindow(config)
                 Library:CreateConnection(DropdownButton.MouseButton1Click, function()
                     Dropdown.Open = not Dropdown.Open
                     DropdownHolder.Visible = Dropdown.Open
+                    
+                    if Dropdown.Open then
+                        -- Bring this dropdown to front when opened
+                        Library:BringDropdownToFront(Dropdown)
+                    end
                 end)
                 
                 Dropdown:Refresh()
@@ -1170,6 +1315,7 @@ function Library:CreateWindow(config)
                 Keybind.Callback = config.Callback or function() end
                 Keybind.Value = Keybind.Default
                 Keybind.Listening = false
+                Keybind.Mode = "Toggle"
                 
                 local KeybindFrame = Instance.new("TextLabel")
                 local KeybindBox = Instance.new("TextButton")
@@ -1248,18 +1394,50 @@ function Library:CreateWindow(config)
                         end
                     end
                     
+                    -- Fixed keybind sizing and positioning for standalone keybind
+                    local calculatedWidth, xPosition = getKeybindSizeAndPosition(displayName, 215, 0)
+                    
                     KeybindBox.Text = displayName
-                    
-                    -- Auto-scale size based on text
-                    local textSize = game:GetService("TextService"):GetTextSize(displayName, 15, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
-                    KeybindBox.Size = UDim2.new(0, math.max(40, textSize.X + -10), 0, 20)
-                    
-                    -- Adjust position to keep it right-aligned
-                    local newPosX = 215 - KeybindBox.Size.X.Offset
-                    KeybindBox.Position = UDim2.new(0, newPosX, 0, 0)
+                    KeybindBox.Size = UDim2.new(0, calculatedWidth, 0, 20)
+                    KeybindBox.Position = UDim2.new(0, xPosition, 0, 0)
                     
                     Keybind.Callback(key)
                 end
+                
+                -- Global keybind handling for standalone keybind
+                Library:CreateConnection(UserInputService.InputBegan, function(input, gameProcessed)
+                    if gameProcessed or Keybind.Listening then return end
+                    
+                    local pressedKey = nil
+                    if input.UserInputType == Enum.UserInputType.Keyboard then
+                        pressedKey = input.KeyCode
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                           input.UserInputType == Enum.UserInputType.MouseButton2 or 
+                           input.UserInputType == Enum.UserInputType.MouseButton3 then
+                        pressedKey = input.UserInputType
+                    end
+                    
+                    if pressedKey == Keybind.Value then
+                        handleKeybindMode(Keybind, pressedKey, true)
+                    end
+                end)
+                
+                Library:CreateConnection(UserInputService.InputEnded, function(input, gameProcessed)
+                    if gameProcessed or Keybind.Listening then return end
+                    
+                    local releasedKey = nil
+                    if input.UserInputType == Enum.UserInputType.Keyboard then
+                        releasedKey = input.KeyCode
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                           input.UserInputType == Enum.UserInputType.MouseButton2 or 
+                           input.UserInputType == Enum.UserInputType.MouseButton3 then
+                        releasedKey = input.UserInputType
+                    end
+                    
+                    if releasedKey == Keybind.Value and Keybind.Mode == "Hold" then
+                        handleKeybindMode(Keybind, releasedKey, false)
+                    end
+                end)
                 
                 Library:CreateConnection(KeybindBox.MouseButton1Click, function()
                     if not Keybind.Listening then
@@ -1285,6 +1463,43 @@ function Library:CreateWindow(config)
                                 KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
                                 Keybind.Listening = false
                                 connection:Disconnect()
+                            end
+                        end)
+                    end
+                end)
+                
+                -- Right click for mode selection on standalone keybind
+                Library:CreateConnection(KeybindBox.MouseButton2Click, function()
+                    Window.KeybindModeFrame.Visible = true
+                    Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
+                    
+                    -- Update button colors based on current mode
+                    for i, btn in pairs(Window.KeybindModeButtons) do
+                        if btn.Text == Keybind.Mode then
+                            btn.TextColor3 = Color3.fromRGB(253, 247, 255)
+                        else
+                            btn.TextColor3 = Color3.fromRGB(124, 121, 125)
+                        end
+                    end
+                    
+                    local connections = {}
+                    for i, btn in pairs(Window.KeybindModeButtons) do
+                        connections[i] = btn.MouseButton1Click:Connect(function()
+                            Keybind.Mode = btn.Text
+                            Window.KeybindModeFrame.Visible = false
+                            
+                            -- Update button colors
+                            for j, b in pairs(Window.KeybindModeButtons) do
+                                if b == btn then
+                                    b.TextColor3 = Color3.fromRGB(253, 247, 255)
+                                else
+                                    b.TextColor3 = Color3.fromRGB(124, 121, 125)
+                                end
+                            end
+                            
+                            -- Disconnect all connections
+                            for _, conn in pairs(connections) do
+                                conn:Disconnect()
                             end
                         end)
                     end
