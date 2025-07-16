@@ -1265,7 +1265,7 @@ function Library:CreateWindow(config)
                     if not Keybind.Listening then
                         Keybind.Listening = true
                         KeybindBox.Text = "..."
-                        KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 0)
+                        KeybindBox.TextColor3 = Color3.fromRGB(124, 121, 125)
                         
                         local connection
                         connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
