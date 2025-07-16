@@ -81,7 +81,8 @@ function Library:CreateWindow(config)
     coresploit.Name = "coresploit"
     coresploit.Parent = LocalPlayer:WaitForChild("PlayerGui")
     coresploit.Enabled = true
-    coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
 
     Background.Name = "Background"
     Background.Parent = coresploit
