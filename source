@@ -89,6 +89,25 @@ function Library:CreateWindow(config)
     overlay.ZIndexBehavior = Enum.ZIndexBehavior.Global
     overlay.DisplayOrder   = 1   -- sits above your main GUI
     Library.OverlayGui     = overlay
+    
+    -- full-screen invisible button to catch clicks
+    local mask = Instance.new("TextButton")
+    mask.Name = "DropdownMask"
+    mask.Parent = overlay
+    mask.Size = UDim2.new(1,0,1,0)
+    mask.BackgroundTransparency = 1
+    mask.AutoButtonColor = false
+    mask.Visible = false
+    -- clicking outside closes all open dropdowns
+    mask.MouseButton1Click:Connect(function()
+        for _, dd in ipairs(Library.OpenDropdowns or {}) do
+            dd:Close()
+        end
+    end)
+    Library.Mask = mask
+    
+    -- track open dropdowns
+    Library.OpenDropdowns = {}
 
     Background.Name = "Background"
     Background.Parent = coresploit
@@ -325,6 +344,13 @@ function Library:CreateWindow(config)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             Background.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            
+            -- reposition any open dropdowns
+            for _, dd in ipairs(Library.OpenDropdowns or {}) do
+                local p = dd.Button.AbsolutePosition
+                local s = dd.Button.AbsoluteSize
+                dd.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y)
+            end
         end
     end)
     
@@ -1098,27 +1124,51 @@ function Library:CreateWindow(config)
                     end
                 end
                 
-                Library:CreateConnection(DropdownButton.MouseButton1Click, function()
-                    Dropdown.Open = not Dropdown.Open
-                    if Dropdown.Open then
-                        -- 1) reparent to the overlay:
-                        DropdownHolder.Parent = Library.OverlayGui
+                -- give dropdown object helper methods
+                function Dropdown:OpenMenu()
+                    Dropdown.Open = true
+                    -- mask on
+                    Library.Mask.Visible = true
+                    -- reparent & position
+                    DropdownHolder.Parent = Library.OverlayGui
+                    DropdownHolder.ZIndex = 50
+                    local p = DropdownButton.AbsolutePosition
+                    local s = DropdownButton.AbsoluteSize
+                    DropdownHolder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y)
+                    DropdownHolder.Visible = true
+                    -- track it
+                    table.insert(Library.OpenDropdowns, Dropdown)
+                end
                 
-                        -- 2) position absolutely under the button:
-                        local absPos = DropdownButton.AbsolutePosition
-                        local absSize = DropdownButton.AbsoluteSize
-                        DropdownHolder.Position = UDim2.new(0,
-                            absPos.X,
-                            0,
-                            absPos.Y + absSize.Y
-                        )
-                    else
-                        -- close: send it back under its section so Refresh()/cleanup still works
-                        DropdownHolder.Parent = SectionHolder
-                        DropdownHolder.Position = UDim2.new(0, 0, 1.35, 0)
+                function Dropdown:Close()
+                    Dropdown.Open = false
+                    -- mask off if last
+                    for i,d in ipairs(Library.OpenDropdowns) do
+                        if d == Dropdown then
+                            table.remove(Library.OpenDropdowns,i)
+                            break
+                        end
                     end
+                    if #Library.OpenDropdowns == 0 then
+                        Library.Mask.Visible = false
+                    end
+                    -- return to its section
+                    DropdownHolder.Parent = SectionHolder
+                    DropdownHolder.Position = UDim2.new(0, 0, 1.35, 0)
+                    DropdownHolder.Visible = false
+                end
                 
-                    DropdownHolder.Visible = Dropdown.Open
+                -- store references for drag handler
+                Dropdown.Button = DropdownButton
+                Dropdown.Holder = DropdownHolder
+                
+                -- hook the button
+                Library:CreateConnection(DropdownButton.MouseButton1Click, function()
+                    if Dropdown.Open then
+                        Dropdown:Close()
+                    else
+                        Dropdown:OpenMenu()
+                    end
                 end)
 
                 Dropdown:Refresh()
