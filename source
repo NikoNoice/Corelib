@@ -841,7 +841,7 @@ function Library:CreateWindow(config)
                 local Dropdown = {}
                 Dropdown.Name = config.Name or "Dropdown"
                 Dropdown.Options = config.Options or {"Option1", "Option2", "Option3"}
-                Dropdown.Default = config.Default or "None"
+                Dropdown.Default = config.Default or (config.Multi and {} or "None")
                 Dropdown.Flag = config.Flag or Dropdown.Name
                 Dropdown.Callback = config.Callback or function() end
                 Dropdown.Value = Dropdown.Default
@@ -863,7 +863,7 @@ function Library:CreateWindow(config)
                 DropdownButton.Size = UDim2.new(0, 215, 0, 20)
                 DropdownButton.ZIndex = 2
                 DropdownButton.Font = Enum.Font.SourceSansSemibold
-                DropdownButton.Text = " " .. Dropdown.Default
+                DropdownButton.Text = " " .. (Dropdown.Multi and table.concat(Dropdown.Default, ", ") or tostring(Dropdown.Default))
                 DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                 DropdownButton.TextSize = 15.000
                 DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
@@ -905,9 +905,17 @@ function Library:CreateWindow(config)
                     Library.Flags[Dropdown.Flag] = value
                     
                     if Dropdown.Multi then
-                        DropdownButton.Text = " " .. table.concat(value, ", ")
+                        -- Ensure value is a table for multi-select
+                        if type(value) ~= "table" then
+                            value = {value}
+                        end
+                        DropdownButton.Text = " " .. (#value > 0 and table.concat(value, ", ") or "None")
                     else
-                        DropdownButton.Text = " " .. value
+                        -- Ensure value is a string for single-select
+                        if type(value) == "table" then
+                            value = value[1] or "None"
+                        end
+                        DropdownButton.Text = " " .. tostring(value)
                     end
                     
                     Dropdown.Callback(value)
@@ -942,6 +950,11 @@ function Library:CreateWindow(config)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                                 if Dropdown.Multi then
                                     local selected = Dropdown.Value or {}
+                                    -- Ensure selected is a table
+                                    if type(selected) ~= "table" then
+                                        selected = {}
+                                    end
+                                    
                                     local index = table.find(selected, option)
                                     if index then
                                         table.remove(selected, index)
