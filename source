@@ -1252,7 +1252,7 @@ function Library:CreateWindow(config)
                     
                     -- Auto-scale size based on text
                     local textSize = game:GetService("TextService"):GetTextSize(displayName, 15, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
-                    KeybindBox.Size = UDim2.new(0, math.max(40, textSize.X + 10), 0, 20)
+                    KeybindBox.Size = UDim2.new(0, math.max(40, textSize.X + -10), 0, 20)
                     
                     -- Adjust position to keep it right-aligned
                     local newPosX = 215 - KeybindBox.Size.X.Offset
