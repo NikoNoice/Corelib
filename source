@@ -661,7 +661,9 @@ function Library:CreateWindow(config)
                     Keybind.Mode = "Toggle"
                     Keybind.Listening = false
                     
+                    local TextService = game:GetService("TextService")
                     local KeybindBox = Instance.new("TextButton")
+                    local MIN_W = 20
                     
                     KeybindBox.Name = "KeybindBinded"
                     KeybindBox.Parent = ToggleButton
@@ -669,8 +671,9 @@ function Library:CreateWindow(config)
                     KeybindBox.BackgroundTransparency = 1.000
                     KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
                     KeybindBox.BorderSizePixel = 0
-                    KeybindBox.Position = UDim2.new(10.8000002, 0, 0, 0)
-                    KeybindBox.Size = UDim2.new(0, 20, 0, 20)
+                    KeybindBox.AnchorPoint = Vector2.new(1, 0) -- Anchor to top-right
+                    KeybindBox.Position = UDim2.new(1, 195, 0, 0) -- Pin to right side with margin
+                    KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
                     KeybindBox.Font = Enum.Font.SourceSansSemibold
                     KeybindBox.Text = Keybind.Default
                     KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -726,9 +729,13 @@ function Library:CreateWindow(config)
                         
                         KeybindBox.Text = displayName
                         
-                        -- Auto-scale size based on text
-                        local textSize = game:GetService("TextService"):GetTextSize(displayName, 15, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
-                        KeybindBox.Size = UDim2.new(0, math.max(20, textSize.X + -10), 0, 20)
+                        -- Auto-scale size based on text, growing from the left
+                        local fontSize = 15
+                        local font = Enum.Font.SourceSansSemibold
+                        local padding = 16 -- 8px on each side
+                        local bounds = TextService:GetTextSize(displayName, fontSize, font, Vector2.new(1e5, 20))
+                        local newW = math.max(MIN_W, bounds.X + padding)
+                        KeybindBox.Size = UDim2.new(0, newW, 0, 20)
                         
                         Keybind.Callback(key)
                     end
@@ -1242,8 +1249,10 @@ function Library:CreateWindow(config)
                 Keybind.Value = Keybind.Default
                 Keybind.Listening = false
                 
+                local TextService = game:GetService("TextService")
                 local KeybindFrame = Instance.new("TextLabel")
                 local KeybindBox = Instance.new("TextButton")
+                local MIN_W = 40
                 
                 KeybindFrame.Name = "Keybind"
                 KeybindFrame.Parent = SectionHolder
@@ -1264,8 +1273,9 @@ function Library:CreateWindow(config)
                 KeybindBox.BackgroundTransparency = 1.000
                 KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 KeybindBox.BorderSizePixel = 0
-                KeybindBox.Position = UDim2.new(0.813953459, 0, 0, 0)
-                KeybindBox.Size = UDim2.new(0, 40, 0, 20)
+                KeybindBox.AnchorPoint = Vector2.new(1, 0) -- Anchor to top-right
+                KeybindBox.Position = UDim2.new(1, -5, 0, 0) -- Pin to right side with 5px margin
+                KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
                 KeybindBox.Font = Enum.Font.SourceSansSemibold
                 KeybindBox.Text = Keybind.Default
                 KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1321,13 +1331,13 @@ function Library:CreateWindow(config)
                     
                     KeybindBox.Text = displayName
                     
-                    -- Auto-scale size based on text
-                    local textSize = game:GetService("TextService"):GetTextSize(displayName, 15, Enum.Font.SourceSansSemibold, Vector2.new(200, 20))
-                    KeybindBox.Size = UDim2.new(0, math.max(40, textSize.X + -10), 0, 20)
-                    
-                    -- Adjust position to keep it right-aligned
-                    local newPosX = 215 - KeybindBox.Size.X.Offset
-                    KeybindBox.Position = UDim2.new(0, newPosX, 0, 0)
+                    -- Auto-scale size based on text, growing from the left
+                    local fontSize = 15
+                    local font = Enum.Font.SourceSansSemibold
+                    local padding = 16 -- 8px on each side
+                    local bounds = TextService:GetTextSize(displayName, fontSize, font, Vector2.new(1e5, 20))
+                    local newW = math.max(MIN_W, bounds.X + padding)
+                    KeybindBox.Size = UDim2.new(0, newW, 0, 20)
                     
                     Keybind.Callback(key)
                 end
