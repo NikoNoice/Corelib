@@ -43,6 +43,563 @@ function Library:CreateStroke(parent, color, thickness)
     return stroke
 end
 
+-- Add HSV to RGB conversion
+function Library:HSVtoRGB(h, s, v)
+    local r, g, b
+    local i = math.floor(h * 6)
+    local f = h * 6 - i
+    local p = v * (1 - s)
+    local q = v * (1 - f * s)
+    local t = v * (1 - (1 - f) * s)
+    
+    local imod = i % 6
+    if imod == 0 then
+        r, g, b = v, t, p
+    elseif imod == 1 then
+        r, g, b = q, v, p
+    elseif imod == 2 then
+        r, g, b = p, v, t
+    elseif imod == 3 then
+        r, g, b = p, q, v
+    elseif imod == 4 then
+        r, g, b = t, p, v
+    elseif imod == 5 then
+        r, g, b = v, p, q
+    end
+    
+    return r, g, b
+end
+
+-- Add RGB to HSV conversion
+function Library:RGBtoHSV(r, g, b)
+    local max = math.max(r, g, b)
+    local min = math.min(r, g, b)
+    local h, s, v = 0, 0, max
+    
+    local d = max - min
+    s = max == 0 and 0 or d / max
+    
+    if max == min then
+        h = 0
+    else
+        if max == r then
+            h = (g - b) / d + (g < b and 6 or 0)
+        elseif max == g then
+            h = (b - r) / d + 2
+        elseif max == b then
+            h = (r - g) / d + 4
+        end
+        h = h / 6
+    end
+    
+    return h, s, v
+end
+
+-- Create colorpicker window
+function Library:CreateColorpickerWindow(colorpicker)
+    local ColorpickerFrame = Instance.new("Frame")
+    local UICorner = Instance.new("UICorner")
+    local Colorpicker = Instance.new("Frame")
+    local UICorner_2 = Instance.new("UICorner")
+    local HueImage = Instance.new("ImageLabel")
+    local UICorner_3 = Instance.new("UICorner")
+    local SaturationImage = Instance.new("ImageLabel")
+    local UICorner_4 = Instance.new("UICorner")
+    local ColorpickerHead = Instance.new("Frame")
+    local UICorner_5 = Instance.new("UICorner")
+    local HueSlider = Instance.new("Frame")
+    local UICorner_6 = Instance.new("UICorner")
+    local HueGradient = Instance.new("UIGradient")
+    local HueHead = Instance.new("Frame")
+    local UICorner_7 = Instance.new("UICorner")
+    local List = Instance.new("Frame")
+    local UIListLayout = Instance.new("UIListLayout")
+    local RainbowToggle = Instance.new("TextButton")
+    local UICorner_8 = Instance.new("UICorner")
+    local RainbowTitle = Instance.new("TextLabel")
+    local RainbowCheckmark = Instance.new("ImageLabel")
+    local SpeedSlider = Instance.new("TextLabel")
+    local SpeedSliderBar = Instance.new("Frame")
+    local SpeedFiller = Instance.new("Frame")
+    local UICorner_9 = Instance.new("UICorner")
+    local SpeedHead = Instance.new("TextButton")
+    local UICorner_10 = Instance.new("UICorner")
+    local SpeedValue = Instance.new("TextBox")
+    local CopyButton = Instance.new("TextButton")
+    local PasteButton = Instance.new("TextButton")
+    local CloseButton = Instance.new("TextButton")
+    
+    -- Properties
+    ColorpickerFrame.Name = "ColorpickerFrame"
+    ColorpickerFrame.Parent = Library.OverlayGui
+    ColorpickerFrame.BackgroundColor3 = Color3.fromRGB(17, 16, 24)
+    ColorpickerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ColorpickerFrame.BorderSizePixel = 0
+    ColorpickerFrame.Position = UDim2.new(0, 500, 0, 100)
+    ColorpickerFrame.Size = UDim2.new(0, 321, 0, 225)
+    ColorpickerFrame.ZIndex = 100
+    
+    UICorner.CornerRadius = UDim.new(0, 3)
+    UICorner.Parent = ColorpickerFrame
+    
+    -- Add stroke to colorpicker frame
+    Library:CreateStroke(ColorpickerFrame, Color3.fromRGB(50, 50, 50), 1)
+    
+    Colorpicker.Name = "Colorpicker"
+    Colorpicker.Parent = ColorpickerFrame
+    Colorpicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Colorpicker.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Colorpicker.BorderSizePixel = 0
+    Colorpicker.Position = UDim2.new(0.034, 0, 0.059, 0)
+    Colorpicker.Size = UDim2.new(0, 150, 0, 150)
+    
+    UICorner_2.CornerRadius = UDim.new(0, 3)
+    UICorner_2.Parent = Colorpicker
+    
+    HueImage.Name = "HueImage"
+    HueImage.Parent = Colorpicker
+    HueImage.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    HueImage.BackgroundTransparency = 1.000
+    HueImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    HueImage.BorderSizePixel = 0
+    HueImage.Size = UDim2.new(1, 0, 1, 0)
+    HueImage.Image = "rbxassetid://6976876787"
+    HueImage.ImageColor3 = Color3.fromRGB(255, 0, 0)
+    
+    UICorner_3.CornerRadius = UDim.new(0, 3)
+    UICorner_3.Parent = HueImage
+    
+    SaturationImage.Name = "SaturationImage"
+    SaturationImage.Parent = Colorpicker
+    SaturationImage.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    SaturationImage.BackgroundTransparency = 1.000
+    SaturationImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SaturationImage.BorderSizePixel = 0
+    SaturationImage.Size = UDim2.new(1, 0, 1, 0)
+    SaturationImage.ZIndex = 2
+    SaturationImage.Image = "rbxassetid://6941137543"
+    SaturationImage.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    
+    UICorner_4.CornerRadius = UDim.new(0, 3)
+    UICorner_4.Parent = SaturationImage
+    
+    ColorpickerHead.Name = "ColorpickerHead"
+    ColorpickerHead.Parent = Colorpicker
+    ColorpickerHead.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ColorpickerHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ColorpickerHead.BorderSizePixel = 0
+    ColorpickerHead.Position = UDim2.new(0.5, 0, 0.5, 0)
+    ColorpickerHead.Size = UDim2.new(0, 12, 0, 12)
+    ColorpickerHead.ZIndex = 3
+    
+    UICorner_5.CornerRadius = UDim.new(1, 0)
+    UICorner_5.Parent = ColorpickerHead
+    
+    -- Add stroke to colorpicker head
+    Library:CreateStroke(ColorpickerHead, Color3.fromRGB(0, 0, 0), 2)
+    
+    -- Hue Slider
+    HueSlider.Name = "HueSlider"
+    HueSlider.Parent = ColorpickerFrame
+    HueSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    HueSlider.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    HueSlider.BorderSizePixel = 0
+    HueSlider.Position = UDim2.new(0.034, 0, 0.82, 0)
+    HueSlider.Size = UDim2.new(0, 150, 0, 10)
+    
+    UICorner_6.CornerRadius = UDim.new(0, 3)
+    UICorner_6.Parent = HueSlider
+    
+    HueGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
+        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+        ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
+        ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0))
+    }
+    HueGradient.Parent = HueSlider
+    
+    HueHead.Name = "HueHead"
+    HueHead.Parent = HueSlider
+    HueHead.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    HueHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    HueHead.BorderSizePixel = 0
+    HueHead.Position = UDim2.new(0, 0, -0.3, 0)
+    HueHead.Size = UDim2.new(0, 4, 0, 16)
+    HueHead.ZIndex = 3
+    
+    UICorner_7.CornerRadius = UDim.new(0, 2)
+    UICorner_7.Parent = HueHead
+    
+    -- Add stroke to hue head
+    Library:CreateStroke(HueHead, Color3.fromRGB(0, 0, 0), 1)
+    
+    -- List for toggles and sliders
+    List.Name = "List"
+    List.Parent = ColorpickerFrame
+    List.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    List.BackgroundTransparency = 1.000
+    List.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    List.BorderSizePixel = 0
+    List.Position = UDim2.new(0.536, 0, 0.057, 0)
+    List.Size = UDim2.new(0, 136, 0, 100)
+    
+    UIListLayout.Parent = List
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Padding = UDim.new(0, 7)
+    
+    -- Rainbow Toggle
+    RainbowToggle.Name = "RainbowToggle"
+    RainbowToggle.Parent = List
+    RainbowToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    RainbowToggle.BackgroundTransparency = 1.000
+    RainbowToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    RainbowToggle.BorderSizePixel = 0
+    RainbowToggle.Size = UDim2.new(0, 18, 0, 18)
+    RainbowToggle.ZIndex = 4
+    RainbowToggle.Font = Enum.Font.SourceSans
+    RainbowToggle.Text = ""
+    RainbowToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
+    RainbowToggle.TextSize = 14.000
+    
+    UICorner_8.CornerRadius = UDim.new(0, 3)
+    UICorner_8.Parent = RainbowToggle
+    
+    -- Add stroke to rainbow toggle
+    Library:CreateStroke(RainbowToggle, Color3.fromRGB(50, 50, 50), 1)
+    
+    RainbowTitle.Name = "RainbowTitle"
+    RainbowTitle.Parent = RainbowToggle
+    RainbowTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    RainbowTitle.BackgroundTransparency = 1.000
+    RainbowTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    RainbowTitle.BorderSizePixel = 0
+    RainbowTitle.Position = UDim2.new(1.461, 0, -0.056, 0)
+    RainbowTitle.Size = UDim2.new(0, 82, 0, 20)
+    RainbowTitle.Font = Enum.Font.SourceSansSemibold
+    RainbowTitle.Text = "Rainbow"
+    RainbowTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
+    RainbowTitle.TextSize = 15.000
+    RainbowTitle.TextXAlignment = Enum.TextXAlignment.Left
+    
+    RainbowCheckmark.Name = "RainbowCheckmark"
+    RainbowCheckmark.Parent = RainbowToggle
+    RainbowCheckmark.BackgroundTransparency = 1.000
+    RainbowCheckmark.BorderSizePixel = 0
+    RainbowCheckmark.Position = UDim2.new(0.111, 0, 0.111, 0)
+    RainbowCheckmark.Size = UDim2.new(0, 13, 0, 13)
+    RainbowCheckmark.Image = "http://www.roblox.com/asset/?id=6031094667"
+    RainbowCheckmark.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    RainbowCheckmark.Visible = false
+    
+    -- Speed Slider
+    SpeedSlider.Name = "SpeedSlider"
+    SpeedSlider.Parent = List
+    SpeedSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SpeedSlider.BackgroundTransparency = 1.000
+    SpeedSlider.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedSlider.BorderSizePixel = 0
+    SpeedSlider.Size = UDim2.new(0, 136, 0, 32)
+    SpeedSlider.Font = Enum.Font.SourceSansSemibold
+    SpeedSlider.Text = "Speed"
+    SpeedSlider.TextColor3 = Color3.fromRGB(124, 121, 125)
+    SpeedSlider.TextSize = 15.000
+    SpeedSlider.TextXAlignment = Enum.TextXAlignment.Left
+    SpeedSlider.TextYAlignment = Enum.TextYAlignment.Top
+    
+    SpeedSliderBar.Name = "SpeedSliderBar"
+    SpeedSliderBar.Parent = SpeedSlider
+    SpeedSliderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SpeedSliderBar.BackgroundTransparency = 1.000
+    SpeedSliderBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedSliderBar.BorderSizePixel = 0
+    SpeedSliderBar.Position = UDim2.new(0, 0, 0.8, 0)
+    SpeedSliderBar.Size = UDim2.new(0, 120, 0, 2)
+    
+    -- Add stroke to speed slider bar
+    Library:CreateStroke(SpeedSliderBar, Color3.fromRGB(50, 50, 50), 1)
+    
+    SpeedFiller.Name = "SpeedFiller"
+    SpeedFiller.Parent = SpeedSliderBar
+    SpeedFiller.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+    SpeedFiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedFiller.BorderSizePixel = 0
+    SpeedFiller.Position = UDim2.new(0, 0, -2, 0)
+    SpeedFiller.Size = UDim2.new(0, 60, 0, 4)
+    SpeedFiller.ZIndex = 2
+    
+    UICorner_9.CornerRadius = UDim.new(0, 2)
+    UICorner_9.Parent = SpeedFiller
+    
+    SpeedHead.Name = "SpeedHead"
+    SpeedHead.Parent = SpeedFiller
+    SpeedHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+    SpeedHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedHead.BorderSizePixel = 0
+    SpeedHead.Position = UDim2.new(0.9, 0, -0.75, 0)
+    SpeedHead.Size = UDim2.new(0, 10, 0, 10)
+    SpeedHead.ZIndex = 2
+    SpeedHead.Font = Enum.Font.SourceSans
+    SpeedHead.Text = ""
+    SpeedHead.TextColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedHead.TextSize = 14.000
+    
+    UICorner_10.CornerRadius = UDim.new(1, 0)
+    UICorner_10.Parent = SpeedHead
+    
+    -- Add stroke to speed head
+    Library:CreateStroke(SpeedHead, Color3.fromRGB(50, 50, 50), 1)
+    
+    SpeedValue.Name = "SpeedValue"
+    SpeedValue.Parent = SpeedSlider
+    SpeedValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SpeedValue.BackgroundTransparency = 1.000
+    SpeedValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedValue.BorderSizePixel = 0
+    SpeedValue.Position = UDim2.new(0.9, 0, 0, 0)
+    SpeedValue.Size = UDim2.new(0, 30, 0, 19)
+    SpeedValue.Font = Enum.Font.SourceSansSemibold
+    SpeedValue.Text = "5"
+    SpeedValue.TextColor3 = Color3.fromRGB(111, 108, 112)
+    SpeedValue.TextSize = 16.000
+    SpeedValue.TextXAlignment = Enum.TextXAlignment.Right
+    
+    -- Copy and Paste buttons
+    CopyButton.Name = "CopyButton"
+    CopyButton.Parent = ColorpickerFrame
+    CopyButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    CopyButton.BackgroundTransparency = 1.000
+    CopyButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    CopyButton.BorderSizePixel = 0
+    CopyButton.Position = UDim2.new(0.535, 0, 0.71, 0)
+    CopyButton.Size = UDim2.new(0, 63, 0, 20)
+    CopyButton.Font = Enum.Font.SourceSansSemibold
+    CopyButton.Text = "Copy"
+    CopyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CopyButton.TextSize = 15.000
+    
+    -- Add stroke to copy button
+    Library:CreateStroke(CopyButton, Color3.fromRGB(50, 50, 50), 1)
+    
+    PasteButton.Name = "PasteButton"
+    PasteButton.Parent = ColorpickerFrame
+    PasteButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    PasteButton.BackgroundTransparency = 1.000
+    PasteButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    PasteButton.BorderSizePixel = 0
+    PasteButton.Position = UDim2.new(0.762, 0, 0.71, 0)
+    PasteButton.Size = UDim2.new(0, 63, 0, 20)
+    PasteButton.Font = Enum.Font.SourceSansSemibold
+    PasteButton.Text = "Paste"
+    PasteButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    PasteButton.TextSize = 15.000
+    
+    -- Add stroke to paste button
+    Library:CreateStroke(PasteButton, Color3.fromRGB(50, 50, 50), 1)
+    
+    -- Close button
+    CloseButton.Name = "CloseButton"
+    CloseButton.Parent = ColorpickerFrame
+    CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    CloseButton.BackgroundTransparency = 1.000
+    CloseButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    CloseButton.BorderSizePixel = 0
+    CloseButton.Position = UDim2.new(0.9, 0, 0.02, 0)
+    CloseButton.Size = UDim2.new(0, 20, 0, 20)
+    CloseButton.Font = Enum.Font.SourceSansBold
+    CloseButton.Text = "×"
+    CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseButton.TextSize = 18.000
+    
+    -- Variables for colorpicker state
+    local h, s, v = 0, 1, 1
+    local rainbow = false
+    local rainbowSpeed = 5
+    local rainbowConnection
+    
+    -- Convert current color to HSV
+    local currentColor = colorpicker.Value
+    h, s, v = Library:RGBtoHSV(currentColor.R, currentColor.G, currentColor.B)
+    
+    -- Update functions
+    local function updateColorpicker()
+        local r, g, b = Library:HSVtoRGB(h, s, v)
+        local color = Color3.fromRGB(r * 255, g * 255, b * 255)
+        
+        -- Update hue background
+        local hueR, hueG, hueB = Library:HSVtoRGB(h, 1, 1)
+        HueImage.ImageColor3 = Color3.fromRGB(hueR * 255, hueG * 255, hueB * 255)
+        
+        -- Update head positions
+        ColorpickerHead.Position = UDim2.new(s, -6, 1-v, -6)
+        HueHead.Position = UDim2.new(h, -2, -0.3, 0)
+        
+        -- Update colorpicker value
+        colorpicker:SetValue(color)
+    end
+    
+    local function startRainbow()
+        if rainbowConnection then
+            rainbowConnection:Disconnect()
+        end
+        
+        rainbowConnection = Library:CreateConnection(RunService.Heartbeat, function()
+            if rainbow then
+                h = (h + (rainbowSpeed / 1000)) % 1
+                updateColorpicker()
+            end
+        end)
+    end
+    
+    local function stopRainbow()
+        if rainbowConnection then
+            rainbowConnection:Disconnect()
+            rainbowConnection = nil
+        end
+    end
+    
+    -- Color picker interactions
+    local colorpickerDragging = false
+    local hueDragging = false
+    local speedDragging = false
+    
+    Library:CreateConnection(Colorpicker.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            colorpickerDragging = true
+            local rel = input.Position - Colorpicker.AbsolutePosition
+            s = math.clamp(rel.X / Colorpicker.AbsoluteSize.X, 0, 1)
+            v = 1 - math.clamp(rel.Y / Colorpicker.AbsoluteSize.Y, 0, 1)
+            updateColorpicker()
+        end
+    end)
+    
+    Library:CreateConnection(HueSlider.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            hueDragging = true
+            local rel = input.Position - HueSlider.AbsolutePosition
+            h = math.clamp(rel.X / HueSlider.AbsoluteSize.X, 0, 1)
+            updateColorpicker()
+        end
+    end)
+    
+    Library:CreateConnection(SpeedHead.MouseButton1Down, function()
+        speedDragging = true
+    end)
+    
+    Library:CreateConnection(UserInputService.InputChanged, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            if colorpickerDragging then
+                local rel = input.Position - Colorpicker.AbsolutePosition
+                s = math.clamp(rel.X / Colorpicker.AbsoluteSize.X, 0, 1)
+                v = 1 - math.clamp(rel.Y / Colorpicker.AbsoluteSize.Y, 0, 1)
+                updateColorpicker()
+            elseif hueDragging then
+                local rel = input.Position - HueSlider.AbsolutePosition
+                h = math.clamp(rel.X / HueSlider.AbsoluteSize.X, 0, 1)
+                updateColorpicker()
+            elseif speedDragging then
+                local rel = input.Position - SpeedSliderBar.AbsolutePosition
+                local percent = math.clamp(rel.X / SpeedSliderBar.AbsoluteSize.X, 0, 1)
+                rainbowSpeed = math.floor(percent * 20) + 1
+                SpeedFiller.Size = UDim2.new(0, SpeedSliderBar.AbsoluteSize.X * percent, 0, 4)
+                SpeedHead.Position = UDim2.new(0, (SpeedSliderBar.AbsoluteSize.X * percent) - 5, -0.75, 0)
+                SpeedValue.Text = tostring(rainbowSpeed)
+            end
+        end
+    end)
+    
+    Library:CreateConnection(UserInputService.InputEnded, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            colorpickerDragging = false
+            hueDragging = false
+            speedDragging = false
+        end
+    end)
+    
+    -- Rainbow toggle
+    Library:CreateConnection(RainbowToggle.MouseButton1Click, function()
+        rainbow = not rainbow
+        if rainbow then
+            RainbowToggle.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+            RainbowToggle.BackgroundTransparency = 0
+            RainbowTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            RainbowCheckmark.Visible = true
+            startRainbow()
+        else
+            RainbowToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            RainbowToggle.BackgroundTransparency = 1
+            RainbowTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
+            RainbowCheckmark.Visible = false
+            stopRainbow()
+        end
+    end)
+    
+    -- Copy and Paste functionality
+    local copiedColor = nil
+    
+    Library:CreateConnection(CopyButton.MouseButton1Click, function()
+        copiedColor = colorpicker.Value
+    end)
+    
+    Library:CreateConnection(PasteButton.MouseButton1Click, function()
+        if copiedColor then
+            h, s, v = Library:RGBtoHSV(copiedColor.R, copiedColor.G, copiedColor.B)
+            updateColorpicker()
+        end
+    end)
+    
+    -- Close button
+    Library:CreateConnection(CloseButton.MouseButton1Click, function()
+        stopRainbow()
+        ColorpickerFrame:Destroy()
+    end)
+    
+    -- Speed value textbox
+    Library:CreateConnection(SpeedValue.FocusLost, function()
+        local value = tonumber(SpeedValue.Text)
+        if value then
+            rainbowSpeed = math.clamp(value, 1, 20)
+            SpeedValue.Text = tostring(rainbowSpeed)
+            local percent = (rainbowSpeed - 1) / 19
+            SpeedFiller.Size = UDim2.new(0, SpeedSliderBar.AbsoluteSize.X * percent, 0, 4)
+            SpeedHead.Position = UDim2.new(0, (SpeedSliderBar.AbsoluteSize.X * percent) - 5, -0.75, 0)
+        end
+    end)
+    
+    -- Make draggable
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+    
+    Library:CreateConnection(ColorpickerFrame.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = ColorpickerFrame.Position
+        end
+    end)
+    
+    Library:CreateConnection(UserInputService.InputChanged, function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            ColorpickerFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    Library:CreateConnection(UserInputService.InputEnded, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    -- Initial update
+    updateColorpicker()
+    
+    return ColorpickerFrame
+end
+
 -- Main Library Functions
 function Library:CreateWindow(config)
     local Window = {}
@@ -378,8 +935,8 @@ function Library:CreateWindow(config)
         LineGlow.BackgroundTransparency = 0.900
         LineGlow.BorderColor3 = Color3.fromRGB(0, 0, 0)
         LineGlow.BorderSizePixel = 0
-        LineGlow.Position = UDim2.new(-0.06,  0, -0.15,  0)  -- shift it up another ~10% or so
-        LineGlow.Size     = UDim2.new( 0,   55,   0,   39)  -- 32 + 7 pixels
+        LineGlow.Position = UDim2.new(-0.06,  0, -0.022, 0)
+        LineGlow.Size     = UDim2.new( 0,   55,   0,   32)
         LineGlow.Visible = false
         
         UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(66, 255, 249)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(66, 255, 249))}
@@ -643,8 +1200,7 @@ function Library:CreateWindow(config)
                     end
                     
                     Library:CreateConnection(ColorpickerButton.MouseButton1Click, function()
-                        -- Color picker logic would go here
-                        print("Color picker clicked for:", Colorpicker.Name)
+                        Library:CreateColorpickerWindow(Colorpicker)
                     end)
                     
                     Colorpicker:SetValue(Colorpicker.Default)
@@ -1238,8 +1794,7 @@ function Library:CreateWindow(config)
                 end
                 
                 Library:CreateConnection(ColorpickerButton.MouseButton1Click, function()
-                    -- Color picker window logic would go here
-                    print("Color picker clicked for:", Colorpicker.Name)
+                    Library:CreateColorpickerWindow(Colorpicker)
                 end)
                 
                 Colorpicker:SetValue(Colorpicker.Default)
@@ -1501,6 +2056,9 @@ function Library:Destroy()
     end
     if self.GUI then
         self.GUI:Destroy()
+    end
+    if self.OverlayGui then
+        self.OverlayGui:Destroy()
     end
 end
 
