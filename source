@@ -1119,8 +1119,7 @@ function Library:CreateWindow(config)
                                     OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
                                     
                                     Dropdown:SetValue(option)
-                                    DropdownHolder.Visible = false
-                                    Dropdown.Open = false
+
                                 end
                             end
                         end)
