@@ -1070,7 +1070,9 @@ function Library:CreateWindow(config)
                         OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
                         OptionLabel.TextSize = 14.000
                         OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
-                        OptionLabel.ZIndex = 10
+                        OptionLabel.ZIndex = 11
+                        OptionLabel.ZIndex = DropdownHolder.ZIndex + 1
+
                         
                         -- Check if this option is selected and update appearance
                         local isSelected = false
