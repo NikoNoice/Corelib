@@ -24,7 +24,7 @@ Library._currentColorpicker = nil -- Global tracker for open colorpickers
 Library._copiedColor = nil -- Global copied color for copy/paste across colorpickers
 
 -- Config System Variables
-Library.ConfigFolder = "YourScript_Configs" -- Change this to your script name
+Library.ConfigFolder = "obeecity" -- Change this to your script name
 Library.ConfigExtension = ".json"
 
 -- Utility Functions
@@ -73,7 +73,11 @@ function Library:SaveConfig(name)
         writefile(self.ConfigFolder .. "/" .. name .. self.ConfigExtension, HttpService:JSONEncode(configData))
     end)
     
-    return success, err
+    if success then
+        return true, "Config saved successfully"
+    else
+        return false, err or "Unknown error occurred"
+    end
 end
 
 function Library:LoadConfig(name)
@@ -89,9 +93,9 @@ function Library:LoadConfig(name)
         local configData = HttpService:JSONDecode(fileContent)
         
         for flag, value in pairs(configData) do
-            if type(value) == "table" and #value == 3 then
+            if type(value) == "table" and #value == 3 and type(value[1]) == "number" then
                 -- Convert RGB array back to Color3
-                self.Flags[flag] = Color3.fromRGB(value[1] * 255, value[2] * 255, value[3] * 255)
+                self.Flags[flag] = Color3.fromRGB(math.floor(value[1] * 255), math.floor(value[2] * 255), math.floor(value[3] * 255))
             else
                 self.Flags[flag] = value
             end
@@ -100,14 +104,20 @@ function Library:LoadConfig(name)
         return true
     end)
     
-    return success, result
+    if success then
+        return true, "Config loaded successfully"
+    else
+        return false, result
+    end
 end
 
 function Library:DeleteConfig(name)
     local filePath = self.ConfigFolder .. "/" .. name .. self.ConfigExtension
     if isfile(filePath) then
-        delfile(filePath)
-        return true
+        local success, err = pcall(function()
+            delfile(filePath)
+        end)
+        return success
     end
     return false
 end
@@ -117,10 +127,12 @@ function Library:RenameConfig(oldName, newName)
     local newPath = self.ConfigFolder .. "/" .. newName .. self.ConfigExtension
     
     if isfile(oldPath) and not isfile(newPath) then
-        local content = readfile(oldPath)
-        writefile(newPath, content)
-        delfile(oldPath)
-        return true
+        local success, err = pcall(function()
+            local content = readfile(oldPath)
+            writefile(newPath, content)
+            delfile(oldPath)
+        end)
+        return success
     end
     return false
 end
@@ -133,7 +145,9 @@ function Library:GetConfigs()
     
     for _, file in ipairs(files) do
         if file:sub(-#self.ConfigExtension) == self.ConfigExtension then
-            local configName = file:gsub(self.ConfigFolder .. "/", ""):gsub(self.ConfigExtension, "")
+            -- Extract just the filename without directory and extension
+            local fileName = file:match("([^/\\]+)$") -- Get everything after last slash/backslash
+            local configName = fileName:gsub(self.ConfigExtension .. "$", "") -- Remove extension
             table.insert(configs, configName)
         end
     end
@@ -2307,7 +2321,7 @@ function Library:CreateWindow(config)
                 ButtonsFrame.BackgroundTransparency = 1.000
                 ButtonsFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ButtonsFrame.BorderSizePixel = 0
-                ButtonsFrame.Position = UDim2.new(0, 0, 0.65, 0)
+                ButtonsFrame.Position = UDim2.new(0, 0, 0.68, 0) -- Moved down from 0.65 to 0.68
                 ButtonsFrame.Size = UDim2.new(0, 215, 0, 35)
                 
                 -- Save button
@@ -2353,7 +2367,7 @@ function Library:CreateWindow(config)
                 DeleteButton.Size = UDim2.new(0, 50, 0, 25)
                 DeleteButton.Font = Enum.Font.SourceSansSemibold
                 DeleteButton.Text = "Delete"
-                DeleteButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+                DeleteButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- Changed from red to normal white
                 DeleteButton.TextSize = 14.000
                 
                 Library:CreateStroke(DeleteButton, Color3.fromRGB(50, 50, 50), 1)
@@ -2380,7 +2394,7 @@ function Library:CreateWindow(config)
                 SaveAsFrame.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
                 SaveAsFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 SaveAsFrame.BorderSizePixel = 0
-                SaveAsFrame.Position = UDim2.new(0, 0, 0.82, 0)
+                SaveAsFrame.Position = UDim2.new(0, 0, 0.85, 0) -- Moved down from 0.82 to 0.85
                 SaveAsFrame.Size = UDim2.new(0, 215, 0, 25)
                 SaveAsFrame.Visible = false
                 
@@ -2419,7 +2433,7 @@ function Library:CreateWindow(config)
                 RenameFrame.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
                 RenameFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 RenameFrame.BorderSizePixel = 0
-                RenameFrame.Position = UDim2.new(0, 0, 0.82, 0)
+                RenameFrame.Position = UDim2.new(0, 0, 0.85, 0) -- Moved down from 0.82 to 0.85
                 RenameFrame.Size = UDim2.new(0, 215, 0, 25)
                 RenameFrame.Visible = false
                 
@@ -2475,7 +2489,7 @@ function Library:CreateWindow(config)
                         ConfigButton.BackgroundTransparency = 1.000
                         ConfigButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                         ConfigButton.BorderSizePixel = 0
-                        ConfigButton.Size = UDim2.new(0, 200, 0, 20)
+                        ConfigButton.Size = UDim2.new(1, -4, 0, 20) -- Full width minus padding
                         ConfigButton.Font = Enum.Font.SourceSansSemibold
                         ConfigButton.Text = " " .. configName
                         ConfigButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -2514,16 +2528,14 @@ function Library:CreateWindow(config)
                 
                 Library:CreateConnection(LoadButton.MouseButton1Click, function()
                     if Config.SelectedConfig then
-                        local success, error = Library:LoadConfig(Config.SelectedConfig)
+                        local success, message = Library:LoadConfig(Config.SelectedConfig)
                         if success then
-                            print("Config loaded:", Config.SelectedConfig)
-                            -- Refresh UI elements to reflect loaded values
-                            for flag, value in pairs(Library.Flags) do
-                                -- You can add code here to update UI elements if needed
-                            end
+                            print("✅ Config loaded successfully:", Config.SelectedConfig)
                         else
-                            warn("Failed to load config:", error)
+                            warn("❌ Failed to load config:", Config.SelectedConfig, "-", message)
                         end
+                    else
+                        warn("❌ No config selected")
                     end
                 end)
                 
@@ -2531,12 +2543,14 @@ function Library:CreateWindow(config)
                     if Config.SelectedConfig then
                         local success = Library:DeleteConfig(Config.SelectedConfig)
                         if success then
-                            print("Config deleted:", Config.SelectedConfig)
+                            print("✅ Config deleted successfully:", Config.SelectedConfig)
                             Config.SelectedConfig = nil
                             Config:RefreshList()
                         else
-                            warn("Failed to delete config")
+                            warn("❌ Failed to delete config:", Config.SelectedConfig)
                         end
+                    else
+                        warn("❌ No config selected")
                     end
                 end)
                 
@@ -2552,15 +2566,17 @@ function Library:CreateWindow(config)
                 Library:CreateConnection(SaveAsButton.MouseButton1Click, function()
                     local configName = SaveAsTextBox.Text:gsub("%s+", "_") -- Replace spaces with underscores
                     if configName ~= "" then
-                        local success, error = Library:SaveConfig(configName)
+                        local success, message = Library:SaveConfig(configName)
                         if success then
-                            print("Config saved:", configName)
+                            print("✅ Config saved successfully:", configName)
                             SaveAsTextBox.Text = ""
                             SaveAsFrame.Visible = false
                             Config:RefreshList()
                         else
-                            warn("Failed to save config:", error)
+                            warn("❌ Failed to save config:", configName, "-", message)
                         end
+                    else
+                        warn("❌ Config name cannot be empty")
                     end
                 end)
                 
@@ -2569,13 +2585,19 @@ function Library:CreateWindow(config)
                     if newName ~= "" and Config.SelectedConfig then
                         local success = Library:RenameConfig(Config.SelectedConfig, newName)
                         if success then
-                            print("Config renamed from", Config.SelectedConfig, "to", newName)
+                            print("✅ Config renamed successfully from", Config.SelectedConfig, "to", newName)
                             Config.SelectedConfig = newName
                             RenameTextBox.Text = ""
                             RenameFrame.Visible = false
                             Config:RefreshList()
                         else
-                            warn("Failed to rename config")
+                            warn("❌ Failed to rename config from", Config.SelectedConfig, "to", newName)
+                        end
+                    else
+                        if not Config.SelectedConfig then
+                            warn("❌ No config selected")
+                        else
+                            warn("❌ New name cannot be empty")
                         end
                     end
                 end)
