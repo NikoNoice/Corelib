@@ -11,7 +11,2187 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
 -- Variables
+local LocalPlayer = Players.LocalPlayer-- Complete Custom GUI Library
+-- Based on your original GUI design with all elements
+
+local Library = {}
+Library.__index = Library
+
+-- Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+-- Variables
 local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+Library.Flags = {}
+Library.Connections = {}
+Library.Pages = {}
+Library.CurrentPage = nil
+Library.GUI = nil
+Library._currentColorpicker = nil -- Global tracker for open colorpickers
+Library._copiedColor = nil -- Global copied color for copy/paste across colorpickers
+
+-- Utility Functions
+function Library:CreateConnection(signal, callback)
+    local connection = signal:Connect(callback)
+    table.insert(self.Connections, connection)
+    return connection
+end
+
+function Library:Tween(object, properties, duration, easingStyle, easingDirection)
+    local tweenInfo = TweenInfo.new(duration or 0.3, easingStyle or Enum.EasingStyle.Quad, easingDirection or Enum.EasingDirection.Out)
+    return TweenService:Create(object, tweenInfo, properties)
+end
+
+-- Create UIStroke for borders
+function Library:CreateStroke(parent, color, thickness)
+    local stroke = Instance.new("UIStroke")
+    stroke.Parent = parent
+    stroke.Color = color or Color3.fromRGB(50, 50, 50)
+    stroke.Thickness = thickness or 1
+    stroke.LineJoinMode = Enum.LineJoinMode.Round
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    return stroke
+end
+
+-- Add HSV to RGB conversion
+function Library:HSVtoRGB(h, s, v)
+    local r, g, b
+    local i = math.floor(h * 6)
+    local f = h * 6 - i
+    local p = v * (1 - s)
+    local q = v * (1 - f * s)
+    local t = v * (1 - (1 - f) * s)
+    
+    local imod = i % 6
+    if imod == 0 then
+        r, g, b = v, t, p
+    elseif imod == 1 then
+        r, g, b = q, v, p
+    elseif imod == 2 then
+        r, g, b = p, v, t
+    elseif imod == 3 then
+        r, g, b = p, q, v
+    elseif imod == 4 then
+        r, g, b = t, p, v
+    elseif imod == 5 then
+        r, g, b = v, p, q
+    end
+    
+    return r, g, b
+end
+
+-- Add RGB to HSV conversion
+function Library:RGBtoHSV(r, g, b)
+    local max = math.max(r, g, b)
+    local min = math.min(r, g, b)
+    local h, s, v = 0, 0, max
+    
+    local d = max - min
+    s = max == 0 and 0 or d / max
+    
+    if max == min then
+        h = 0
+    else
+        if max == r then
+            h = (g - b) / d + (g < b and 6 or 0)
+        elseif max == g then
+            h = (b - r) / d + 2
+        elseif max == b then
+            h = (r - g) / d + 4
+        end
+        h = h / 6
+    end
+    
+    return h, s, v
+end
+
+-- Create colorpicker window with improved functionality
+function Library:CreateColorpickerWindow(colorpicker)
+    -- 1) Toggle off if you click the same bind again
+    if colorpicker._window then
+        colorpicker._window:Destroy()
+        colorpicker._window = nil
+        Library._currentColorpicker = nil
+        return
+    end
+
+    -- 2) Close any other open picker
+    if Library._currentColorpicker
+    and Library._currentColorpicker._window 
+    and Library._currentColorpicker ~= colorpicker then
+        Library._currentColorpicker._window:Destroy()
+        Library._currentColorpicker._window = nil
+    end
+    Library._currentColorpicker = colorpicker
+
+    -- Initialize persistent state
+    if colorpicker._rainbow == nil then colorpicker._rainbow = false end
+    if colorpicker._rainbowSpeed == nil then colorpicker._rainbowSpeed = 5 end
+
+    -- stop any existing rainbow coroutines
+    if colorpicker._rainbowConnection then
+        colorpicker._rainbowConnection:Disconnect()
+        colorpicker._rainbowConnection = nil
+    end
+    
+    local ColorpickerFrame = Instance.new("Frame")
+    local UICorner = Instance.new("UICorner")
+    local Colorpicker = Instance.new("Frame")
+    local UICorner_2 = Instance.new("UICorner")
+    local HueImage = Instance.new("ImageLabel")
+    local UICorner_3 = Instance.new("UICorner")
+    local SaturationImage = Instance.new("ImageLabel")
+    local UICorner_4 = Instance.new("UICorner")
+    local ColorpickerHead = Instance.new("Frame")
+    local UICorner_5 = Instance.new("UICorner")
+    local HueSlider = Instance.new("Frame")
+    local UICorner_6 = Instance.new("UICorner")
+    local HueGradient = Instance.new("UIGradient")
+    local HueHead = Instance.new("Frame")
+    local UICorner_7 = Instance.new("UICorner")
+    local List = Instance.new("Frame")
+    local UIListLayout = Instance.new("UIListLayout")
+    local RainbowToggle = Instance.new("TextButton")
+    local UICorner_8 = Instance.new("UICorner")
+    local RainbowTitle = Instance.new("TextLabel")
+    local RainbowCheckmark = Instance.new("ImageLabel")
+    local SpeedSlider = Instance.new("TextLabel")
+    local SpeedSliderBar = Instance.new("Frame")
+    local SpeedFiller = Instance.new("Frame")
+    local UICorner_9 = Instance.new("UICorner")
+    local SpeedHead = Instance.new("TextButton")
+    local UICorner_10 = Instance.new("UICorner")
+    local SpeedValue = Instance.new("TextBox")
+    local CopyButton = Instance.new("TextButton")
+    local PasteButton = Instance.new("TextButton")
+    local CloseButton = Instance.new("TextButton")
+    
+    -- Properties
+    ColorpickerFrame.Name = "ColorpickerFrame"
+    ColorpickerFrame.Parent = Library.OverlayGui
+    ColorpickerFrame.BackgroundColor3 = Color3.fromRGB(17, 16, 24)
+    ColorpickerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ColorpickerFrame.BorderSizePixel = 0
+    ColorpickerFrame.Position = UDim2.new(0, 500, 0, 100)
+    ColorpickerFrame.Size = UDim2.new(0, 321, 0, 225)
+    ColorpickerFrame.ZIndex = 100
+    
+    UICorner.CornerRadius = UDim.new(0, 3)
+    UICorner.Parent = ColorpickerFrame
+    
+    -- Add stroke to colorpicker frame
+    Library:CreateStroke(ColorpickerFrame, Color3.fromRGB(50, 50, 50), 1)
+    
+    Colorpicker.Name = "Colorpicker"
+    Colorpicker.Parent = ColorpickerFrame
+    Colorpicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Colorpicker.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Colorpicker.BorderSizePixel = 0
+    Colorpicker.Position = UDim2.new(0.034, 0, 0.059, 0)
+    Colorpicker.Size = UDim2.new(0, 150, 0, 150)
+    Colorpicker.ZIndex = 101
+    
+    UICorner_2.CornerRadius = UDim.new(0, 3)
+    UICorner_2.Parent = Colorpicker
+    
+    HueImage.Name = "HueImage"
+    HueImage.Parent = Colorpicker
+    HueImage.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    HueImage.BackgroundTransparency = 1.000
+    HueImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    HueImage.BorderSizePixel = 0
+    HueImage.Size = UDim2.new(1, 0, 1, 0)
+    HueImage.Image = "rbxassetid://6976876787"
+    HueImage.ImageColor3 = Color3.fromRGB(255, 0, 0)
+    HueImage.ZIndex = 102
+    
+    UICorner_3.CornerRadius = UDim.new(0, 3)
+    UICorner_3.Parent = HueImage
+    
+    SaturationImage.Name = "SaturationImage"
+    SaturationImage.Parent = Colorpicker
+    SaturationImage.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    SaturationImage.BackgroundTransparency = 1.000
+    SaturationImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SaturationImage.BorderSizePixel = 0
+    SaturationImage.Size = UDim2.new(1, 0, 1, 0)
+    SaturationImage.ZIndex = 103
+    SaturationImage.Image = "rbxassetid://6941137543"
+    SaturationImage.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    
+    UICorner_4.CornerRadius = UDim.new(0, 3)
+    UICorner_4.Parent = SaturationImage
+    
+    ColorpickerHead.Name = "ColorpickerHead"
+    ColorpickerHead.Parent = Colorpicker
+    ColorpickerHead.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ColorpickerHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ColorpickerHead.BorderSizePixel = 0
+    ColorpickerHead.Position = UDim2.new(0.5, 0, 0.5, 0)
+    ColorpickerHead.Size = UDim2.new(0, 12, 0, 12)
+    ColorpickerHead.ZIndex = 104
+    
+    UICorner_5.CornerRadius = UDim.new(1, 0)
+    UICorner_5.Parent = ColorpickerHead
+    
+    -- Add stroke to colorpicker head
+    Library:CreateStroke(ColorpickerHead, Color3.fromRGB(0, 0, 0), 2)
+    
+    -- Hue Slider
+    HueSlider.Name = "HueSlider"
+    HueSlider.Parent = ColorpickerFrame
+    HueSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    HueSlider.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    HueSlider.BorderSizePixel = 0
+    HueSlider.Position = UDim2.new(0.034, 0, 0.82, 0)
+    HueSlider.Size = UDim2.new(0, 150, 0, 10)
+    HueSlider.ZIndex = 101
+    
+    UICorner_6.CornerRadius = UDim.new(0, 3)
+    UICorner_6.Parent = HueSlider
+    
+    HueGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
+        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+        ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
+        ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0))
+    }
+    HueGradient.Parent = HueSlider
+    
+    HueHead.Name = "HueHead"
+    HueHead.Parent = HueSlider
+    HueHead.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    HueHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    HueHead.BorderSizePixel = 0
+    HueHead.Position = UDim2.new(0, 0, -0.3, 0)
+    HueHead.Size = UDim2.new(0, 4, 0, 16)
+    HueHead.ZIndex = 102
+    
+    UICorner_7.CornerRadius = UDim.new(0, 2)
+    UICorner_7.Parent = HueHead
+    
+    -- Add stroke to hue head
+    Library:CreateStroke(HueHead, Color3.fromRGB(0, 0, 0), 1)
+    
+    -- List for toggles and sliders
+    List.Name = "List"
+    List.Parent = ColorpickerFrame
+    List.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    List.BackgroundTransparency = 1.000
+    List.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    List.BorderSizePixel = 0
+    List.Position = UDim2.new(0.536, 0, 0.057, 0)
+    List.Size = UDim2.new(0, 136, 0, 100)
+    List.ZIndex = 101
+    
+    UIListLayout.Parent = List
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Padding = UDim.new(0, 7)
+    
+    -- Rainbow Toggle
+    RainbowToggle.Name = "RainbowToggle"
+    RainbowToggle.Parent = List
+    RainbowToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    RainbowToggle.BackgroundTransparency = 1.000
+    RainbowToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    RainbowToggle.BorderSizePixel = 0
+    RainbowToggle.Size = UDim2.new(0, 18, 0, 18)
+    RainbowToggle.ZIndex = 102
+    RainbowToggle.Font = Enum.Font.SourceSans
+    RainbowToggle.Text = ""
+    RainbowToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
+    RainbowToggle.TextSize = 14.000
+    
+    UICorner_8.CornerRadius = UDim.new(0, 3)
+    UICorner_8.Parent = RainbowToggle
+    
+    -- Add stroke to rainbow toggle
+    Library:CreateStroke(RainbowToggle, Color3.fromRGB(50, 50, 50), 1)
+    
+    RainbowTitle.Name = "RainbowTitle"
+    RainbowTitle.Parent = RainbowToggle
+    RainbowTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    RainbowTitle.BackgroundTransparency = 1.000
+    RainbowTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    RainbowTitle.BorderSizePixel = 0
+    RainbowTitle.Position = UDim2.new(1.461, 0, -0.056, 0)
+    RainbowTitle.Size = UDim2.new(0, 82, 0, 20)
+    RainbowTitle.Font = Enum.Font.SourceSansSemibold
+    RainbowTitle.Text = "Rainbow"
+    RainbowTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
+    RainbowTitle.TextSize = 15.000
+    RainbowTitle.TextXAlignment = Enum.TextXAlignment.Left
+    RainbowTitle.ZIndex = 102
+    
+    RainbowCheckmark.Name = "RainbowCheckmark"
+    RainbowCheckmark.Parent = RainbowToggle
+    RainbowCheckmark.BackgroundTransparency = 1.000
+    RainbowCheckmark.BorderSizePixel = 0
+    RainbowCheckmark.Position = UDim2.new(0.111, 0, 0.111, 0)
+    RainbowCheckmark.Size = UDim2.new(0, 13, 0, 13)
+    RainbowCheckmark.Image = "http://www.roblox.com/asset/?id=6031094667"
+    RainbowCheckmark.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    RainbowCheckmark.Visible = false
+    RainbowCheckmark.ZIndex = 103
+    
+    -- Speed Slider
+    SpeedSlider.Name = "SpeedSlider"
+    SpeedSlider.Parent = List
+    SpeedSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SpeedSlider.BackgroundTransparency = 1.000
+    SpeedSlider.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedSlider.BorderSizePixel = 0
+    SpeedSlider.Size = UDim2.new(0, 136, 0, 32)
+    SpeedSlider.Font = Enum.Font.SourceSansSemibold
+    SpeedSlider.Text = "Speed"
+    SpeedSlider.TextColor3 = Color3.fromRGB(124, 121, 125)
+    SpeedSlider.TextSize = 15.000
+    SpeedSlider.TextXAlignment = Enum.TextXAlignment.Left
+    SpeedSlider.TextYAlignment = Enum.TextYAlignment.Top
+    SpeedSlider.ZIndex = 102
+    
+    SpeedSliderBar.Name = "SpeedSliderBar"
+    SpeedSliderBar.Parent = SpeedSlider
+    SpeedSliderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SpeedSliderBar.BackgroundTransparency = 1.000
+    SpeedSliderBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedSliderBar.BorderSizePixel = 0
+    SpeedSliderBar.Position = UDim2.new(0, 0, 0.8, 0)
+    SpeedSliderBar.Size = UDim2.new(0, 120, 0, 2)
+    SpeedSliderBar.ZIndex = 102
+    
+    -- Add stroke to speed slider bar
+    Library:CreateStroke(SpeedSliderBar, Color3.fromRGB(50, 50, 50), 1)
+    
+    SpeedFiller.Name = "SpeedFiller"
+    SpeedFiller.Parent = SpeedSliderBar
+    SpeedFiller.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+    SpeedFiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedFiller.BorderSizePixel = 0
+    SpeedFiller.Position = UDim2.new(0, 0, -1, 0) -- Centered vertically
+    SpeedFiller.Size = UDim2.new(0, 60, 0, 4)
+    SpeedFiller.ZIndex = 103
+    
+    UICorner_9.CornerRadius = UDim.new(0, 2)
+    UICorner_9.Parent = SpeedFiller
+    
+    SpeedHead.Name = "SpeedHead"
+    SpeedHead.Parent = SpeedFiller
+    SpeedHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+    SpeedHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedHead.BorderSizePixel = 0
+    SpeedHead.Position = UDim2.new(0.9, 0, -0.5, 0) -- Centered on filler
+    SpeedHead.Size = UDim2.new(0, 10, 0, 10)
+    SpeedHead.ZIndex = 104
+    SpeedHead.Font = Enum.Font.SourceSans
+    SpeedHead.Text = ""
+    SpeedHead.TextColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedHead.TextSize = 14.000
+    
+    UICorner_10.CornerRadius = UDim.new(1, 0)
+    UICorner_10.Parent = SpeedHead
+    
+    -- Add stroke to speed head
+    Library:CreateStroke(SpeedHead, Color3.fromRGB(50, 50, 50), 1)
+    
+    SpeedValue.Name = "SpeedValue"
+    SpeedValue.Parent = SpeedSlider
+    SpeedValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SpeedValue.BackgroundTransparency = 1.000
+    SpeedValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SpeedValue.BorderSizePixel = 0
+    -- right after you create SpeedValue, before any connections:
+    SpeedValue.AnchorPoint = Vector2.new(1, 0)
+    SpeedValue.Position = UDim2.new(1, -4, 0, 0)
+    SpeedValue.TextYAlignment = Enum.TextYAlignment.Center
+    SpeedValue.Size = UDim2.new(0, 30, 0, 19)
+    SpeedValue.Font = Enum.Font.SourceSansSemibold
+    SpeedValue.Text = "5"
+    SpeedValue.TextColor3 = Color3.fromRGB(111, 108, 112)
+    SpeedValue.TextSize = 16.000
+    SpeedValue.TextXAlignment = Enum.TextXAlignment.Right
+    SpeedValue.ZIndex = 102
+    
+    -- Copy and Paste buttons
+    CopyButton.Name = "CopyButton"
+    CopyButton.Parent = ColorpickerFrame
+    CopyButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    CopyButton.BackgroundTransparency = 1.000
+    CopyButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    CopyButton.BorderSizePixel = 0
+    CopyButton.Position = UDim2.new(0.535, 0, 0.71, 0)
+    CopyButton.Size = UDim2.new(0, 63, 0, 20)
+    CopyButton.Font = Enum.Font.SourceSansSemibold
+    CopyButton.Text = "Copy"
+    CopyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CopyButton.TextSize = 15.000
+    CopyButton.ZIndex = 101
+    
+    -- Add stroke to copy button
+    Library:CreateStroke(CopyButton, Color3.fromRGB(50, 50, 50), 1)
+    
+    PasteButton.Name = "PasteButton"
+    PasteButton.Parent = ColorpickerFrame
+    PasteButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    PasteButton.BackgroundTransparency = 1.000
+    PasteButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    PasteButton.BorderSizePixel = 0
+    PasteButton.Position = UDim2.new(0.762, 0, 0.71, 0)
+    PasteButton.Size = UDim2.new(0, 63, 0, 20)
+    PasteButton.Font = Enum.Font.SourceSansSemibold
+    PasteButton.Text = "Paste"
+    PasteButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    PasteButton.TextSize = 15.000
+    PasteButton.ZIndex = 101
+    
+    -- Add stroke to paste button
+    Library:CreateStroke(PasteButton, Color3.fromRGB(50, 50, 50), 1)
+    
+    -- Close button
+    CloseButton.Name = "CloseButton"
+    CloseButton.Parent = ColorpickerFrame
+    CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    CloseButton.BackgroundTransparency = 1.000
+    CloseButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    CloseButton.BorderSizePixel = 0
+    CloseButton.Position = UDim2.new(0.9, 0, 0.02, 0)
+    CloseButton.Size = UDim2.new(0, 20, 0, 20)
+    CloseButton.Font = Enum.Font.SourceSansBold
+    CloseButton.Text = "×"
+    CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseButton.TextSize = 18.000
+    CloseButton.ZIndex = 101
+    
+    -- Variables for colorpicker state
+    local h, s, v = 0, 1, 1
+    local rainbow = colorpicker._rainbow
+    local rainbowSpeed = colorpicker._rainbowSpeed
+    
+    -- Convert current color to HSV
+    local currentColor = colorpicker.Value
+    if currentColor then
+        h, s, v = Library:RGBtoHSV(currentColor.R, currentColor.G, currentColor.B)
+    end
+    
+    -- Update functions
+    local function updateColorpicker()
+        local r, g, b = Library:HSVtoRGB(h, s, v)
+        local color = Color3.fromRGB(math.floor(r * 255), math.floor(g * 255), math.floor(b * 255))
+        
+        -- Update hue background
+        local hueR, hueG, hueB = Library:HSVtoRGB(h, 1, 1)
+        HueImage.ImageColor3 = Color3.fromRGB(math.floor(hueR * 255), math.floor(hueG * 255), math.floor(hueB * 255))
+        
+        -- Update head positions
+        ColorpickerHead.Position = UDim2.new(s, -6, 1-v, -6)
+        HueHead.Position = UDim2.new(h, -2, -0.3, 0)
+        
+        -- Update colorpicker value
+        colorpicker:SetValue(color)
+    end
+    
+    -- helper to start/stop rainbow
+    local function startRainbow()
+        if colorpicker._rainbowConnection then
+            colorpicker._rainbowConnection:Disconnect()
+        end
+        colorpicker._rainbowConnection = Library:CreateConnection(RunService.Heartbeat, function()
+            if colorpicker._rainbow then
+                local currentH,s,v = Library:RGBtoHSV(colorpicker.Value.R, colorpicker.Value.G, colorpicker.Value.B)
+                currentH = (currentH + (colorpicker._rainbowSpeed/1000)) % 1
+                local r,g,b = Library:HSVtoRGB(currentH,s,v)
+                local c = Color3.fromRGB(r*255,g*255,b*255)
+                
+                -- Update the global h value for UI synchronization
+                h = currentH
+                
+                -- Update hue slider position to follow rainbow
+                HueHead.Position = UDim2.new(h, -2, -0.3, 0)
+                
+                -- Update hue background
+                local hueR, hueG, hueB = Library:HSVtoRGB(h, 1, 1)
+                HueImage.ImageColor3 = Color3.fromRGB(math.floor(hueR * 255), math.floor(hueG * 255), math.floor(hueB * 255))
+                
+                colorpicker:SetValue(c)
+            end
+        end)
+    end
+
+    local function stopRainbow()
+        if colorpicker._rainbowConnection then
+            colorpicker._rainbowConnection:Disconnect()
+            colorpicker._rainbowConnection = nil
+        end
+    end
+    
+    -- Color picker interactions
+    local colorpickerDragging = false
+    local hueDragging = false
+    local speedDragging = false
+    local windowDragging = false
+    local dragStart = nil
+    local startPos = nil
+    
+    Library:CreateConnection(Colorpicker.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position and Colorpicker.AbsolutePosition then
+            colorpickerDragging = true
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+            local rel = inputPos - Colorpicker.AbsolutePosition
+            s = math.clamp(rel.X / Colorpicker.AbsoluteSize.X, 0, 1)
+            v = 1 - math.clamp(rel.Y / Colorpicker.AbsoluteSize.Y, 0, 1)
+            updateColorpicker()
+        end
+    end)
+    
+    Library:CreateConnection(HueSlider.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position and HueSlider.AbsolutePosition then
+            hueDragging = true
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+            local rel = inputPos - HueSlider.AbsolutePosition
+            h = math.clamp(rel.X / HueSlider.AbsoluteSize.X, 0, 1)
+            updateColorpicker()
+        end
+    end)
+    
+    Library:CreateConnection(SpeedHead.MouseButton1Down, function()
+        speedDragging = true
+    end)
+    
+    Library:CreateConnection(UserInputService.InputChanged, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and input.Position then
+            -- Colorpicker interactions (priority over window drag)
+            if colorpickerDragging then
+                local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+                if Colorpicker and Colorpicker.AbsolutePosition then
+                    local rel = inputPos - Colorpicker.AbsolutePosition
+                    s = math.clamp(rel.X / Colorpicker.AbsoluteSize.X, 0, 1)
+                    v = 1 - math.clamp(rel.Y / Colorpicker.AbsoluteSize.Y, 0, 1)
+                    updateColorpicker()
+                end
+            elseif hueDragging then
+                local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+                if HueSlider and HueSlider.AbsolutePosition then
+                    local rel = inputPos - HueSlider.AbsolutePosition
+                    h = math.clamp(rel.X / HueSlider.AbsoluteSize.X, 0, 1)
+                    updateColorpicker()
+                end
+            elseif speedDragging then
+                local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+                if SpeedSliderBar and SpeedSliderBar.AbsolutePosition then
+                    local rel = inputPos - SpeedSliderBar.AbsolutePosition
+                    local percent = math.clamp(rel.X / SpeedSliderBar.AbsoluteSize.X, 0, 1)
+                    colorpicker._rainbowSpeed = math.floor(percent * 20) + 1
+                    local barWidth = SpeedSliderBar.AbsoluteSize.X
+                    SpeedFiller.Size = UDim2.new(0, barWidth * percent, 0, 4)
+                    SpeedHead.Position = UDim2.new(0, (barWidth * percent) - 5, -0.5, 0)
+                    SpeedValue.Text = tostring(colorpicker._rainbowSpeed)
+                end
+            -- Window dragging (lower priority)
+            elseif windowDragging and dragStart and startPos then
+                local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+                local delta = inputPos - dragStart
+                ColorpickerFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end
+    end)
+    
+    Library:CreateConnection(UserInputService.InputEnded, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            colorpickerDragging = false
+            hueDragging = false
+            speedDragging = false
+            windowDragging    = false
+        end
+    end)
+    
+    -- Rainbow toggle
+    Library:CreateConnection(RainbowToggle.MouseButton1Click, function()
+        rainbow = not rainbow
+        colorpicker._rainbow = rainbow
+
+        if rainbow then
+            RainbowToggle.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+            RainbowToggle.BackgroundTransparency = 0
+            RainbowTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            RainbowCheckmark.Visible = true
+            startRainbow()
+        else
+            RainbowToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            RainbowToggle.BackgroundTransparency = 1
+            RainbowTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
+            RainbowCheckmark.Visible = false
+            stopRainbow()
+        end
+    end)
+    
+    -- Copy and Paste functionality
+    Library:CreateConnection(CopyButton.MouseButton1Click, function()
+        Library._copiedColor = colorpicker.Value
+    end)
+    
+    Library:CreateConnection(PasteButton.MouseButton1Click, function()
+        if Library._copiedColor then
+            h, s, v = Library:RGBtoHSV(Library._copiedColor.R, Library._copiedColor.G, Library._copiedColor.B)
+            updateColorpicker()
+        end
+    end)
+    
+    -- Close button
+    Library:CreateConnection(CloseButton.MouseButton1Click, function()
+        colorpicker._window = nil
+        Library._currentColorpicker = nil
+        ColorpickerFrame:Destroy()
+    end)
+    
+    -- Speed value textbox
+    Library:CreateConnection(SpeedValue.FocusLost, function()
+        local value = tonumber(SpeedValue.Text)
+        if value then
+            colorpicker._rainbowSpeed = math.clamp(value, 1, 20)
+            SpeedValue.Text = tostring(colorpicker._rainbowSpeed)
+            local percent = (colorpicker._rainbowSpeed - 1) / 19
+            local barWidth = SpeedSliderBar.AbsoluteSize.X
+            if barWidth > 0 then
+                SpeedFiller.Size = UDim2.new(0, barWidth * percent, 0, 4)
+                SpeedHead.Position = UDim2.new(0, (barWidth * percent) - 5, -0.5, 0) -- Centered
+            end
+        end
+    end)
+    
+    -- Make window draggable (only on title area)
+    -- Create a draggable title area (top part of the window)
+    local DragArea = Instance.new("Frame")
+    DragArea.Name = "DragArea"
+    DragArea.Parent = ColorpickerFrame
+    DragArea.BackgroundTransparency = 1
+    DragArea.Position = UDim2.new(0, 0, 0, 0)
+    DragArea.Size = UDim2.new(1, 0, 0, 30) -- Only top 30 pixels are draggable
+    DragArea.ZIndex = 99
+    
+    Library:CreateConnection(DragArea.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position then
+            windowDragging = true
+            dragStart = Vector2.new(input.Position.X, input.Position.Y)
+            startPos = ColorpickerFrame.Position
+        end
+    end)
+    
+    Library:CreateConnection(UserInputService.InputChanged, function(input)
+        if windowDragging and input.UserInputType == Enum.UserInputType.MouseMovement and dragStart and startPos then
+            local mp = Vector2.new(input.Position.X, input.Position.Y)
+            local delta = mp - dragStart
+            ColorpickerFrame.Position = UDim2.new(
+              startPos.X.Scale, startPos.X.Offset + delta.X,
+              startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    -- 3) After everything is wired up, sync the UI to your saved state:
+    spawn(function()
+        -- wait one frame so AbsoluteSize is valid
+        RunService.Heartbeat:Wait()
+
+        -- rainbow toggle
+        if colorpicker._rainbow then
+            startRainbow()
+        end
+        RainbowToggle.BackgroundTransparency = colorpicker._rainbow and 0 or 1
+        RainbowToggle.BackgroundColor3   = colorpicker._rainbow
+            and Color3.fromRGB(66,255,249)
+            or Color3.fromRGB(255,255,255)
+        RainbowTitle.TextColor3 = colorpicker._rainbow
+            and Color3.fromRGB(255,255,255)
+            or Color3.fromRGB(124,121,125)
+        RainbowCheckmark.Visible = colorpicker._rainbow
+
+        -- speed slider
+        local pct = (colorpicker._rainbowSpeed - 1) / 19
+        local barW = SpeedSliderBar.AbsoluteSize.X
+        SpeedFiller.Size = UDim2.new(0, barW * pct, 0, 4)
+        SpeedHead.Position = UDim2.new(0, barW * pct - 5, -0.5, 0)
+        SpeedValue.Text = tostring(colorpicker._rainbowSpeed)
+    end)
+    
+    -- Initial update
+    updateColorpicker()
+    
+    -- finally store & return
+    colorpicker._window = ColorpickerFrame
+    return ColorpickerFrame
+end
+
+-- Main Library Functions
+function Library:CreateWindow(config)
+    local Window = {}
+    Window.Name = config.Name or "o bee city"
+    Window.Pages = {}
+    Window.CurrentPage = nil
+    
+    -- Create main GUI structure
+    local coresploit = Instance.new("ScreenGui")
+    local Background = Instance.new("Frame")
+    local UICorner = Instance.new("UICorner")
+    local Topbar = Instance.new("Frame")
+    local TabsHolder = Instance.new("Frame")
+    local TextLabel = Instance.new("TextLabel")
+    local Roundingfiller = Instance.new("Frame")
+    local UICorner_2 = Instance.new("UICorner")
+    local Frame = Instance.new("Frame")
+    local UnderBar = Instance.new("Frame")
+    local GameName = Instance.new("TextLabel")
+    local UserStatus = Instance.new("TextLabel")
+    local MenuGlow = Instance.new("ImageLabel")
+    local UIListLayout = Instance.new("UIListLayout")
+    
+    -- Keybind Mode Frame
+    local KeybindModeFrame = Instance.new("Frame")
+    local Frame_2 = Instance.new("Frame")
+    local TextButton = Instance.new("TextButton")
+    local TextButton_2 = Instance.new("TextButton")
+    local TextButton_3 = Instance.new("TextButton")
+    local UIListLayout_7 = Instance.new("UIListLayout")
+    local TextLabel_4 = Instance.new("TextLabel")
+    local Frame_3 = Instance.new("Frame")
+    local UICorner_28 = Instance.new("UICorner")
+
+    -- Properties
+    coresploit.Name = "coresploit"
+    coresploit.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    coresploit.Enabled = true
+    coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
+    local overlay = Instance.new("ScreenGui")
+    overlay.Name           = "coresploitOverlay"
+    overlay.Parent         = LocalPlayer.PlayerGui
+    overlay.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    overlay.DisplayOrder   = 1   -- sits above your main GUI
+    Library.OverlayGui     = overlay
+    
+    -- track open dropdowns
+    Library.OpenDropdowns = {}
+
+    Background.Name = "Background"
+    Background.Parent = coresploit
+    Background.BackgroundColor3 = Color3.fromRGB(17, 16, 24)
+    Background.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Background.BorderSizePixel = 0
+    Background.Position = UDim2.new(0.5, -235, 0.5, -290)
+    Background.Size = UDim2.new(0, 470, 0, 581)
+    Library:CreateStroke(Background, Color3.fromRGB(50, 50, 50), 1)
+
+    UICorner.CornerRadius = UDim.new(0, 3)
+    UICorner.Parent = Background
+
+    Topbar.Name = "Topbar"
+    Topbar.Parent = Background
+    Topbar.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    Topbar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Topbar.BorderSizePixel = 0
+    Topbar.Position = UDim2.new(0, 0, 0.0103270225, 0)
+    Topbar.Size = UDim2.new(0, 470, 0, 30)
+
+    TabsHolder.Name = "TabsHolder"
+    TabsHolder.Parent = Topbar
+    TabsHolder.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TabsHolder.BackgroundTransparency = 1.000
+    TabsHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TabsHolder.BorderSizePixel = 0
+    TabsHolder.Position = UDim2.new(0.506383002, 0, -0.17647095, 0)
+    TabsHolder.Size = UDim2.new(0, 232, 0, 36)
+
+    UIListLayout.Parent = TabsHolder
+    UIListLayout.FillDirection = Enum.FillDirection.Horizontal
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Padding = UDim.new(0, 8)
+
+    TextLabel.Parent = Topbar
+    TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel.BackgroundTransparency = 1.000
+    TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextLabel.BorderSizePixel = 0
+    TextLabel.Position = UDim2.new(0.0245389901, 0, -0.200000003, 0)
+    TextLabel.Size = UDim2.new(0, 120, 0, 32)
+    TextLabel.Font = Enum.Font.SourceSansBold
+    TextLabel.Text = Window.Name
+    TextLabel.TextColor3 = Color3.fromRGB(66, 255, 249)
+    TextLabel.TextSize = 14.000
+    TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    Roundingfiller.Name = "Roundingfiller"
+    Roundingfiller.Parent = Topbar
+    Roundingfiller.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Roundingfiller.BorderSizePixel = 0
+    Roundingfiller.ClipsDescendants = true
+    Roundingfiller.Position = UDim2.new(0, 0, -0.209804028, 0)
+    Roundingfiller.Size = UDim2.new(0, 470, 0, 7)
+    Roundingfiller.ZIndex = 1
+
+    UICorner_2.CornerRadius = UDim.new(0, 3)
+    UICorner_2.Parent = Roundingfiller
+
+    Frame.Parent = Topbar
+    Frame.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+    Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame.BorderSizePixel = 0
+    Frame.Position = UDim2.new(0, 0, 0.95686239, 0)
+    Frame.Size = UDim2.new(0, 469, 0, 1)
+
+    UnderBar.Name = "UnderBar"
+    UnderBar.Parent = Background
+    UnderBar.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    UnderBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    UnderBar.BorderSizePixel = 0
+    UnderBar.Position = UDim2.new(0.00212765951, 0, 0.963855445, 0)
+    UnderBar.Size = UDim2.new(0, 468, 0, 21)
+    
+    -- Add stroke to UnderBar
+    Library:CreateStroke(UnderBar, Color3.fromRGB(50, 50, 50), 1)
+
+    GameName.Name = "GameName"
+    GameName.Parent = UnderBar
+    GameName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    GameName.BackgroundTransparency = 1.000
+    GameName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    GameName.BorderSizePixel = 0
+    GameName.Position = UDim2.new(0, 5, 0, 0)
+    GameName.Size = UDim2.new(0, 300, 0, 21)
+    GameName.Font = Enum.Font.SourceSansSemibold
+    GameName.Text = "Game: " .. (game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name or "Unknown")
+    GameName.TextColor3 = Color3.fromRGB(66, 255, 249)
+    GameName.TextSize = 14.000
+    GameName.TextXAlignment = Enum.TextXAlignment.Left
+
+    UserStatus.Name = "UserStatus"
+    UserStatus.Parent = UnderBar
+    UserStatus.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    UserStatus.BackgroundTransparency = 1.000
+    UserStatus.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    UserStatus.BorderSizePixel = 0
+    UserStatus.Position = UDim2.new(0.786324799, 0, 0, 0)
+    UserStatus.Size = UDim2.new(0, 94, 0, 21)
+    UserStatus.Font = Enum.Font.SourceSansSemibold
+    UserStatus.Text = "User"
+    UserStatus.TextColor3 = Color3.fromRGB(66, 255, 249)
+    UserStatus.TextSize = 14.000
+    UserStatus.TextXAlignment = Enum.TextXAlignment.Right
+
+    MenuGlow.Name = "MenuGlow"
+    MenuGlow.Parent = Background
+    MenuGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    MenuGlow.BackgroundTransparency = 1.000
+    MenuGlow.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    MenuGlow.BorderSizePixel = 0
+    MenuGlow.Position = UDim2.new(-0.047340557, 0, -0.0366644785, 0)
+    MenuGlow.Size = UDim2.new(0, 513, 0, 623)
+    MenuGlow.ZIndex = 1
+    MenuGlow.Image = "rbxassetid://18245826428"
+    MenuGlow.ImageColor3 = Color3.fromRGB(66, 255, 249)
+    MenuGlow.ImageTransparency = 0.740
+    MenuGlow.ScaleType = Enum.ScaleType.Slice
+    MenuGlow.SliceCenter = Rect.new(21, 21, 79, 79)
+
+    -- Keybind Mode Frame
+    KeybindModeFrame.Name = "KeybindModeFrame"
+    KeybindModeFrame.Parent = Background
+    KeybindModeFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    KeybindModeFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    KeybindModeFrame.BorderSizePixel = 0
+    KeybindModeFrame.Position = UDim2.new(0.351444304, 0, 0.550614119, 0)
+    KeybindModeFrame.Size = UDim2.new(0, 98, 0, 68)
+    KeybindModeFrame.Visible = false
+    KeybindModeFrame.ZIndex = 3
+    Library:CreateStroke(KeybindModeFrame, Color3.fromRGB(50, 50, 50), 1)
+
+    Frame_2.Parent = KeybindModeFrame
+    Frame_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Frame_2.BackgroundTransparency = 1.000
+    Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame_2.BorderSizePixel = 0
+    Frame_2.Position = UDim2.new(0.0379588865, 0, 0.26470542, 0)
+    Frame_2.Size = UDim2.new(0, 96, 0, 50)
+
+    TextButton.Parent = Frame_2
+    TextButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextButton.BackgroundTransparency = 1.000
+    TextButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextButton.BorderSizePixel = 0
+    TextButton.Position = UDim2.new(0, 0, 0.0399999991, 0)
+    TextButton.Size = UDim2.new(0, 88, 0, 14)
+    TextButton.ZIndex = 3
+    TextButton.Font = Enum.Font.SourceSansSemibold
+    TextButton.Text = "Hold"
+    TextButton.TextColor3 = Color3.fromRGB(253, 247, 255)
+    TextButton.TextSize = 14.000
+    TextButton.TextXAlignment = Enum.TextXAlignment.Left
+
+    TextButton_2.Parent = Frame_2
+    TextButton_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextButton_2.BackgroundTransparency = 1.000
+    TextButton_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextButton_2.BorderSizePixel = 0
+    TextButton_2.Position = UDim2.new(0, 0, 0.00722045917, 0)
+    TextButton_2.Size = UDim2.new(0, 88, 0, 14)
+    TextButton_2.ZIndex = 3
+    TextButton_2.Font = Enum.Font.SourceSansSemibold
+    TextButton_2.Text = "Toggle"
+    TextButton_2.TextColor3 = Color3.fromRGB(124, 121, 125)
+    TextButton_2.TextSize = 14.000
+    TextButton_2.TextXAlignment = Enum.TextXAlignment.Left
+
+    TextButton_3.Parent = Frame_2
+    TextButton_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextButton_3.BackgroundTransparency = 1.000
+    TextButton_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextButton_3.BorderSizePixel = 0
+    TextButton_3.Position = UDim2.new(0.0500000007, 0, 0.144117743, 0)
+    TextButton_3.Size = UDim2.new(0, 88, 0, 14)
+    TextButton_3.ZIndex = 3
+    TextButton_3.Font = Enum.Font.SourceSansSemibold
+    TextButton_3.Text = "Always"
+    TextButton_3.TextColor3 = Color3.fromRGB(124, 121, 125)
+    TextButton_3.TextSize = 14.000
+    TextButton_3.TextXAlignment = Enum.TextXAlignment.Left
+
+    UIListLayout_7.Parent = Frame_2
+    UIListLayout_7.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout_7.Padding = UDim.new(0, 2)
+
+    TextLabel_4.Parent = KeybindModeFrame
+    TextLabel_4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel_4.BackgroundTransparency = 1.000
+    TextLabel_4.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextLabel_4.BorderSizePixel = 0
+    TextLabel_4.Position = UDim2.new(0.0379588865, 0, -0.00705898507, 0)
+    TextLabel_4.Size = UDim2.new(0, 94, 0, 18)
+    TextLabel_4.Font = Enum.Font.SourceSansSemibold
+    TextLabel_4.Text = "Mode"
+    TextLabel_4.TextColor3 = Color3.fromRGB(66, 255, 249)
+    TextLabel_4.TextSize = 14.000
+    TextLabel_4.TextXAlignment = Enum.TextXAlignment.Left
+
+    Frame_3.Parent = TextLabel_4
+    Frame_3.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+    Frame_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame_3.BorderSizePixel = 0
+    Frame_3.Position = UDim2.new(-0.0531914905, 0, 0.944444418, 0)
+    Frame_3.Size = UDim2.new(0, 100, 0, 1)
+
+    UICorner_28.CornerRadius = UDim.new(0, 3)
+    UICorner_28.Parent = KeybindModeFrame
+
+    -- Store references
+    Window.GUI = coresploit
+    Window.Background = Background
+    Window.TabsHolder = TabsHolder
+    Window.KeybindModeFrame = KeybindModeFrame
+    Window.KeybindModeButtons = {TextButton, TextButton_2, TextButton_3}
+    Library.GUI = coresploit
+    
+    -- Make draggable
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+    
+    Library:CreateConnection(Background.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = Background.Position
+        end
+    end)
+    
+    Library:CreateConnection(UserInputService.InputChanged, function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            Background.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    Library:CreateConnection(UserInputService.InputEnded, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    -- Page functions
+    function Window:CreatePage(config)
+        local Page = {}
+        Page.Name = config.Name or "Tab"
+        Page.Window = Window
+        Page.Sections = {}
+        Page.Active = false
+        
+        -- Create tab button
+        local title = Instance.new("TextLabel")
+        local SelectedLine = Instance.new("Frame")
+        local LineGlow = Instance.new("Frame")
+        local UIGradient = Instance.new("UIGradient")
+        
+        title.Name = "title"
+        title.Parent = TabsHolder
+        title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        title.BackgroundTransparency = 1.000
+        title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        title.BorderSizePixel = 0
+        title.Size = UDim2.new(0, 50, 0, 32)
+        title.Font = Enum.Font.SourceSansSemibold
+        title.Text = Page.Name
+        title.TextColor3 = Color3.fromRGB(124, 121, 125)
+        title.TextSize = 14.000
+        
+        SelectedLine.Name = "SelectedLine"
+        SelectedLine.Parent = title
+        SelectedLine.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+        SelectedLine.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        SelectedLine.BorderSizePixel = 0
+        SelectedLine.Position = UDim2.new(-0.0599999987, 0, 1, 0)
+        SelectedLine.Size = UDim2.new(0, 55, 0, 2)
+        SelectedLine.Visible = false
+        
+        LineGlow.Name = "LineGlow"
+        LineGlow.Parent = title
+        LineGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        LineGlow.BackgroundTransparency = 0.900
+        LineGlow.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        LineGlow.BorderSizePixel = 0
+        LineGlow.Position = UDim2.new(-0.06,  0, -0.022, 0)
+        LineGlow.Size     = UDim2.new( 0,   55,   0,   32)
+        LineGlow.Visible = false
+        
+        UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(66, 255, 249)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(66, 255, 249))}
+        UIGradient.Rotation = 90
+        UIGradient.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0.00, 1.00), NumberSequenceKeypoint.new(0.00, 0.00), NumberSequenceKeypoint.new(1.00, 0.00)}
+        UIGradient.Parent = LineGlow
+        
+        -- Create page content areas
+        local Section1 = Instance.new("Frame")
+        local Section2 = Instance.new("Frame")
+        
+        -- Section 1 (Left)
+        Section1.Name = "Section1"
+        Section1.Parent = Background
+        Section1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Section1.BackgroundTransparency = 1.000
+        Section1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Section1.BorderSizePixel = 0
+        Section1.Position = UDim2.new(0.0112055354, 0, 0.0730183199, 0)
+        Section1.Size = UDim2.new(0, 225, 0, 420)
+        Section1.Visible = false
+        
+        -- Add stroke to Section1
+        Library:CreateStroke(Section1, Color3.fromRGB(50, 50, 50), 1)
+        
+        -- Section 2 (Right)
+        Section2.Name = "Section2"
+        Section2.Parent = Background
+        Section2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Section2.BackgroundTransparency = 1.000
+        Section2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Section2.BorderSizePixel = 0
+        Section2.Position = UDim2.new(0.497872353, 4, 0.0730183199, 0)
+        Section2.Size = UDim2.new(0, 225, 0, 420)
+        Section2.Visible = false
+        
+        -- Add stroke to Section2
+        Library:CreateStroke(Section2, Color3.fromRGB(50, 50, 50), 1)
+        
+        Page.Section1 = Section1
+        Page.Section2 = Section2
+        Page.TabButton = title
+        Page.SelectedLine = SelectedLine
+        Page.LineGlow = LineGlow
+        
+        -- Tab click handler
+        Library:CreateConnection(title.InputBegan, function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                Window:SetPage(Page)
+            end
+        end)
+        
+        function Page:SetActive(active)
+            Page.Active = active
+            if active then
+                title.TextColor3 = Color3.fromRGB(66, 255, 249)
+                SelectedLine.Visible = true
+                LineGlow.Visible = true
+                Section1.Visible = true
+                Section2.Visible = true
+            else
+                title.TextColor3 = Color3.fromRGB(124, 121, 125)
+                SelectedLine.Visible = false
+                LineGlow.Visible = false
+                Section1.Visible = false
+                Section2.Visible = false
+            end
+        end
+        
+        function Page:CreateSection(config)
+            local Section = {}
+            Section.Name = config.Name or "Section"
+            Section.Side = config.Side or "left"
+            Section.Page = Page
+            Section.Elements = {}
+            
+            local parentFrame = Section.Side == "left" and Section1 or Section2
+            
+            -- Create section with your styling
+            local SectionFrame = Instance.new("Frame")
+            local UICorner = Instance.new("UICorner")
+            local Title = Instance.new("Frame")
+            local Roundingfiller = Instance.new("Frame")
+            local UICorner_2 = Instance.new("UICorner")
+            local TitleLabel = Instance.new("TextLabel")
+            local SectionHolder = Instance.new("Frame")
+            local UIListLayout = Instance.new("UIListLayout")
+            
+            SectionFrame.Name = "SectionFrame"
+            SectionFrame.Parent = parentFrame
+            SectionFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            SectionFrame.BackgroundTransparency = 1.000
+            SectionFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            SectionFrame.BorderSizePixel = 0
+            SectionFrame.Size = UDim2.new(1, 0, 0, 300)
+            
+            UICorner.CornerRadius = UDim.new(0, 3)
+            UICorner.Parent = SectionFrame
+            
+            Title.Name = "Title"
+            Title.Parent = SectionFrame
+            Title.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+            Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            Title.BorderSizePixel = 0
+            Title.Position = UDim2.new(0, 0, 0.0219435729, 0)
+            Title.Size = UDim2.new(0, 225, 0, 15)
+            
+            -- Add stroke to section title
+            Library:CreateStroke(Title, Color3.fromRGB(50, 50, 50), 1)
+            
+            Roundingfiller.Name = "Roundingfiller"
+            Roundingfiller.Parent = Title
+            Roundingfiller.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+            Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            Roundingfiller.BorderSizePixel = 0
+            Roundingfiller.Position = UDim2.new(0, 0, -0.48, 0)
+            Roundingfiller.Size = UDim2.new(0, 225, 0, 10)
+            
+            UICorner_2.CornerRadius = UDim.new(0, 3)
+            UICorner_2.Parent = Roundingfiller
+            
+            TitleLabel.Parent = Title
+            TitleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            TitleLabel.BackgroundTransparency = 1.000
+            TitleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            TitleLabel.BorderSizePixel = 0
+            TitleLabel.Position = UDim2.new(0.0279069766, 0, -0.466666669, 0)
+            TitleLabel.Size = UDim2.new(0, 79, 0, 22)
+            TitleLabel.Font = Enum.Font.SourceSansSemibold
+            TitleLabel.Text = Section.Name
+            TitleLabel.TextColor3 = Color3.fromRGB(66, 255, 249)
+            TitleLabel.TextSize = 15.000
+            TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            
+            SectionHolder.Name = "SectionHolder"
+            SectionHolder.Parent = SectionFrame
+            SectionHolder.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            SectionHolder.BackgroundTransparency = 1.000
+            SectionHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            SectionHolder.BorderSizePixel = 0
+            SectionHolder.Position = UDim2.new(0.0149999997, 0, 0.0877742916, 0)
+            SectionHolder.Size = UDim2.new(0, 216, 0, 283)
+            
+            UIListLayout.Parent = SectionHolder
+            UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            UIListLayout.Padding = UDim.new(0, 7)
+            
+            Section.Frame = SectionFrame
+            Section.SectionHolder = SectionHolder
+            
+            -- Toggle Element
+            function Section:CreateToggle(config)
+                local Toggle = {}
+                Toggle.Name = config.Name or "Toggle"
+                Toggle.Default = config.Default or false
+                Toggle.Flag = config.Flag or Toggle.Name
+                Toggle.Callback = config.Callback or function() end
+                Toggle.Value = Toggle.Default
+                
+                local ToggleButton = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
+                local title = Instance.new("TextLabel")
+                local checkmark = Instance.new("ImageLabel")
+                
+                ToggleButton.Name = "ToggleButton"
+                ToggleButton.Parent = SectionHolder
+                ToggleButton.BackgroundColor3 = Toggle.Default and Color3.fromRGB(66, 255, 249) or Color3.fromRGB(255, 255, 255)
+                ToggleButton.BackgroundTransparency = Toggle.Default and 0 or 1
+                ToggleButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ToggleButton.BorderSizePixel = 0
+                ToggleButton.Size = UDim2.new(0, 18, 0, 18)
+                ToggleButton.ZIndex = 1
+                ToggleButton.Font = Enum.Font.SourceSans
+                ToggleButton.Text = ""
+                ToggleButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                ToggleButton.TextSize = 14.000
+                
+                UICorner.CornerRadius = UDim.new(0, 3)
+                UICorner.Parent = ToggleButton
+                
+                -- Add stroke to toggle button
+                Library:CreateStroke(ToggleButton, Color3.fromRGB(50, 50, 50), 1)
+                
+                title.Name = "title"
+                title.Parent = ToggleButton
+                title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                title.BackgroundTransparency = 1.000
+                title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                title.BorderSizePixel = 0
+                title.Position = UDim2.new(1.46110022, 0, -0.055555556, 0)
+                title.Size = UDim2.new(0, 120, 0, 20)
+                title.Font = Enum.Font.SourceSansSemibold
+                title.Text = Toggle.Name
+                title.TextColor3 = Toggle.Default and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(124, 121, 125)
+                title.TextSize = 15.000
+                title.TextXAlignment = Enum.TextXAlignment.Left
+                
+                checkmark.Name = "checkmark"
+                checkmark.Parent = ToggleButton
+                checkmark.BackgroundTransparency = 1.000
+                checkmark.BorderSizePixel = 0
+                checkmark.Position = UDim2.new(0.111111112, 0, 0.111111112, 0)
+                checkmark.Size = UDim2.new(0, 13, 0, 13)
+                checkmark.Image = "http://www.roblox.com/asset/?id=6031094667"
+                checkmark.ImageColor3 = Color3.fromRGB(0, 0, 0)
+                checkmark.Visible = Toggle.Default
+                
+                function Toggle:SetValue(value)
+                    Toggle.Value = value
+                    Library.Flags[Toggle.Flag] = value
+                    
+                    if value then
+                        ToggleButton.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+                        ToggleButton.BackgroundTransparency = 0
+                        title.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        checkmark.Visible = true
+                    else
+                        ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        ToggleButton.BackgroundTransparency = 1
+                        title.TextColor3 = Color3.fromRGB(124, 121, 125)
+                        checkmark.Visible = false
+                    end
+                    
+                    Toggle.Callback(value)
+                end
+                
+                function Toggle:AddColorpicker(config)
+                    local Colorpicker = {}
+                    Colorpicker.Name = config.Name or "Color"
+                    Colorpicker.Default = config.Default or Color3.fromRGB(255, 0, 0)
+                    Colorpicker.Flag = config.Flag or Toggle.Flag .. "_Color"
+                    Colorpicker.Callback = config.Callback or function() end
+                    Colorpicker.Value = Colorpicker.Default
+                    
+                    local ColorpickerButton = Instance.new("TextButton")
+                    local UICorner = Instance.new("UICorner")
+                    
+                    ColorpickerButton.Name = "ColorpickerBinded"
+                    ColorpickerButton.Parent = ToggleButton
+                    ColorpickerButton.BackgroundColor3 = Colorpicker.Default
+                    ColorpickerButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                    ColorpickerButton.BorderSizePixel = 0
+                    ColorpickerButton.Position = UDim2.new(10.2222223, 0, 0.111111112, 0)
+                    ColorpickerButton.Size = UDim2.new(0, 32, 0, 13)
+                    ColorpickerButton.Font = Enum.Font.SourceSans
+                    ColorpickerButton.Text = ""
+                    ColorpickerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                    ColorpickerButton.TextSize = 14.000
+                    
+                    UICorner.CornerRadius = UDim.new(0, 3)
+                    UICorner.Parent = ColorpickerButton
+                    
+                    -- Add stroke to colorpicker button
+                    Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
+                    
+                    function Colorpicker:SetValue(color)
+                        Colorpicker.Value = color
+                        Library.Flags[Colorpicker.Flag] = color
+                        ColorpickerButton.BackgroundColor3 = color
+                        Colorpicker.Callback(color)
+                    end
+                    
+                    Library:CreateConnection(ColorpickerButton.MouseButton1Click, function()
+                        Library:CreateColorpickerWindow(Colorpicker)
+                    end)
+                    
+                    Colorpicker:SetValue(Colorpicker.Default)
+                    return Colorpicker
+                end
+                
+                function Toggle:AddKeybind(config)
+                    local Keybind = {}
+                    Keybind.Name = config.Name or "Keybind"
+                    Keybind.Default = config.Default or "None"
+                    Keybind.Flag = config.Flag or Toggle.Flag .. "_Keybind"
+                    Keybind.Callback = config.Callback or function() end
+                    Keybind.Value = Keybind.Default
+                    Keybind.Mode = "Toggle"
+                    Keybind.Listening = false
+                    
+                    local TextService = game:GetService("TextService")
+                    local MIN_W = 20 -- minimum width
+                    local H_PADDING = 8 -- horizontal padding inside the box
+                    local V_PADDING = 0 -- adjust if you want a tiny vertical nudge
+                    
+                    local KeybindBox = Instance.new("TextButton")
+                    
+                    KeybindBox.Name = "KeybindBinded"
+                    KeybindBox.Parent = ToggleButton
+                    KeybindBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                    KeybindBox.BackgroundTransparency = 1.000
+                    KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                    KeybindBox.BorderSizePixel = 0
+                    KeybindBox.AnchorPoint = Vector2.new(1, 0.5) -- pivot on its right-center
+                    KeybindBox.Position = UDim2.new(1, 197, 0.5, V_PADDING) -- positioned relative to toggle, vertically centered
+                    KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
+                    KeybindBox.Font = Enum.Font.SourceSansSemibold
+                    KeybindBox.Text = Keybind.Default
+                    KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    KeybindBox.TextSize = 15.000
+                    KeybindBox.TextScaled = false
+                    KeybindBox.AutoButtonColor = false
+                    
+                    -- Add stroke to keybind box
+                    Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
+                    
+                    -- Key name mapping
+                    local KeyNames = {
+                        [Enum.KeyCode.LeftShift] = "LShift",
+                        [Enum.KeyCode.RightShift] = "RShift",
+                        [Enum.KeyCode.LeftControl] = "LCtrl",
+                        [Enum.KeyCode.RightControl] = "RCtrl",
+                        [Enum.KeyCode.LeftAlt] = "LAlt",
+                        [Enum.KeyCode.RightAlt] = "RAlt",
+                        [Enum.KeyCode.Space] = "Space",
+                        [Enum.KeyCode.Return] = "Enter",
+                        [Enum.KeyCode.BackSlash] = "\\",
+                        [Enum.KeyCode.Slash] = "/",
+                        [Enum.KeyCode.Period] = ".",
+                        [Enum.KeyCode.Comma] = ",",
+                        [Enum.KeyCode.Semicolon] = ";",
+                        [Enum.KeyCode.Quote] = "'",
+                        [Enum.KeyCode.LeftBracket] = "[",
+                        [Enum.KeyCode.RightBracket] = "]",
+                        [Enum.KeyCode.Minus] = "-",
+                        [Enum.KeyCode.Equals] = "=",
+                        [Enum.KeyCode.Backquote] = "`",
+                        [Enum.KeyCode.Tab] = "Tab",
+                        [Enum.KeyCode.CapsLock] = "Caps",
+                        [Enum.UserInputType.MouseButton1] = "MB1",
+                        [Enum.UserInputType.MouseButton2] = "MB2",
+                        [Enum.UserInputType.MouseButton3] = "MB3"
+                    }
+                    
+                    function Keybind:SetValue(key)
+                        Keybind.Value = key
+                        Library.Flags[Keybind.Flag] = key
+                        
+                        local displayName = "None"
+                        if key and key ~= "None" then
+                            if KeyNames[key] then
+                                displayName = KeyNames[key]
+                            elseif typeof(key) == "EnumItem" then
+                                displayName = key.Name
+                            else
+                                displayName = tostring(key)
+                            end
+                        end
+                        
+                        KeybindBox.Text = displayName
+                        
+                        -- measure the text
+                        local bounds = TextService:GetTextSize(
+                            displayName,
+                            15, -- font size
+                            Enum.Font.SourceSansSemibold, -- font
+                            Vector2.new(1e5, 20) -- unconstrained width
+                        )
+                        local newWidth = math.max(MIN_W, bounds.X + H_PADDING*2)
+                        
+                        -- resize only the width; pivot keeps the right edge fixed
+                        KeybindBox.Size = UDim2.new(0, newWidth, 0, 20)
+                        
+                        Keybind.Callback(key)
+                    end
+                    
+                    -- Left click to bind key
+                    Library:CreateConnection(KeybindBox.MouseButton1Click, function()
+                        if not Keybind.Listening then
+                            Keybind.Listening = true
+                            KeybindBox.Text = "..."
+                            KeybindBox.TextColor3 = Color3.fromRGB(124, 121, 125)
+                            
+                            local connection
+                            connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
+                                if gameProcessed then return end
+                                
+                                local key = nil
+                                if input2.UserInputType == Enum.UserInputType.Keyboard then
+                                    key = input2.KeyCode
+                                elseif input2.UserInputType == Enum.UserInputType.MouseButton1 or 
+                                       input2.UserInputType == Enum.UserInputType.MouseButton2 or 
+                                       input2.UserInputType == Enum.UserInputType.MouseButton3 then
+                                    key = input2.UserInputType
+                                end
+                                
+                                if key then
+                                    Keybind:SetValue(key)
+                                    KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                    Keybind.Listening = false
+                                    connection:Disconnect()
+                                end
+                            end)
+                        end
+                    end)
+                    
+                    -- Right click for mode selection
+                    Library:CreateConnection(KeybindBox.MouseButton2Click, function()
+                        Window.KeybindModeFrame.Visible = true
+                        Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
+                        
+                        for i, btn in pairs(Window.KeybindModeButtons) do
+                            Library:CreateConnection(btn.MouseButton1Click, function()
+                                Keybind.Mode = btn.Text
+                                Window.KeybindModeFrame.Visible = false
+                                
+                                -- Update button colors
+                                for j, b in pairs(Window.KeybindModeButtons) do
+                                    if b == btn then
+                                        b.TextColor3 = Color3.fromRGB(253, 247, 255)
+                                    else
+                                        b.TextColor3 = Color3.fromRGB(124, 121, 125)
+                                    end
+                                end
+                            end)
+                        end
+                    end)
+                    
+                    Keybind:SetValue(Keybind.Default)
+                    return Keybind
+                end
+                
+                Library:CreateConnection(ToggleButton.MouseButton1Click, function()
+                    Toggle:SetValue(not Toggle.Value)
+                end)
+                
+                Toggle:SetValue(Toggle.Default)
+                return Toggle
+            end
+            
+            -- Slider Element
+            function Section:CreateSlider(config)
+                local Slider = {}
+                Slider.Name = config.Name or "Slider"
+                Slider.Min = config.Min or 0
+                Slider.Max = config.Max or 100
+                Slider.Default = config.Default or 0
+                Slider.Flag = config.Flag or Slider.Name
+                Slider.Callback = config.Callback or function() end
+                Slider.Value = Slider.Default
+                
+                local SliderFrame = Instance.new("TextLabel")
+                local SliderBar = Instance.new("Frame")
+                local Filler = Instance.new("Frame")
+                local UICorner = Instance.new("UICorner")
+                local SliderHead = Instance.new("TextButton")
+                local UICorner_2 = Instance.new("UICorner")
+                local SliderValue = Instance.new("TextBox")
+                
+                SliderFrame.Name = "Slider"
+                SliderFrame.Parent = SectionHolder
+                SliderFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SliderFrame.BackgroundTransparency = 1.000
+                SliderFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                SliderFrame.BorderSizePixel = 0
+                SliderFrame.Size = UDim2.new(0, 215, 0, 32)
+                SliderFrame.Font = Enum.Font.SourceSansSemibold
+                SliderFrame.Text = Slider.Name
+                SliderFrame.TextColor3 = Color3.fromRGB(124, 121, 125)
+                SliderFrame.TextSize = 15.000
+                SliderFrame.TextXAlignment = Enum.TextXAlignment.Left
+                SliderFrame.TextYAlignment = Enum.TextYAlignment.Top
+                
+                SliderBar.Name = "Slider"
+                SliderBar.Parent = SliderFrame
+                SliderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SliderBar.BackgroundTransparency = 1.000
+                SliderBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                SliderBar.BorderSizePixel = 0
+                SliderBar.Position = UDim2.new(0, 0, 0.800000012, 0)
+                SliderBar.Size = UDim2.new(0, 214, 0, 2)
+                
+                -- Add stroke to slider bar
+                Library:CreateStroke(SliderBar, Color3.fromRGB(50, 50, 50), 1)
+                
+                Filler.Name = "Filler"
+                Filler.Parent = SliderBar
+                Filler.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+                Filler.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                Filler.BorderSizePixel = 0
+                Filler.Position = UDim2.new(0, 0, -4, 7)
+                Filler.Size = UDim2.new(0, 70, 0, 4)
+                Filler.ZIndex = 2
+                
+                UICorner.CornerRadius = UDim.new(0, 2)
+                UICorner.Parent = Filler
+                
+                SliderHead.Name = "SliderHead"
+                SliderHead.Parent = Filler
+                SliderHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+                SliderHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                SliderHead.BorderSizePixel = 0
+                SliderHead.Position = UDim2.new(0.899999976, 0, -0.75, 0)
+                SliderHead.Size = UDim2.new(0, 10, 0, 10)
+                SliderHead.ZIndex = 2 -- Set ZIndex to 2 as requested
+                SliderHead.Font = Enum.Font.SourceSans
+                SliderHead.Text = ""
+                SliderHead.TextColor3 = Color3.fromRGB(0, 0, 0)
+                SliderHead.TextSize = 14.000
+                
+                UICorner_2.CornerRadius = UDim.new(1, 0)
+                UICorner_2.Parent = SliderHead
+                
+                -- Add stroke to slider head
+                Library:CreateStroke(SliderHead, Color3.fromRGB(50, 50, 50), 1)
+                
+                SliderValue.Name = "SliderValue"
+                SliderValue.Parent = SliderFrame
+                SliderValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SliderValue.BackgroundTransparency = 1.000
+                SliderValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                SliderValue.BorderSizePixel = 0
+                SliderValue.Position = UDim2.new(0.764534891, 0, 0, 0)
+                SliderValue.Size = UDim2.new(0, 50, 0, 19)
+                SliderValue.Font = Enum.Font.SourceSansSemibold
+                SliderValue.PlaceholderColor3 = Color3.fromRGB(111, 108, 112)
+                SliderValue.PlaceholderText = tostring(Slider.Default)
+                SliderValue.Text = ""
+                SliderValue.TextColor3 = Color3.fromRGB(111, 108, 112)
+                SliderValue.TextSize = 16.000
+                SliderValue.TextXAlignment = Enum.TextXAlignment.Right
+                
+                function Slider:SetValue(value)
+                    value = math.clamp(value, Slider.Min, Slider.Max)
+                    Slider.Value = value
+                    Library.Flags[Slider.Flag] = value
+                    
+                    local percent = (value - Slider.Min) / (Slider.Max - Slider.Min)
+                    local fillWidth = 214 * percent
+                    Filler.Size = UDim2.new(0, fillWidth, 0, 4)
+                    
+                    -- Fix slider head position to follow the fill properly
+                    SliderHead.Position = UDim2.new(0, fillWidth - 5, -0.75, 0)
+                    
+                    SliderValue.Text = tostring(value)
+                    
+                    Slider.Callback(value)
+                end
+                
+                local dragging = false
+                Library:CreateConnection(SliderHead.MouseButton1Down, function()
+                    dragging = true
+                end)
+                
+                Library:CreateConnection(UserInputService.InputEnded, function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+                
+                Library:CreateConnection(UserInputService.InputChanged, function(input)
+                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        local percent = math.clamp((Mouse.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
+                        local value = Slider.Min + (Slider.Max - Slider.Min) * percent
+                        Slider:SetValue(math.floor(value * 1000) / 1000)
+                    end
+                end)
+                
+                Library:CreateConnection(SliderValue.FocusLost, function()
+                    local value = tonumber(SliderValue.Text)
+                    if value then
+                        Slider:SetValue(value)
+                    end
+                end)
+                
+                Slider:SetValue(Slider.Default)
+                return Slider
+            end
+            
+            -- Dropdown Element
+            function Section:CreateDropdown(config)
+                local Dropdown = {}
+                Dropdown.Name = config.Name or "Dropdown"
+                Dropdown.Options = config.Options or {"Option1", "Option2", "Option3"}
+                Dropdown.Default = config.Default or (config.Multi and {} or "None")
+                Dropdown.Flag = config.Flag or Dropdown.Name
+                Dropdown.Callback = config.Callback or function() end
+                Dropdown.Value = Dropdown.Default
+                Dropdown.Multi = config.Multi or false
+                Dropdown.Open = false
+                
+                local DropdownButton = Instance.new("TextButton")
+                local Arrow = Instance.new("ImageLabel")
+                local DropdownHolder = Instance.new("Frame")
+                local UICorner = Instance.new("UICorner")
+                local UIListLayout = Instance.new("UIListLayout")
+                
+                DropdownButton.Name = "Dropdown"
+                DropdownButton.Parent = SectionHolder
+                DropdownButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownButton.BackgroundTransparency = 1.000
+                DropdownButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DropdownButton.BorderSizePixel = 0
+                DropdownButton.Size = UDim2.new(0, 215, 0, 20)
+                DropdownButton.ZIndex = 2
+                DropdownButton.Font = Enum.Font.SourceSansSemibold
+                DropdownButton.Text = " " .. (Dropdown.Multi and table.concat(Dropdown.Default, ", ") or tostring(Dropdown.Default))
+                DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownButton.TextSize = 15.000
+                DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- Add stroke to dropdown button
+                Library:CreateStroke(DropdownButton, Color3.fromRGB(50, 50, 50), 1)
+                
+                Arrow.Name = "Arrow"
+                Arrow.Parent = DropdownButton
+                Arrow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                Arrow.BackgroundTransparency = 1.000
+                Arrow.BorderSizePixel = 0
+                Arrow.Position = UDim2.new(0.906976759, 0, 0, 0)
+                Arrow.Size = UDim2.new(0, 20, 0, 20)
+                Arrow.Image = "http://www.roblox.com/asset/?id=6034818372"
+                
+                DropdownHolder.Name = "DropdownHolder"
+                DropdownHolder.Parent = DropdownButton
+                DropdownHolder.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+                DropdownHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DropdownHolder.BorderSizePixel = 0
+                DropdownHolder.Position = UDim2.new(0, 0, 1.35000002, 0)
+                DropdownHolder.Size = UDim2.new(0, 215, 0, 54)
+                DropdownHolder.ZIndex = 10
+                DropdownHolder.Visible = false
+                
+                UICorner.CornerRadius = UDim.new(0, 2)
+                UICorner.Parent = DropdownHolder
+                
+                -- Add stroke to dropdown holder
+                Library:CreateStroke(DropdownHolder, Color3.fromRGB(50, 50, 50), 1)
+                
+                UIListLayout.Parent = DropdownHolder
+                UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                UIListLayout.Padding = UDim.new(0, 1)
+                
+                -- Store references on the dropdown object
+                Dropdown.Button = DropdownButton
+                Dropdown.Holder = DropdownHolder
+                Dropdown.UIListLayout = UIListLayout
+                
+                function Dropdown:SetValue(value)
+                    self.Value = value
+                    Library.Flags[self.Flag] = value
+                    
+                    if self.Multi then
+                        -- Ensure value is a table for multi-select
+                        if type(value) ~= "table" then
+                            value = {value}
+                        end
+                        self.Button.Text = " " .. (#value > 0 and table.concat(value, ", ") or "None")
+                    else
+                        -- Ensure value is a string for single-select
+                        if type(value) == "table" then
+                            value = value[1] or "None"
+                        end
+                        self.Button.Text = " " .. tostring(value)
+                    end
+                    
+                    self.Callback(value)
+                end
+                
+                function Dropdown:Refresh()
+                    -- clear old options
+                    for _, child in ipairs(self.Holder:GetChildren()) do
+                        if child:IsA("TextLabel") then child:Destroy() end
+                    end
+                    
+                    for _, option in ipairs(self.Options) do
+                        local OptionLabel = Instance.new("TextLabel")
+                        OptionLabel.Name = "Option"
+                        OptionLabel.Parent = self.Holder
+                        OptionLabel.BackgroundTransparency = 1
+                        OptionLabel.Size = UDim2.new(0,215,0,16)
+                        OptionLabel.Font = Enum.Font.SourceSansSemibold
+                        OptionLabel.TextSize = 14
+                        OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
+                        OptionLabel.Text = " " .. option
+                        OptionLabel.Active = true
+                        OptionLabel.ZIndex = self.Holder.ZIndex + 1
+                        
+                        local isSelected = self.Multi
+                            and table.find(self.Value, option)
+                            or (not self.Multi and self.Value == option)
+                        if isSelected then
+                            OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                            OptionLabel.Text = "       " .. option
+                        else
+                            OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
+                        end
+                        
+                        Library:CreateConnection(OptionLabel.InputBegan, function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if self.Multi then
+                                    local selected = self.Value or {}
+                                    -- Ensure selected is a table
+                                    if type(selected) ~= "table" then
+                                        selected = {}
+                                    end
+                                    
+                                    local index = table.find(selected, option)
+                                    if index then
+                                        table.remove(selected, index)
+                                        OptionLabel.Text = " " .. option
+                                        OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
+                                    else
+                                        table.insert(selected, option)
+                                        OptionLabel.Text = "       " .. option
+                                        OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                                    end
+                                    self:SetValue(selected)
+                                else
+                                    -- Update all options to unselected first
+                                    for _, child in pairs(self.Holder:GetChildren()) do
+                                        if child:IsA("TextLabel") and child.Name == "Option" then
+                                            child.Text = " " .. child.Text:gsub("^%s*", "")
+                                            child.TextColor3 = Color3.fromRGB(111, 108, 112)
+                                        end
+                                    end
+                                    
+                                    -- Update selected option
+                                    OptionLabel.Text = "       " .. option
+                                    OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                                    
+                                    self:SetValue(option)
+                                end
+                            end
+                        end)
+                    end
+                    
+                    -- Auto-size the holder based on content
+                    local contentH = self.UIListLayout.AbsoluteContentSize.Y
+                    self.Holder.Size = UDim2.new(0, self.Holder.Size.X.Offset, 0, contentH)
+                end
+                
+                function Dropdown:OpenMenu()
+                    if self.Open then return end
+                    self.Open = true
+                    
+                    -- Move into overlay ScreenGui
+                    self.Holder.Parent = Library.OverlayGui
+                    self.Holder.ZIndex = 50
+                    
+                    -- Refresh and position
+                    self:Refresh()
+                    local p, s = self.Button.AbsolutePosition, self.Button.AbsoluteSize
+                    self.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5)
+                    self.Holder.Visible = true
+                    
+                    -- Set up outside-click watcher
+                    self._outsideConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                        if gameProcessed or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+                            return
+                        end
+                        
+                        local mx, my = UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y
+                        local hp, hs = self.Holder.AbsolutePosition, self.Holder.AbsoluteSize
+                        local bp, bs = self.Button.AbsolutePosition, self.Button.AbsoluteSize
+                        
+                        local inHolder = mx >= hp.X and mx <= hp.X+hs.X and my >= hp.Y and my <= hp.Y+hs.Y
+                        local inButton = mx >= bp.X and mx <= bp.X+bs.X and my >= bp.Y and my <= bp.Y+bs.Y
+                        
+                        if not (inHolder or inButton) then
+                            self:Close()
+                        end
+                    end)
+                    
+                    table.insert(Library.OpenDropdowns, self)
+                end
+                
+                function Dropdown:Close()
+                    if not self.Open then return end
+                    self.Open = false
+                    
+                    -- Hide and reparent back
+                    self.Holder.Visible = false
+                    self.Holder.Parent = SectionHolder
+                    self.Holder.Position = UDim2.new(0, 0, 1.35, 0)
+                    
+                    -- Clean up outside-click watcher
+                    if self._outsideConn then
+                        self._outsideConn:Disconnect()
+                        self._outsideConn = nil
+                    end
+                    
+                    -- Remove from open dropdowns list
+                    for i, dd in ipairs(Library.OpenDropdowns) do
+                        if dd == self then
+                            table.remove(Library.OpenDropdowns, i)
+                            break
+                        end
+                    end
+                end
+                
+                -- Hook the button
+                Library:CreateConnection(DropdownButton.MouseButton1Click, function()
+                    if Dropdown.Open then
+                        Dropdown:Close()
+                    else
+                        Dropdown:OpenMenu()
+                    end
+                end)
+                
+                Dropdown:Refresh()
+                Dropdown:SetValue(Dropdown.Default)
+                return Dropdown
+            end
+            
+            -- Colorpicker Element
+            function Section:CreateColorpicker(config)
+                local Colorpicker = {}
+                Colorpicker.Name = config.Name or "Color"
+                Colorpicker.Default = config.Default or Color3.fromRGB(0, 251, 255)
+                Colorpicker.Flag = config.Flag or Colorpicker.Name
+                Colorpicker.Callback = config.Callback or function() end
+                Colorpicker.Value = Colorpicker.Default
+                
+                local ColorpickerFrame = Instance.new("TextLabel")
+                local ColorpickerButton = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
+                
+                ColorpickerFrame.Name = "Colorpicker"
+                ColorpickerFrame.Parent = SectionHolder
+                ColorpickerFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                ColorpickerFrame.BackgroundTransparency = 1.000
+                ColorpickerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ColorpickerFrame.BorderSizePixel = 0
+                ColorpickerFrame.Size = UDim2.new(0, 215, 0, 20)
+                ColorpickerFrame.Font = Enum.Font.SourceSansSemibold
+                ColorpickerFrame.Text = Colorpicker.Name
+                ColorpickerFrame.TextColor3 = Color3.fromRGB(124, 121, 125)
+                ColorpickerFrame.TextSize = 15.000
+                ColorpickerFrame.TextXAlignment = Enum.TextXAlignment.Left
+                
+                ColorpickerButton.Name = "ColorpickerAlone"
+                ColorpickerButton.Parent = ColorpickerFrame
+                ColorpickerButton.BackgroundColor3 = Colorpicker.Default
+                ColorpickerButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ColorpickerButton.BorderSizePixel = 0
+                ColorpickerButton.Position = UDim2.new(0.851162791, 0, 0.14799957, 0)
+                ColorpickerButton.Size = UDim2.new(0, 32, 0, 13)
+                ColorpickerButton.Font = Enum.Font.SourceSans
+                ColorpickerButton.Text = ""
+                ColorpickerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                ColorpickerButton.TextSize = 14.000
+                
+                UICorner.CornerRadius = UDim.new(0, 3)
+                UICorner.Parent = ColorpickerButton
+                
+                -- Add stroke to standalone colorpicker button
+                Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
+                
+                function Colorpicker:SetValue(color)
+                    Colorpicker.Value = color
+                    Library.Flags[Colorpicker.Flag] = color
+                    ColorpickerButton.BackgroundColor3 = color
+                    Colorpicker.Callback(color)
+                end
+                
+                Library:CreateConnection(ColorpickerButton.MouseButton1Click, function()
+                    Library:CreateColorpickerWindow(Colorpicker)
+                end)
+                
+                Colorpicker:SetValue(Colorpicker.Default)
+                return Colorpicker
+            end
+            
+            -- Keybind Element
+            function Section:CreateKeybind(config)
+                local Keybind = {}
+                Keybind.Name = config.Name or "Keybind"
+                Keybind.Default = config.Default or "None"
+                Keybind.Flag = config.Flag or Keybind.Name
+                Keybind.Callback = config.Callback or function() end
+                Keybind.Value = Keybind.Default
+                Keybind.Listening = false
+                
+                local TextService = game:GetService("TextService")
+                local MIN_W = 20 -- minimum width
+                local H_PADDING = 8 -- horizontal padding inside the box
+                local V_PADDING = 0 -- adjust if you want a tiny vertical nudge
+                
+                local KeybindFrame = Instance.new("TextLabel")
+                local KeybindBox = Instance.new("TextButton")
+                
+                KeybindFrame.Name = "Keybind"
+                KeybindFrame.Parent = SectionHolder
+                KeybindFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                KeybindFrame.BackgroundTransparency = 1.000
+                KeybindFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                KeybindFrame.BorderSizePixel = 0
+                KeybindFrame.Size = UDim2.new(0, 215, 0, 20)
+                KeybindFrame.Font = Enum.Font.SourceSansSemibold
+                KeybindFrame.Text = Keybind.Name
+                KeybindFrame.TextColor3 = Color3.fromRGB(124, 121, 125)
+                KeybindFrame.TextSize = 15.000
+                KeybindFrame.TextXAlignment = Enum.TextXAlignment.Left
+                
+                KeybindBox.Name = "KeybindAlone"
+                KeybindBox.Parent = KeybindFrame
+                KeybindBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                KeybindBox.BackgroundTransparency = 1.000
+                KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                KeybindBox.BorderSizePixel = 0
+                KeybindBox.AnchorPoint = Vector2.new(1, 0.5) -- pivot on its right-center
+                KeybindBox.Position = UDim2.new(1, -0, 0.5, V_PADDING) -- 8px from right edge, vertically centered
+                KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
+                KeybindBox.Font = Enum.Font.SourceSansSemibold
+                KeybindBox.Text = Keybind.Default
+                KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                KeybindBox.TextSize = 15.000
+                KeybindBox.TextScaled = false
+                KeybindBox.AutoButtonColor = false
+                
+                -- Add stroke to standalone keybind box
+                Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
+                
+                -- Key name mapping
+                local KeyNames = {
+                    [Enum.KeyCode.LeftShift] = "LShift",
+                    [Enum.KeyCode.RightShift] = "RShift",
+                    [Enum.KeyCode.LeftControl] = "LCtrl",
+                    [Enum.KeyCode.RightControl] = "RCtrl",
+                    [Enum.KeyCode.LeftAlt] = "LAlt",
+                    [Enum.KeyCode.RightAlt] = "RAlt",
+                    [Enum.KeyCode.Space] = "Space",
+                    [Enum.KeyCode.Return] = "Enter",
+                    [Enum.KeyCode.BackSlash] = "\\",
+                    [Enum.KeyCode.Slash] = "/",
+                    [Enum.KeyCode.Period] = ".",
+                    [Enum.KeyCode.Comma] = ",",
+                    [Enum.KeyCode.Semicolon] = ";",
+                    [Enum.KeyCode.Quote] = "'",
+                    [Enum.KeyCode.LeftBracket] = "[",
+                    [Enum.KeyCode.RightBracket] = "]",
+                    [Enum.KeyCode.Minus] = "-",
+                    [Enum.KeyCode.Equals] = "=",
+                    [Enum.KeyCode.Backquote] = "`",
+                    [Enum.KeyCode.Tab] = "Tab",
+                    [Enum.KeyCode.CapsLock] = "Caps",
+                    [Enum.UserInputType.MouseButton1] = "MB1",
+                    [Enum.UserInputType.MouseButton2] = "MB2",
+                    [Enum.UserInputType.MouseButton3] = "MB3"
+                }
+                
+                function Keybind:SetValue(key)
+                    Keybind.Value = key
+                    Library.Flags[Keybind.Flag] = key
+                    
+                    local displayName = "None"
+                    if key and key ~= "None" then
+                        if KeyNames[key] then
+                            displayName = KeyNames[key]
+                        elseif typeof(key) == "EnumItem" then
+                            displayName = key.Name
+                        else
+                            displayName = tostring(key)
+                        end
+                    end
+                    
+                    KeybindBox.Text = displayName
+                    
+                    -- measure the text
+                    local bounds = TextService:GetTextSize(
+                        displayName,
+                        15, -- font size
+                        Enum.Font.SourceSansSemibold, -- font
+                        Vector2.new(1e5, 20) -- unconstrained width
+                    )
+                    local newWidth = math.max(MIN_W, bounds.X + H_PADDING*2)
+                    
+                    -- resize only the width; pivot keeps the right edge fixed
+                    KeybindBox.Size = UDim2.new(0, newWidth, 0, 20)
+                    
+                    Keybind.Callback(key)
+                end
+                
+                Library:CreateConnection(KeybindBox.MouseButton1Click, function()
+                    if not Keybind.Listening then
+                        Keybind.Listening = true
+                        KeybindBox.Text = "..."
+                        KeybindBox.TextColor3 = Color3.fromRGB(124, 121, 125)
+                        
+                        local connection
+                        connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
+                            if gameProcessed then return end
+                            
+                            local key = nil
+                            if input2.UserInputType == Enum.UserInputType.Keyboard then
+                                key = input2.KeyCode
+                            elseif input2.UserInputType == Enum.UserInputType.MouseButton1 or 
+                                   input2.UserInputType == Enum.UserInputType.MouseButton2 or 
+                                   input2.UserInputType == Enum.UserInputType.MouseButton3 then
+                                key = input2.UserInputType
+                            end
+                            
+                            if key then
+                                Keybind:SetValue(key)
+                                KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                Keybind.Listening = false
+                                connection:Disconnect()
+                            end
+                        end)
+                    end
+                end)
+                
+                Keybind:SetValue(Keybind.Default)
+                return Keybind
+            end
+            
+            -- Button Element
+            function Section:CreateButton(config)
+                local Button = {}
+                Button.Name = config.Name or "Button"
+                Button.Callback = config.Callback or function() end
+                
+                local ButtonFrame = Instance.new("TextButton")
+                
+                ButtonFrame.Name = "Button"
+                ButtonFrame.Parent = SectionHolder
+                ButtonFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                ButtonFrame.BackgroundTransparency = 1.000
+                ButtonFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ButtonFrame.BorderSizePixel = 0
+                ButtonFrame.Size = UDim2.new(0, 100, 0, 30)
+                ButtonFrame.Font = Enum.Font.SourceSansSemibold
+                ButtonFrame.Text = Button.Name
+                ButtonFrame.TextColor3 = Color3.fromRGB(255, 255, 255)
+                ButtonFrame.TextSize = 15.000
+                
+                -- Add stroke to button
+                Library:CreateStroke(ButtonFrame, Color3.fromRGB(50, 50, 50), 1)
+                
+                Library:CreateConnection(ButtonFrame.MouseButton1Click, function()
+                    Button.Callback()
+                end)
+                
+                return Button
+            end
+            
+            -- Label Element
+            function Section:CreateLabel(config)
+                local Label = {}
+                Label.Name = config.Name or "Label"
+                Label.Text = config.Text or Label.Name
+                
+                local LabelFrame = Instance.new("TextLabel")
+                
+                LabelFrame.Name = "Label"
+                LabelFrame.Parent = SectionHolder
+                LabelFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                LabelFrame.BackgroundTransparency = 1.000
+                LabelFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                LabelFrame.BorderSizePixel = 0
+                LabelFrame.Size = UDim2.new(0, 215, 0, 20)
+                LabelFrame.Font = Enum.Font.SourceSansSemibold
+                LabelFrame.Text = Label.Text
+                LabelFrame.TextColor3 = Color3.fromRGB(111, 108, 112)
+                LabelFrame.TextSize = 15.000
+                
+                function Label:SetText(text)
+                    Label.Text = text
+                    LabelFrame.Text = text
+                end
+                
+                return Label
+            end
+            
+            -- Divider Element
+            function Section:CreateDivider(config)
+                local Divider = {}
+                Divider.Name = config.Name or "Divider"
+                
+                local DividerFrame = Instance.new("Frame")
+                local UICorner = Instance.new("UICorner")
+                
+                DividerFrame.Name = "Divider"
+                DividerFrame.Parent = SectionHolder
+                DividerFrame.BackgroundColor3 = Color3.fromRGB(0, 251, 255)
+                DividerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DividerFrame.BorderSizePixel = 0
+                DividerFrame.Size = UDim2.new(0, 215, 0, 3)
+                
+                UICorner.CornerRadius = UDim.new(0, 3)
+                UICorner.Parent = DividerFrame
+                
+                return Divider
+            end
+            
+            table.insert(Page.Sections, Section)
+            return Section
+        end
+        
+        table.insert(Window.Pages, Page)
+        return Page
+    end
+    
+    function Window:SetPage(page)
+        if Window.CurrentPage then
+            Window.CurrentPage:SetActive(false)
+        end
+        Window.CurrentPage = page
+        page:SetActive(true)
+    end
+    
+    -- Set first page as default
+    spawn(function()
+        wait(0.1)
+        if #Window.Pages > 0 then
+            Window:SetPage(Window.Pages[1])
+        end
+    end)
+    
+    return Window
+end
+
+function Library:Destroy()
+    for _, connection in pairs(self.Connections) do
+        connection:Disconnect()
+    end
+    if self.GUI then
+        self.GUI:Destroy()
+    end
+    if self.OverlayGui then
+        self.OverlayGui:Destroy()
+    end
+end
+
+return Library
 local Mouse = LocalPlayer:GetMouse()
 
 Library.Flags = {}
