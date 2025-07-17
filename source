@@ -495,7 +495,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     local windowDragging = false
     
     Library:CreateConnection(Colorpicker.InputBegan, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position then
             colorpickerDragging = true
             -- Convert Vector3 to Vector2
             local inputPos = Vector2.new(input.Position.X, input.Position.Y)
@@ -507,7 +507,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     end)
     
     Library:CreateConnection(HueSlider.InputBegan, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position then
             hueDragging = true
             -- Convert Vector3 to Vector2
             local inputPos = Vector2.new(input.Position.X, input.Position.Y)
@@ -522,7 +522,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     end)
     
     Library:CreateConnection(UserInputService.InputChanged, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
+        if input.UserInputType == Enum.UserInputType.MouseMovement and input.Position then
             -- Colorpicker interactions (priority over window drag)
             if colorpickerDragging then
                 local inputPos = Vector2.new(input.Position.X, input.Position.Y)
@@ -545,7 +545,7 @@ function Library:CreateColorpickerWindow(colorpicker)
                 SpeedHead.Position = UDim2.new(0, (barWidth * percent) - 5, -0.5, 0) -- Centered
                 SpeedValue.Text = tostring(colorpicker._rainbowSpeed)
             -- Window dragging (lower priority)
-            elseif windowDragging then
+            elseif windowDragging and dragStart then
                 local inputPos = Vector2.new(input.Position.X, input.Position.Y)
                 local delta = inputPos - dragStart
                 ColorpickerFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -630,7 +630,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     DragArea.ZIndex = 99
     
     Library:CreateConnection(DragArea.InputBegan, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position then
             windowDragging = true
             dragStart = Vector2.new(input.Position.X, input.Position.Y)
             startPos = ColorpickerFrame.Position
