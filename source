@@ -1070,12 +1070,13 @@ function Library:CreateWindow(config)
                     OptionLabel.Active           = true
                     OptionLabel.ZIndex           = DropdownHolder.ZIndex + 1
                 
-                    -- color it if selected
-                    if (not Dropdown.Multi and Dropdown.Value == option)
-                    or ( Dropdown.Multi and table.find(Dropdown.Value, option)) then
-                      OptionLabel.TextColor3 = Color3.fromRGB(0,251,255)
+                    local isSelected = Dropdown.Multi
+                        and table.find(Dropdown.Value, option)
+                        or (not Dropdown.Multi and Dropdown.Value == option)
+                    if isSelected then
+                        OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
                     else
-                      OptionLabel.TextColor3 = Color3.fromRGB(255,255,255)
+                        OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
                     end
                         
                         Library:CreateConnection(OptionLabel.InputBegan, function(input)
