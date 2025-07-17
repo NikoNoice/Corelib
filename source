@@ -1133,7 +1133,6 @@ function Library:CreateWindow(config)
                 Library.Mask.Visible = true
             
                 -- 1) reparent into the overlay
-                DropdownHolder.Parent = Library.OverlayGui
                 DropdownHolder.ZIndex = 50
             
                 -- 2) re‑build & auto‑size
