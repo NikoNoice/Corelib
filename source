@@ -99,6 +99,7 @@ function Library:CreateWindow(config)
     mask.AutoButtonColor = false
     mask.Visible = false
     mask.ZIndex = 0
+    mask.Text = ""
 
     -- clicking outside closes all open dropdowns
     mask.MouseButton1Click:Connect(function()
