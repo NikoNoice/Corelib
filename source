@@ -1142,7 +1142,6 @@ function Library:CreateWindow(config)
                 Dropdown:Refresh()
                 local contentH = UIListLayout.AbsoluteContentSize.Y
                 DropdownHolder.Size = UDim2.new(0, DropdownHolder.Size.X.Offset, 0, contentH)
-                OptionLabel.ZIndex = DropdownHolder.ZIndex + 1
 
                 -- 3) position under the button
                 local p, s = DropdownButton.AbsolutePosition, DropdownButton.AbsoluteSize
