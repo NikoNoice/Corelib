@@ -965,6 +965,7 @@ function Library:CreateWindow(config)
     TextLabel_4.TextColor3 = Color3.fromRGB(66, 255, 249)
     TextLabel_4.TextSize = 14.000
     TextLabel_4.TextXAlignment = Enum.TextXAlignment.Left
+    TextLabel_4.ZIndex = 50
 
     Frame_3.Parent = TextLabel_4
     Frame_3.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
