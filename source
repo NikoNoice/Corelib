@@ -19,6 +19,7 @@ Library.Connections = {}
 Library.Pages = {}
 Library.CurrentPage = nil
 Library.GUI = nil
+Library._currentColorpicker = nil -- Global tracker for open colorpickers
 
 -- Utility Functions
 function Library:CreateConnection(signal, callback)
@@ -95,23 +96,35 @@ function Library:RGBtoHSV(r, g, b)
     return h, s, v
 end
 
--- Create colorpicker window
+-- Create colorpicker window with improved functionality
 function Library:CreateColorpickerWindow(colorpicker)
-    -- Initialize colorpicker state if not exists
-    if colorpicker._rainbow == nil then colorpicker._rainbow = false end
-    if colorpicker._rainbowSpeed == nil then colorpicker._rainbowSpeed = 5 end
-    
-    -- Prevent multiple windows for the same colorpicker
+    -- 1) Toggle off if you click the same bind again
     if colorpicker._window then
         colorpicker._window:Destroy()
         colorpicker._window = nil
+        Library._currentColorpicker = nil
+        return
     end
-    
-    -- Stop any existing rainbow for this colorpicker
+
+    -- 2) Close any other open picker
+    if Library._currentColorpicker
+    and Library._currentColorpicker._window 
+    and Library._currentColorpicker ~= colorpicker then
+        Library._currentColorpicker._window:Destroy()
+        Library._currentColorpicker._window = nil
+    end
+    Library._currentColorpicker = colorpicker
+
+    -- Initialize persistent state
+    if colorpicker._rainbow == nil then colorpicker._rainbow = false end
+    if colorpicker._rainbowSpeed == nil then colorpicker._rainbowSpeed = 5 end
+
+    -- stop any existing rainbow coroutines
     if colorpicker._rainbowConnection then
         colorpicker._rainbowConnection:Disconnect()
         colorpicker._rainbowConnection = nil
     end
+    
     local ColorpickerFrame = Instance.new("Frame")
     local UICorner = Instance.new("UICorner")
     local Colorpicker = Instance.new("Frame")
@@ -381,7 +394,10 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedValue.BackgroundTransparency = 1.000
     SpeedValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SpeedValue.BorderSizePixel = 0
-    SpeedValue.Position = UDim2.new(0.9, 0, 0, 0)
+    -- right after you create SpeedValue, before any connections:
+    SpeedValue.AnchorPoint = Vector2.new(1, 0)
+    SpeedValue.Position = UDim2.new(1, -4, 0, 0)
+    SpeedValue.TextYAlignment = Enum.TextYAlignment.Center
     SpeedValue.Size = UDim2.new(0, 30, 0, 19)
     SpeedValue.Font = Enum.Font.SourceSansSemibold
     SpeedValue.Text = "5"
@@ -442,8 +458,8 @@ function Library:CreateColorpickerWindow(colorpicker)
     
     -- Variables for colorpicker state
     local h, s, v = 0, 1, 1
-    local rainbow = colorpicker._rainbow or false
-    local rainbowSpeed = colorpicker._rainbowSpeed or 5
+    local rainbow = colorpicker._rainbow
+    local rainbowSpeed = colorpicker._rainbowSpeed
     
     -- Convert current color to HSV
     local currentColor = colorpicker.Value
@@ -468,19 +484,22 @@ function Library:CreateColorpickerWindow(colorpicker)
         colorpicker:SetValue(color)
     end
     
+    -- helper to start/stop rainbow
     local function startRainbow()
         if colorpicker._rainbowConnection then
             colorpicker._rainbowConnection:Disconnect()
         end
-        
         colorpicker._rainbowConnection = Library:CreateConnection(RunService.Heartbeat, function()
             if colorpicker._rainbow then
-                h = (h + (colorpicker._rainbowSpeed / 1000)) % 1
-                updateColorpicker()
+                local h,s,v = Library:RGBtoHSV(colorpicker.Value.R, colorpicker.Value.G, colorpicker.Value.B)
+                h = (h + (colorpicker._rainbowSpeed/1000)) % 1
+                local r,g,b = Library:HSVtoRGB(h,s,v)
+                local c = Color3.fromRGB(r*255,g*255,b*255)
+                colorpicker:SetValue(c)
             end
         end)
     end
-    
+
     local function stopRainbow()
         if colorpicker._rainbowConnection then
             colorpicker._rainbowConnection:Disconnect()
@@ -574,7 +593,6 @@ function Library:CreateColorpickerWindow(colorpicker)
         colorpicker._rainbow = rainbow
 
         if rainbow then
-
             RainbowToggle.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
             RainbowToggle.BackgroundTransparency = 0
             RainbowTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -607,6 +625,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     Library:CreateConnection(CloseButton.MouseButton1Click, function()
         stopRainbow()
         colorpicker._window = nil
+        Library._currentColorpicker = nil
         ColorpickerFrame:Destroy()
     end)
     
@@ -643,24 +662,48 @@ function Library:CreateColorpickerWindow(colorpicker)
         end
     end)
     
-        Library:CreateConnection(UserInputService.InputChanged, function(input)
-            if windowDragging and input.UserInputType == Enum.UserInputType.MouseMovement and dragStart and startPos then
-                local mp = Vector2.new(input.Position.X, input.Position.Y)
-                local delta = mp - dragStart
-                ColorpickerFrame.Position = UDim2.new(
-                  startPos.X.Scale, startPos.X.Offset + delta.X,
-                  startPos.Y.Scale, startPos.Y.Offset + delta.Y
-                )
-            end
-        end)
+    Library:CreateConnection(UserInputService.InputChanged, function(input)
+        if windowDragging and input.UserInputType == Enum.UserInputType.MouseMovement and dragStart and startPos then
+            local mp = Vector2.new(input.Position.X, input.Position.Y)
+            local delta = mp - dragStart
+            ColorpickerFrame.Position = UDim2.new(
+              startPos.X.Scale, startPos.X.Offset + delta.X,
+              startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
 
+    -- 3) After everything is wired up, sync the UI to your saved state:
+    spawn(function()
+        -- wait one frame so AbsoluteSize is valid
+        RunService.Heartbeat:Wait()
+
+        -- rainbow toggle
+        if colorpicker._rainbow then
+            startRainbow()
+        end
+        RainbowToggle.BackgroundTransparency = colorpicker._rainbow and 0 or 1
+        RainbowToggle.BackgroundColor3   = colorpicker._rainbow
+            and Color3.fromRGB(66,255,249)
+            or Color3.fromRGB(255,255,255)
+        RainbowTitle.TextColor3 = colorpicker._rainbow
+            and Color3.fromRGB(255,255,255)
+            or Color3.fromRGB(124,121,125)
+        RainbowCheckmark.Visible = colorpicker._rainbow
+
+        -- speed slider
+        local pct = (colorpicker._rainbowSpeed - 1) / 19
+        local barW = SpeedSliderBar.AbsoluteSize.X
+        SpeedFiller.Size = UDim2.new(0, barW * pct, 0, 4)
+        SpeedHead.Position = UDim2.new(0, barW * pct - 5, -0.5, 0)
+        SpeedValue.Text = tostring(colorpicker._rainbowSpeed)
+    end)
     
     -- Initial update
     updateColorpicker()
     
-    -- Store reference to prevent multiple windows
+    -- finally store & return
     colorpicker._window = ColorpickerFrame
-    
     return ColorpickerFrame
 end
 
