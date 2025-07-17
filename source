@@ -97,7 +97,7 @@ function Library:CreateWindow(config)
         mask.Size               = UDim2.new(1,0,1,0)
         mask.BackgroundTransparency = 1
         mask.Active             = true    -- so it fires InputBegan
-        mask.ZIndex             = 1      -- keep behind the dropdowns (they’ll be ZIndex 50+)
+        mask.ZIndex             = 0      -- keep behind the dropdowns (they’ll be ZIndex 50+)
         Library.Mask            = mask
 
 
