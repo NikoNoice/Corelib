@@ -675,7 +675,7 @@ function Library:CreateWindow(config)
                     KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
                     KeybindBox.BorderSizePixel = 0
                     KeybindBox.AnchorPoint = Vector2.new(1, 0.5) -- pivot on its right-center
-                    KeybindBox.Position = UDim2.new(1, 190, 0.5, V_PADDING) -- positioned relative to toggle, vertically centered
+                    KeybindBox.Position = UDim2.new(1, 190, 0, V_PADDING) -- positioned relative to toggle, vertically centered
                     KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
                     KeybindBox.Font = Enum.Font.SourceSansSemibold
                     KeybindBox.Text = Keybind.Default
