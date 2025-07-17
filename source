@@ -1071,7 +1071,6 @@ function Library:CreateWindow(config)
                         OptionLabel.TextSize = 14.000
                         OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
                         OptionLabel.ZIndex = 11
-                        OptionLabel.ZIndex = DropdownHolder.ZIndex + 1
 
                         
                         -- Check if this option is selected and update appearance
