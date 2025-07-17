@@ -1134,46 +1134,66 @@ end)
                     end
                 end
                 
-                -- give dropdown object helper methods
-               function Dropdown:OpenMenu()
-                Dropdown.Open = true
-                Library.Mask.Visible = true
-            
-                -- 1) reparent into the overlay
-                DropdownHolder.Parent = Library.OverlayGui
-                DropdownHolder.ZIndex = 50
-            
-                -- 2) re‑build & auto‑size
-                Dropdown:Refresh()
-                local contentH = UIListLayout.AbsoluteContentSize.Y
-                DropdownHolder.Size = UDim2.new(0, DropdownHolder.Size.X.Offset, 0, contentH)
-                
-                -- 3) position under the button with additional offset
-                local p, s = DropdownButton.AbsolutePosition, DropdownButton.AbsoluteSize
-                DropdownHolder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5) -- Added 5 pixel offset
-                DropdownHolder.Visible = true
-            
-                table.insert(Library.OpenDropdowns, Dropdown)
-            end
+local UIS = game:GetService("UserInputService")
 
-                
-                function Dropdown:Close()
-                    Dropdown.Open = false
-                    -- mask off if last
-                    for i,d in ipairs(Library.OpenDropdowns) do
-                        if d == Dropdown then
-                            table.remove(Library.OpenDropdowns,i)
-                            break
-                        end
-                    end
-                    if #Library.OpenDropdowns == 0 then
-                        Library.Mask.Visible = false
-                    end
-                    -- return to its section
-                    DropdownHolder.Parent = SectionHolder
-                    DropdownHolder.Position = UDim2.new(0, 0, 1.35, 0)
-                    DropdownHolder.Visible = false
-                end
+function Dropdown:OpenMenu()
+    if self.Open then return end
+    self.Open = true
+
+    -- 1) show your dropdown exactly as before:
+    DropdownHolder.Parent = Library.OverlayGui
+    DropdownHolder.ZIndex   = 50
+    self:Refresh()
+    local h = UIListLayout.AbsoluteContentSize.Y
+    DropdownHolder.Size = UDim2.new(0, DropdownHolder.Size.X.Offset, 0, h)
+    local p, s = DropdownButton.AbsolutePosition, DropdownButton.AbsoluteSize
+    DropdownHolder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5)
+    DropdownHolder.Visible = true
+
+    -- 2) watch for *any* MouseButton1 click on the whole screen...
+    self._outsideConn = UIS.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+            return
+        end
+
+        local mx, my = UIS:GetMouseLocation().X, UIS:GetMouseLocation().Y
+        local hp, hs = DropdownHolder.AbsolutePosition, DropdownHolder.AbsoluteSize
+        local bp, bs = DropdownButton.AbsolutePosition, DropdownButton.AbsoluteSize
+
+        local inHolder = mx >= hp.X and mx <= hp.X+hs.X and my >= hp.Y and my <= hp.Y+hs.Y
+        local inButton = mx >= bp.X and mx <= bp.X+bs.X and my >= bp.Y and my <= bp.Y+bs.Y
+
+        if not (inHolder or inButton) then
+            self:Close()
+        end
+    end)
+
+    table.insert(Library.OpenDropdowns, self)
+end
+
+function Dropdown:Close()
+    if not self.Open then return end
+    self.Open = false
+
+    -- hide the frame
+    DropdownHolder.Visible = false
+    DropdownHolder.Parent  = SectionHolder
+
+    -- tear down the outside‐click watcher
+    if self._outsideConn then
+        self._outsideConn:Disconnect()
+        self._outsideConn = nil
+    end
+
+    -- remove from open list
+    for i,dd in ipairs(Library.OpenDropdowns) do
+        if dd == self then
+            table.remove(Library.OpenDropdowns, i)
+            break
+        end
+    end
+end
+
                 
                 -- store references for drag handler
                 Dropdown.Button = DropdownButton
