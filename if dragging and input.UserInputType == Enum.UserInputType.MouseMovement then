@@ -564,9 +564,7 @@ function Library:CreateColorpickerWindow(colorpicker)
             colorpickerDragging = false
             hueDragging = false
             speedDragging = false
-        windowDragging    = false
-
-
+            windowDragging    = false
         end
     end)
     
@@ -653,11 +651,6 @@ function Library:CreateColorpickerWindow(colorpicker)
                   startPos.X.Scale, startPos.X.Offset + delta.X,
                   startPos.Y.Scale, startPos.Y.Offset + delta.Y
                 )
-            end
-        end)
-        Library:CreateConnection(UserInputService.InputEnded, function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                windowDragging = false
             end
         end)
 
