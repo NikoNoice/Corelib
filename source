@@ -328,14 +328,6 @@ function Library:CreateWindow(config)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             Background.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-            
-            -- reposition any open dropdowns
-            -- inside your InputChanged drag callback, after you set Background.Position:
-            for _, dd in ipairs(Library.OpenDropdowns) do
-              local p, s = dd.Button.AbsolutePosition, dd.Button.AbsoluteSize
-              dd.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5) -- Added 5 pixel offset
-            end
-
         end
     end)
     
@@ -1008,61 +1000,65 @@ function Library:CreateWindow(config)
                 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 UIListLayout.Padding = UDim.new(0, 1)
                 
+                -- Store references on the dropdown object
+                Dropdown.Button = DropdownButton
+                Dropdown.Holder = DropdownHolder
+                Dropdown.UIListLayout = UIListLayout
+                
                 function Dropdown:SetValue(value)
-                    Dropdown.Value = value
-                    Library.Flags[Dropdown.Flag] = value
+                    self.Value = value
+                    Library.Flags[self.Flag] = value
                     
-                    if Dropdown.Multi then
+                    if self.Multi then
                         -- Ensure value is a table for multi-select
                         if type(value) ~= "table" then
                             value = {value}
                         end
-                        DropdownButton.Text = " " .. (#value > 0 and table.concat(value, ", ") or "None")
+                        self.Button.Text = " " .. (#value > 0 and table.concat(value, ", ") or "None")
                     else
                         -- Ensure value is a string for single-select
                         if type(value) == "table" then
                             value = value[1] or "None"
                         end
-                        DropdownButton.Text = " " .. tostring(value)
+                        self.Button.Text = " " .. tostring(value)
                     end
                     
-                    Dropdown.Callback(value)
+                    self.Callback(value)
                 end
                 
                 function Dropdown:Refresh()
-                  -- clear old options
-                  for _, child in ipairs(DropdownHolder:GetChildren()) do
-                    if child:IsA("TextLabel") then child:Destroy() end
-                  end
-                
-                  for _, option in ipairs(Dropdown.Options) do
-                    local OptionLabel = Instance.new("TextLabel")
-                    OptionLabel.Name             = "Option"
-                    OptionLabel.Parent           = DropdownHolder
-                    OptionLabel.BackgroundTransparency = 1
-                    OptionLabel.Size             = UDim2.new(0,215,0,16)
-                    OptionLabel.Font             = Enum.Font.SourceSansSemibold
-                    OptionLabel.TextSize         = 14
-                    OptionLabel.TextXAlignment   = Enum.TextXAlignment.Left
-                    OptionLabel.Text             = " " .. option
-                
-                    -- ★ ensure this label swallows the click and renders above the panel
-                    OptionLabel.Active           = true
-                    OptionLabel.ZIndex           = DropdownHolder.ZIndex + 1
-                
-                    local isSelected = Dropdown.Multi
-                        and table.find(Dropdown.Value, option)
-                        or (not Dropdown.Multi and Dropdown.Value == option)
-                    if isSelected then
-                        OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
-                    else
-                        OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
+                    -- clear old options
+                    for _, child in ipairs(self.Holder:GetChildren()) do
+                        if child:IsA("TextLabel") then child:Destroy() end
                     end
+                    
+                    for _, option in ipairs(self.Options) do
+                        local OptionLabel = Instance.new("TextLabel")
+                        OptionLabel.Name = "Option"
+                        OptionLabel.Parent = self.Holder
+                        OptionLabel.BackgroundTransparency = 1
+                        OptionLabel.Size = UDim2.new(0,215,0,16)
+                        OptionLabel.Font = Enum.Font.SourceSansSemibold
+                        OptionLabel.TextSize = 14
+                        OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
+                        OptionLabel.Text = " " .. option
+                        OptionLabel.Active = true
+                        OptionLabel.ZIndex = self.Holder.ZIndex + 1
+                        
+                        local isSelected = self.Multi
+                            and table.find(self.Value, option)
+                            or (not self.Multi and self.Value == option)
+                        if isSelected then
+                            OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                            OptionLabel.Text = "       " .. option
+                        else
+                            OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
+                        end
                         
                         Library:CreateConnection(OptionLabel.InputBegan, function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                                if Dropdown.Multi then
-                                    local selected = Dropdown.Value or {}
+                                if self.Multi then
+                                    local selected = self.Value or {}
                                     -- Ensure selected is a table
                                     if type(selected) ~= "table" then
                                         selected = {}
@@ -1078,11 +1074,10 @@ function Library:CreateWindow(config)
                                         OptionLabel.Text = "       " .. option
                                         OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
                                     end
-                                    Dropdown:SetValue(selected)
-                                    -- Dropdown stays open for multi-select
+                                    self:SetValue(selected)
                                 else
                                     -- Update all options to unselected first
-                                    for _, child in pairs(DropdownHolder:GetChildren()) do
+                                    for _, child in pairs(self.Holder:GetChildren()) do
                                         if child:IsA("TextLabel") and child.Name == "Option" then
                                             child.Text = " " .. child.Text:gsub("^%s*", "")
                                             child.TextColor3 = Color3.fromRGB(111, 108, 112)
@@ -1093,80 +1088,77 @@ function Library:CreateWindow(config)
                                     OptionLabel.Text = "       " .. option
                                     OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
                                     
-                                    Dropdown:SetValue(option)
-                                    -- Dropdown stays open for single-select too
+                                    self:SetValue(option)
                                 end
                             end
                         end)
                     end
+                    
+                    -- Auto-size the holder based on content
+                    local contentH = self.UIListLayout.AbsoluteContentSize.Y
+                    self.Holder.Size = UDim2.new(0, self.Holder.Size.X.Offset, 0, contentH)
                 end
                 
-local UIS = game:GetService("UserInputService")
-
-function Dropdown:OpenMenu()
-    if self.Open then return end
-    self.Open = true
-
-    -- 1) show your dropdown exactly as before:
-    DropdownHolder.Parent = Library.OverlayGui
-    DropdownHolder.ZIndex   = 50
-    self:Refresh()
-    local h = UIListLayout.AbsoluteContentSize.Y
-    DropdownHolder.Size = UDim2.new(0, DropdownHolder.Size.X.Offset, 0, h)
-    local p, s = DropdownButton.AbsolutePosition, DropdownButton.AbsoluteSize
-    DropdownHolder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5)
-    DropdownHolder.Visible = true
-
-    -- 2) watch for *any* MouseButton1 click on the whole screen...
-    self._outsideConn = UIS.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
-            return
-        end
-
-        local mx, my = UIS:GetMouseLocation().X, UIS:GetMouseLocation().Y
-        local hp, hs = DropdownHolder.AbsolutePosition, DropdownHolder.AbsoluteSize
-        local bp, bs = DropdownButton.AbsolutePosition, DropdownButton.AbsoluteSize
-
-        local inHolder = mx >= hp.X and mx <= hp.X+hs.X and my >= hp.Y and my <= hp.Y+hs.Y
-        local inButton = mx >= bp.X and mx <= bp.X+bs.X and my >= bp.Y and my <= bp.Y+bs.Y
-
-        if not (inHolder or inButton) then
-            self:Close()
-        end
-    end)
-
-    table.insert(Library.OpenDropdowns, self)
-end
-
-function Dropdown:Close()
-    if not self.Open then return end
-    self.Open = false
-
-    -- hide the frame
-    DropdownHolder.Visible = false
-    DropdownHolder.Parent  = SectionHolder
-
-    -- tear down the outside‐click watcher
-    if self._outsideConn then
-        self._outsideConn:Disconnect()
-        self._outsideConn = nil
-    end
-
-    -- remove from open list
-    for i,dd in ipairs(Library.OpenDropdowns) do
-        if dd == self then
-            table.remove(Library.OpenDropdowns, i)
-            break
-        end
-    end
-end
-
+                function Dropdown:OpenMenu()
+                    if self.Open then return end
+                    self.Open = true
+                    
+                    -- Move into overlay ScreenGui
+                    self.Holder.Parent = Library.OverlayGui
+                    self.Holder.ZIndex = 50
+                    
+                    -- Refresh and position
+                    self:Refresh()
+                    local p, s = self.Button.AbsolutePosition, self.Button.AbsoluteSize
+                    self.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5)
+                    self.Holder.Visible = true
+                    
+                    -- Set up outside-click watcher
+                    self._outsideConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                        if gameProcessed or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+                            return
+                        end
+                        
+                        local mx, my = UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y
+                        local hp, hs = self.Holder.AbsolutePosition, self.Holder.AbsoluteSize
+                        local bp, bs = self.Button.AbsolutePosition, self.Button.AbsoluteSize
+                        
+                        local inHolder = mx >= hp.X and mx <= hp.X+hs.X and my >= hp.Y and my <= hp.Y+hs.Y
+                        local inButton = mx >= bp.X and mx <= bp.X+bs.X and my >= bp.Y and my <= bp.Y+bs.Y
+                        
+                        if not (inHolder or inButton) then
+                            self:Close()
+                        end
+                    end)
+                    
+                    table.insert(Library.OpenDropdowns, self)
+                end
                 
-                -- store references for drag handler
-                Dropdown.Button = DropdownButton
-                Dropdown.Holder = DropdownHolder
+                function Dropdown:Close()
+                    if not self.Open then return end
+                    self.Open = false
+                    
+                    -- Hide and reparent back
+                    self.Holder.Visible = false
+                    self.Holder.Parent = SectionHolder
+                    self.Holder.Position = UDim2.new(0, 0, 1.35, 0)
+                    
+                    -- Clean up outside-click watcher
+                    if self._outsideConn then
+                        self._outsideConn:Disconnect()
+                        self._outsideConn = nil
+                    end
+                    
+                    -- Remove from open dropdowns list
+                    for i, dd in ipairs(Library.OpenDropdowns) do
+                        if dd == self then
+                            table.remove(Library.OpenDropdowns, i)
+                            break
+                        end
+                    end
+                end
                 
-                -- hook the button
+                -- Hook the button
                 Library:CreateConnection(DropdownButton.MouseButton1Click, function()
                     if Dropdown.Open then
                         Dropdown:Close()
@@ -1174,7 +1166,7 @@ end
                         Dropdown:OpenMenu()
                     end
                 end)
-
+                
                 Dropdown:Refresh()
                 Dropdown:SetValue(Dropdown.Default)
                 return Dropdown
