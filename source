@@ -421,16 +421,18 @@ function Library:CreateColorpickerWindow(colorpicker)
     
     -- Convert current color to HSV
     local currentColor = colorpicker.Value
-    h, s, v = Library:RGBtoHSV(currentColor.R, currentColor.G, currentColor.B)
+    if currentColor then
+        h, s, v = Library:RGBtoHSV(currentColor.R, currentColor.G, currentColor.B)
+    end
     
     -- Update functions
     local function updateColorpicker()
         local r, g, b = Library:HSVtoRGB(h, s, v)
-        local color = Color3.fromRGB(r * 255, g * 255, b * 255)
+        local color = Color3.fromRGB(math.floor(r * 255), math.floor(g * 255), math.floor(b * 255))
         
         -- Update hue background
         local hueR, hueG, hueB = Library:HSVtoRGB(h, 1, 1)
-        HueImage.ImageColor3 = Color3.fromRGB(hueR * 255, hueG * 255, hueB * 255)
+        HueImage.ImageColor3 = Color3.fromRGB(math.floor(hueR * 255), math.floor(hueG * 255), math.floor(hueB * 255))
         
         -- Update head positions
         ColorpickerHead.Position = UDim2.new(s, -6, 1-v, -6)
@@ -468,7 +470,9 @@ function Library:CreateColorpickerWindow(colorpicker)
     Library:CreateConnection(Colorpicker.InputBegan, function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             colorpickerDragging = true
-            local rel = input.Position - Colorpicker.AbsolutePosition
+            -- Convert Vector3 to Vector2
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+            local rel = inputPos - Colorpicker.AbsolutePosition
             s = math.clamp(rel.X / Colorpicker.AbsoluteSize.X, 0, 1)
             v = 1 - math.clamp(rel.Y / Colorpicker.AbsoluteSize.Y, 0, 1)
             updateColorpicker()
@@ -478,7 +482,9 @@ function Library:CreateColorpickerWindow(colorpicker)
     Library:CreateConnection(HueSlider.InputBegan, function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             hueDragging = true
-            local rel = input.Position - HueSlider.AbsolutePosition
+            -- Convert Vector3 to Vector2
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+            local rel = inputPos - HueSlider.AbsolutePosition
             h = math.clamp(rel.X / HueSlider.AbsoluteSize.X, 0, 1)
             updateColorpicker()
         end
@@ -490,22 +496,34 @@ function Library:CreateColorpickerWindow(colorpicker)
     
     Library:CreateConnection(UserInputService.InputChanged, function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
+            -- Colorpicker interactions
             if colorpickerDragging then
-                local rel = input.Position - Colorpicker.AbsolutePosition
+                -- Convert Vector3 to Vector2
+                local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+                local rel = inputPos - Colorpicker.AbsolutePosition
                 s = math.clamp(rel.X / Colorpicker.AbsoluteSize.X, 0, 1)
                 v = 1 - math.clamp(rel.Y / Colorpicker.AbsoluteSize.Y, 0, 1)
                 updateColorpicker()
             elseif hueDragging then
-                local rel = input.Position - HueSlider.AbsolutePosition
+                -- Convert Vector3 to Vector2
+                local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+                local rel = inputPos - HueSlider.AbsolutePosition
                 h = math.clamp(rel.X / HueSlider.AbsoluteSize.X, 0, 1)
                 updateColorpicker()
             elseif speedDragging then
-                local rel = input.Position - SpeedSliderBar.AbsolutePosition
+                -- Convert Vector3 to Vector2
+                local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+                local rel = inputPos - SpeedSliderBar.AbsolutePosition
                 local percent = math.clamp(rel.X / SpeedSliderBar.AbsoluteSize.X, 0, 1)
                 rainbowSpeed = math.floor(percent * 20) + 1
                 SpeedFiller.Size = UDim2.new(0, SpeedSliderBar.AbsoluteSize.X * percent, 0, 4)
                 SpeedHead.Position = UDim2.new(0, (SpeedSliderBar.AbsoluteSize.X * percent) - 5, -0.75, 0)
                 SpeedValue.Text = tostring(rainbowSpeed)
+            -- Draggable frame
+            elseif dragging then
+                local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+                local delta = inputPos - dragStart
+                ColorpickerFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
             end
         end
     end)
@@ -563,8 +581,11 @@ function Library:CreateColorpickerWindow(colorpicker)
             rainbowSpeed = math.clamp(value, 1, 20)
             SpeedValue.Text = tostring(rainbowSpeed)
             local percent = (rainbowSpeed - 1) / 19
-            SpeedFiller.Size = UDim2.new(0, SpeedSliderBar.AbsoluteSize.X * percent, 0, 4)
-            SpeedHead.Position = UDim2.new(0, (SpeedSliderBar.AbsoluteSize.X * percent) - 5, -0.75, 0)
+            local barWidth = SpeedSliderBar.AbsoluteSize.X
+            if barWidth > 0 then
+                SpeedFiller.Size = UDim2.new(0, barWidth * percent, 0, 4)
+                SpeedHead.Position = UDim2.new(0, (barWidth * percent) - 5, -0.75, 0)
+            end
         end
     end)
     
@@ -576,14 +597,15 @@ function Library:CreateColorpickerWindow(colorpicker)
     Library:CreateConnection(ColorpickerFrame.InputBegan, function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
-            dragStart = input.Position
+            dragStart = Vector2.new(input.Position.X, input.Position.Y)
             startPos = ColorpickerFrame.Position
         end
     end)
     
     Library:CreateConnection(UserInputService.InputChanged, function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
+            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
+            local delta = inputPos - dragStart
             ColorpickerFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
