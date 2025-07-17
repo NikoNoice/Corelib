@@ -1071,7 +1071,6 @@ function Library:CreateWindow(config)
                         OptionLabel.TextSize = 14.000
                         OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
                         OptionLabel.ZIndex = 11
-
                         
                         -- Check if this option is selected and update appearance
                         local isSelected = false
@@ -1134,14 +1133,14 @@ function Library:CreateWindow(config)
                 Library.Mask.Visible = true
             
                 -- 1) reparent into the overlay
-                DropdownHolder.ZIndex = 50
                 DropdownHolder.Parent = Library.OverlayGui
- 
+                DropdownHolder.ZIndex = 50
+            
                 -- 2) re‑build & auto‑size
                 Dropdown:Refresh()
                 local contentH = UIListLayout.AbsoluteContentSize.Y
                 DropdownHolder.Size = UDim2.new(0, DropdownHolder.Size.X.Offset, 0, contentH)
-
+                
                 -- 3) position under the button
                 local p, s = DropdownButton.AbsolutePosition, DropdownButton.AbsoluteSize
                 DropdownHolder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y)
