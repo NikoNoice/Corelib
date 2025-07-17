@@ -100,6 +100,8 @@ function Library:CreateWindow(config)
     mask.Visible = false
     mask.ZIndex = 0
     mask.Text = ""
+    mask.TextTransparency   = 1                -- ensure no text ever shows
+
 
     -- clicking outside closes all open dropdowns
     mask.MouseButton1Click:Connect(function()
@@ -1048,43 +1050,33 @@ function Library:CreateWindow(config)
                 end
                 
                 function Dropdown:Refresh()
-                    -- Clear existing options
-                    for _, child in pairs(DropdownHolder:GetChildren()) do
-                        if child:IsA("TextLabel") then
-                            child:Destroy()
-                        end
+                  -- clear old options
+                  for _, child in ipairs(DropdownHolder:GetChildren()) do
+                    if child:IsA("TextLabel") then child:Destroy() end
+                  end
+                
+                  for _, option in ipairs(Dropdown.Options) do
+                    local OptionLabel = Instance.new("TextLabel")
+                    OptionLabel.Name             = "Option"
+                    OptionLabel.Parent           = DropdownHolder
+                    OptionLabel.BackgroundTransparency = 1
+                    OptionLabel.Size             = UDim2.new(0,215,0,16)
+                    OptionLabel.Font             = Enum.Font.SourceSansSemibold
+                    OptionLabel.TextSize         = 14
+                    OptionLabel.TextXAlignment   = Enum.TextXAlignment.Left
+                    OptionLabel.Text             = " " .. option
+                
+                    -- ★ ensure this label swallows the click and renders above the panel
+                    OptionLabel.Active           = true
+                    OptionLabel.ZIndex           = DropdownHolder.ZIndex + 1
+                
+                    -- color it if selected
+                    if (not Dropdown.Multi and Dropdown.Value == option)
+                    or ( Dropdown.Multi and table.find(Dropdown.Value, option)) then
+                      OptionLabel.TextColor3 = Color3.fromRGB(0,251,255)
+                    else
+                      OptionLabel.TextColor3 = Color3.fromRGB(255,255,255)
                     end
-                    
-                    -- Create new options
-                    for _, option in pairs(Dropdown.Options) do
-                        local OptionLabel = Instance.new("TextLabel")
-                        
-                        OptionLabel.Name = "Option"
-                        OptionLabel.Parent = DropdownHolder
-                        OptionLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                        OptionLabel.BackgroundTransparency = 1.000
-                        OptionLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                        OptionLabel.BorderSizePixel = 0
-                        OptionLabel.Size = UDim2.new(0, 215, 0, 16)
-                        OptionLabel.Font = Enum.Font.SourceSansSemibold
-                        OptionLabel.Text = " " .. option
-                        OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
-                        OptionLabel.TextSize = 14.000
-                        OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
-                        OptionLabel.ZIndex = 50
-                        
-                        -- Check if this option is selected and update appearance
-                        local isSelected = false
-                        if Dropdown.Multi then
-                            isSelected = Dropdown.Value and table.find(Dropdown.Value, option)
-                        else
-                            isSelected = Dropdown.Value == option
-                        end
-                        
-                        if isSelected then
-                            OptionLabel.Text = "       " .. option
-                            OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
-                        end
                         
                         Library:CreateConnection(OptionLabel.InputBegan, function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 then
