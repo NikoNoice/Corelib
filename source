@@ -732,7 +732,7 @@ function Library:CreateWindow(config)
                         -- Auto-scale size based on text, growing from the left
                         local fontSize = 15
                         local font = Enum.Font.SourceSansSemibold
-                        local padding = 16 -- 8px on each side
+                        local padding = 8 -- 8px on each side
                         local bounds = TextService:GetTextSize(displayName, fontSize, font, Vector2.new(1e5, 20))
                         local newW = math.max(MIN_W, bounds.X + padding)
                         KeybindBox.Size = UDim2.new(0, newW, 0, 20)
