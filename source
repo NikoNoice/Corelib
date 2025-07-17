@@ -90,18 +90,15 @@ function Library:CreateWindow(config)
     overlay.DisplayOrder   = 1   -- sits above your main GUI
     Library.OverlayGui     = overlay
     
-    -- full-screen invisible button to catch clicks
-    local mask = Instance.new("TextButton")
-    mask.Name = "DropdownMask"
-    mask.Parent = overlay
-    mask.Size = UDim2.new(1,0,1,0)
-    mask.BackgroundTransparency = 1
-    mask.AutoButtonColor = false
-    mask.Visible = false
-    mask.Text = ""
-    mask.TextTransparency   = 1                -- ensure no text ever shows
-    mask.Active             = true         -- so it can capture InputBegan
-    mask.ZIndex             = 1            -- keep it behind your dropdown (which will be 50+)
+            -- full-screen invisible button to catch clicks
+        local mask = Instance.new("Frame")
+        mask.Name               = "DropdownMask"
+        mask.Parent             = overlay
+        mask.Size               = UDim2.new(1,0,1,0)
+        mask.BackgroundTransparency = 1
+        mask.Active             = true    -- so it fires InputBegan
+        mask.ZIndex             = 1      -- keep behind the dropdowns (they’ll be ZIndex 50+)
+        Library.Mask            = mask
 
 
 Library:CreateConnection(mask.InputBegan, function(input)
