@@ -97,6 +97,11 @@ end
 
 -- Create colorpicker window
 function Library:CreateColorpickerWindow(colorpicker)
+    -- Prevent multiple windows for the same colorpicker
+    if colorpicker._window then
+        colorpicker._window:Destroy()
+        colorpicker._window = nil
+    end
     local ColorpickerFrame = Instance.new("Frame")
     local UICorner = Instance.new("UICorner")
     local Colorpicker = Instance.new("Frame")
@@ -152,6 +157,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     Colorpicker.BorderSizePixel = 0
     Colorpicker.Position = UDim2.new(0.034, 0, 0.059, 0)
     Colorpicker.Size = UDim2.new(0, 150, 0, 150)
+    Colorpicker.ZIndex = 101
     
     UICorner_2.CornerRadius = UDim.new(0, 3)
     UICorner_2.Parent = Colorpicker
@@ -165,6 +171,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     HueImage.Size = UDim2.new(1, 0, 1, 0)
     HueImage.Image = "rbxassetid://6976876787"
     HueImage.ImageColor3 = Color3.fromRGB(255, 0, 0)
+    HueImage.ZIndex = 102
     
     UICorner_3.CornerRadius = UDim.new(0, 3)
     UICorner_3.Parent = HueImage
@@ -176,7 +183,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SaturationImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SaturationImage.BorderSizePixel = 0
     SaturationImage.Size = UDim2.new(1, 0, 1, 0)
-    SaturationImage.ZIndex = 2
+    SaturationImage.ZIndex = 103
     SaturationImage.Image = "rbxassetid://6941137543"
     SaturationImage.ImageColor3 = Color3.fromRGB(0, 0, 0)
     
@@ -190,7 +197,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     ColorpickerHead.BorderSizePixel = 0
     ColorpickerHead.Position = UDim2.new(0.5, 0, 0.5, 0)
     ColorpickerHead.Size = UDim2.new(0, 12, 0, 12)
-    ColorpickerHead.ZIndex = 3
+    ColorpickerHead.ZIndex = 104
     
     UICorner_5.CornerRadius = UDim.new(1, 0)
     UICorner_5.Parent = ColorpickerHead
@@ -206,6 +213,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     HueSlider.BorderSizePixel = 0
     HueSlider.Position = UDim2.new(0.034, 0, 0.82, 0)
     HueSlider.Size = UDim2.new(0, 150, 0, 10)
+    HueSlider.ZIndex = 101
     
     UICorner_6.CornerRadius = UDim.new(0, 3)
     UICorner_6.Parent = HueSlider
@@ -228,7 +236,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     HueHead.BorderSizePixel = 0
     HueHead.Position = UDim2.new(0, 0, -0.3, 0)
     HueHead.Size = UDim2.new(0, 4, 0, 16)
-    HueHead.ZIndex = 3
+    HueHead.ZIndex = 102
     
     UICorner_7.CornerRadius = UDim.new(0, 2)
     UICorner_7.Parent = HueHead
@@ -245,6 +253,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     List.BorderSizePixel = 0
     List.Position = UDim2.new(0.536, 0, 0.057, 0)
     List.Size = UDim2.new(0, 136, 0, 100)
+    List.ZIndex = 101
     
     UIListLayout.Parent = List
     UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -258,7 +267,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
     RainbowToggle.BorderSizePixel = 0
     RainbowToggle.Size = UDim2.new(0, 18, 0, 18)
-    RainbowToggle.ZIndex = 4
+    RainbowToggle.ZIndex = 102
     RainbowToggle.Font = Enum.Font.SourceSans
     RainbowToggle.Text = ""
     RainbowToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -283,6 +292,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
     RainbowTitle.TextSize = 15.000
     RainbowTitle.TextXAlignment = Enum.TextXAlignment.Left
+    RainbowTitle.ZIndex = 102
     
     RainbowCheckmark.Name = "RainbowCheckmark"
     RainbowCheckmark.Parent = RainbowToggle
@@ -293,6 +303,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowCheckmark.Image = "http://www.roblox.com/asset/?id=6031094667"
     RainbowCheckmark.ImageColor3 = Color3.fromRGB(0, 0, 0)
     RainbowCheckmark.Visible = false
+    RainbowCheckmark.ZIndex = 103
     
     -- Speed Slider
     SpeedSlider.Name = "SpeedSlider"
@@ -308,6 +319,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedSlider.TextSize = 15.000
     SpeedSlider.TextXAlignment = Enum.TextXAlignment.Left
     SpeedSlider.TextYAlignment = Enum.TextYAlignment.Top
+    SpeedSlider.ZIndex = 102
     
     SpeedSliderBar.Name = "SpeedSliderBar"
     SpeedSliderBar.Parent = SpeedSlider
@@ -317,6 +329,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedSliderBar.BorderSizePixel = 0
     SpeedSliderBar.Position = UDim2.new(0, 0, 0.8, 0)
     SpeedSliderBar.Size = UDim2.new(0, 120, 0, 2)
+    SpeedSliderBar.ZIndex = 102
     
     -- Add stroke to speed slider bar
     Library:CreateStroke(SpeedSliderBar, Color3.fromRGB(50, 50, 50), 1)
@@ -328,7 +341,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedFiller.BorderSizePixel = 0
     SpeedFiller.Position = UDim2.new(0, 0, -2, 0)
     SpeedFiller.Size = UDim2.new(0, 60, 0, 4)
-    SpeedFiller.ZIndex = 2
+    SpeedFiller.ZIndex = 103
     
     UICorner_9.CornerRadius = UDim.new(0, 2)
     UICorner_9.Parent = SpeedFiller
@@ -340,7 +353,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedHead.BorderSizePixel = 0
     SpeedHead.Position = UDim2.new(0.9, 0, -0.75, 0)
     SpeedHead.Size = UDim2.new(0, 10, 0, 10)
-    SpeedHead.ZIndex = 2
+    SpeedHead.ZIndex = 104
     SpeedHead.Font = Enum.Font.SourceSans
     SpeedHead.Text = ""
     SpeedHead.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -365,6 +378,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedValue.TextColor3 = Color3.fromRGB(111, 108, 112)
     SpeedValue.TextSize = 16.000
     SpeedValue.TextXAlignment = Enum.TextXAlignment.Right
+    SpeedValue.ZIndex = 102
     
     -- Copy and Paste buttons
     CopyButton.Name = "CopyButton"
@@ -379,6 +393,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     CopyButton.Text = "Copy"
     CopyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     CopyButton.TextSize = 15.000
+    CopyButton.ZIndex = 101
     
     -- Add stroke to copy button
     Library:CreateStroke(CopyButton, Color3.fromRGB(50, 50, 50), 1)
@@ -395,6 +410,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     PasteButton.Text = "Paste"
     PasteButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     PasteButton.TextSize = 15.000
+    PasteButton.ZIndex = 101
     
     -- Add stroke to paste button
     Library:CreateStroke(PasteButton, Color3.fromRGB(50, 50, 50), 1)
@@ -412,6 +428,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     CloseButton.Text = "×"
     CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     CloseButton.TextSize = 18.000
+    CloseButton.ZIndex = 101
     
     -- Variables for colorpicker state
     local h, s, v = 0, 1, 1
@@ -571,6 +588,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     -- Close button
     Library:CreateConnection(CloseButton.MouseButton1Click, function()
         stopRainbow()
+        colorpicker._window = nil
         ColorpickerFrame:Destroy()
     end)
     
@@ -618,6 +636,9 @@ function Library:CreateColorpickerWindow(colorpicker)
     
     -- Initial update
     updateColorpicker()
+    
+    -- Store reference to prevent multiple windows
+    colorpicker._window = ColorpickerFrame
     
     return ColorpickerFrame
 end
