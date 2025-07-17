@@ -564,13 +564,19 @@ function Library:CreateColorpickerWindow(colorpicker)
             colorpickerDragging = false
             hueDragging = false
             speedDragging = false
+        windowDragging    = false
+
+
         end
     end)
     
     -- Rainbow toggle
     Library:CreateConnection(RainbowToggle.MouseButton1Click, function()
         rainbow = not rainbow
+        colorpicker._rainbow = rainbow
+
         if rainbow then
+
             RainbowToggle.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
             RainbowToggle.BackgroundTransparency = 0
             RainbowTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -639,19 +645,22 @@ function Library:CreateColorpickerWindow(colorpicker)
         end
     end)
     
-    Library:CreateConnection(UserInputService.InputChanged, function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local inputPos = Vector2.new(input.Position.X, input.Position.Y)
-            local delta = inputPos - dragStart
-            ColorpickerFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    
-    Library:CreateConnection(UserInputService.InputEnded, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
+        Library:CreateConnection(UserInputService.InputChanged, function(input)
+            if windowDragging and input.UserInputType == Enum.UserInputType.MouseMovement and dragStart and startPos then
+                local mp = Vector2.new(input.Position.X, input.Position.Y)
+                local delta = mp - dragStart
+                ColorpickerFrame.Position = UDim2.new(
+                  startPos.X.Scale, startPos.X.Offset + delta.X,
+                  startPos.Y.Scale, startPos.Y.Offset + delta.Y
+                )
+            end
+        end)
+        Library:CreateConnection(UserInputService.InputEnded, function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                windowDragging = false
+            end
+        end)
+
     
     -- Initial update
     updateColorpicker()
