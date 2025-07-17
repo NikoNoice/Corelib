@@ -354,7 +354,7 @@ function Library:CreateWindow(config)
             -- inside your InputChanged drag callback, after you set Background.Position:
             for _, dd in ipairs(Library.OpenDropdowns) do
               local p, s = dd.Button.AbsolutePosition, dd.Button.AbsoluteSize
-              dd.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y)
+              dd.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5) -- Added 5 pixel offset
             end
 
         end
@@ -890,6 +890,7 @@ function Library:CreateWindow(config)
                 SliderHead.BorderSizePixel = 0
                 SliderHead.Position = UDim2.new(0.899999976, 0, -0.75, 0)
                 SliderHead.Size = UDim2.new(0, 10, 0, 10)
+                SliderHead.ZIndex = 2 -- Set ZIndex to 2 as requested
                 SliderHead.Font = Enum.Font.SourceSans
                 SliderHead.Text = ""
                 SliderHead.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -1099,6 +1100,7 @@ function Library:CreateWindow(config)
                                         OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
                                     end
                                     Dropdown:SetValue(selected)
+                                    -- Dropdown stays open for multi-select
                                 else
                                     -- Update all options to unselected first
                                     for _, child in pairs(DropdownHolder:GetChildren()) do
@@ -1113,7 +1115,7 @@ function Library:CreateWindow(config)
                                     OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
                                     
                                     Dropdown:SetValue(option)
-
+                                    -- Dropdown stays open for single-select too
                                 end
                             end
                         end)
@@ -1134,9 +1136,9 @@ function Library:CreateWindow(config)
                 local contentH = UIListLayout.AbsoluteContentSize.Y
                 DropdownHolder.Size = UDim2.new(0, DropdownHolder.Size.X.Offset, 0, contentH)
                 
-                -- 3) position under the button
+                -- 3) position under the button with additional offset
                 local p, s = DropdownButton.AbsolutePosition, DropdownButton.AbsoluteSize
-                DropdownHolder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y)
+                DropdownHolder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5) -- Added 5 pixel offset
                 DropdownHolder.Visible = true
             
                 table.insert(Library.OpenDropdowns, Dropdown)
