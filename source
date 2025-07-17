@@ -493,11 +493,12 @@ function Library:CreateColorpickerWindow(colorpicker)
     local hueDragging = false
     local speedDragging = false
     local windowDragging = false
+    local dragStart = nil
+    local startPos = nil
     
     Library:CreateConnection(Colorpicker.InputBegan, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position and Colorpicker.AbsolutePosition then
             colorpickerDragging = true
-            -- Convert Vector3 to Vector2
             local inputPos = Vector2.new(input.Position.X, input.Position.Y)
             local rel = inputPos - Colorpicker.AbsolutePosition
             s = math.clamp(rel.X / Colorpicker.AbsoluteSize.X, 0, 1)
@@ -507,9 +508,8 @@ function Library:CreateColorpickerWindow(colorpicker)
     end)
     
     Library:CreateConnection(HueSlider.InputBegan, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position and HueSlider.AbsolutePosition then
             hueDragging = true
-            -- Convert Vector3 to Vector2
             local inputPos = Vector2.new(input.Position.X, input.Position.Y)
             local rel = inputPos - HueSlider.AbsolutePosition
             h = math.clamp(rel.X / HueSlider.AbsoluteSize.X, 0, 1)
@@ -526,26 +526,32 @@ function Library:CreateColorpickerWindow(colorpicker)
             -- Colorpicker interactions (priority over window drag)
             if colorpickerDragging then
                 local inputPos = Vector2.new(input.Position.X, input.Position.Y)
-                local rel = inputPos - Colorpicker.AbsolutePosition
-                s = math.clamp(rel.X / Colorpicker.AbsoluteSize.X, 0, 1)
-                v = 1 - math.clamp(rel.Y / Colorpicker.AbsoluteSize.Y, 0, 1)
-                updateColorpicker()
+                if Colorpicker and Colorpicker.AbsolutePosition then
+                    local rel = inputPos - Colorpicker.AbsolutePosition
+                    s = math.clamp(rel.X / Colorpicker.AbsoluteSize.X, 0, 1)
+                    v = 1 - math.clamp(rel.Y / Colorpicker.AbsoluteSize.Y, 0, 1)
+                    updateColorpicker()
+                end
             elseif hueDragging then
                 local inputPos = Vector2.new(input.Position.X, input.Position.Y)
-                local rel = inputPos - HueSlider.AbsolutePosition
-                h = math.clamp(rel.X / HueSlider.AbsoluteSize.X, 0, 1)
-                updateColorpicker()
+                if HueSlider and HueSlider.AbsolutePosition then
+                    local rel = inputPos - HueSlider.AbsolutePosition
+                    h = math.clamp(rel.X / HueSlider.AbsoluteSize.X, 0, 1)
+                    updateColorpicker()
+                end
             elseif speedDragging then
                 local inputPos = Vector2.new(input.Position.X, input.Position.Y)
-                local rel = inputPos - SpeedSliderBar.AbsolutePosition
-                local percent = math.clamp(rel.X / SpeedSliderBar.AbsoluteSize.X, 0, 1)
-                colorpicker._rainbowSpeed = math.floor(percent * 20) + 1
-                local barWidth = SpeedSliderBar.AbsoluteSize.X
-                SpeedFiller.Size = UDim2.new(0, barWidth * percent, 0, 4)
-                SpeedHead.Position = UDim2.new(0, (barWidth * percent) - 5, -0.5, 0) -- Centered
-                SpeedValue.Text = tostring(colorpicker._rainbowSpeed)
+                if SpeedSliderBar and SpeedSliderBar.AbsolutePosition then
+                    local rel = inputPos - SpeedSliderBar.AbsolutePosition
+                    local percent = math.clamp(rel.X / SpeedSliderBar.AbsoluteSize.X, 0, 1)
+                    colorpicker._rainbowSpeed = math.floor(percent * 20) + 1
+                    local barWidth = SpeedSliderBar.AbsoluteSize.X
+                    SpeedFiller.Size = UDim2.new(0, barWidth * percent, 0, 4)
+                    SpeedHead.Position = UDim2.new(0, (barWidth * percent) - 5, -0.5, 0)
+                    SpeedValue.Text = tostring(colorpicker._rainbowSpeed)
+                end
             -- Window dragging (lower priority)
-            elseif windowDragging and dragStart then
+            elseif windowDragging and dragStart and startPos then
                 local inputPos = Vector2.new(input.Position.X, input.Position.Y)
                 local delta = inputPos - dragStart
                 ColorpickerFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -616,10 +622,6 @@ function Library:CreateColorpickerWindow(colorpicker)
     end)
     
     -- Make window draggable (only on title area)
-    local dragging = false
-    local dragStart = nil
-    local startPos = nil
-    
     -- Create a draggable title area (top part of the window)
     local DragArea = Instance.new("Frame")
     DragArea.Name = "DragArea"
