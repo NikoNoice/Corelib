@@ -98,17 +98,31 @@ function Library:CreateWindow(config)
     mask.BackgroundTransparency = 1
     mask.AutoButtonColor = false
     mask.Visible = false
-    mask.ZIndex = 0
     mask.Text = ""
     mask.TextTransparency   = 1                -- ensure no text ever shows
+    mask.Active             = true         -- so it can capture InputBegan
+    mask.ZIndex             = 1            -- keep it behind your dropdown (which will be 50+)
 
 
-    -- clicking outside closes all open dropdowns
-    mask.MouseButton1Click:Connect(function()
-        for _, dd in ipairs(Library.OpenDropdowns or {}) do
-            dd:Close()
+Library:CreateConnection(mask.InputBegan, function(input)
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+
+    -- get absolute mouse position
+    local mx, my = UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y
+
+    -- if any dropdown is open *and* that point lies within its holder, bail out
+    for _, dd in ipairs(Library.OpenDropdowns) do
+        local p, s = dd.Holder.AbsolutePosition, dd.Holder.AbsoluteSize
+        if mx >= p.X and mx <= p.X + s.X and my >= p.Y and my <= p.Y + s.Y then
+            return
         end
-    end)
+    end
+
+    -- otherwise no open dropdown contains the click → close all
+    for _, dd in ipairs(Library.OpenDropdowns) do
+        dd:Close()
+    end
+end)
     Library.Mask = mask
     
     -- track open dropdowns
