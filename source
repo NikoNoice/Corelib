@@ -378,8 +378,8 @@ function Library:CreateWindow(config)
         LineGlow.BackgroundTransparency = 0.900
         LineGlow.BorderColor3 = Color3.fromRGB(0, 0, 0)
         LineGlow.BorderSizePixel = 0
-        LineGlow.Position = UDim2.new(-0.0599999987, 0, -0.0220584869, 0)
-        LineGlow.Size = UDim2.new(0, 55, 0, 40)
+        LineGlow.Position = UDim2.new(-0.06,  0, -0.15,  0)  -- shift it up another ~10% or so
+        LineGlow.Size     = UDim2.new( 0,   55,   0,   39)  -- 32 + 7 pixels
         LineGlow.Visible = false
         
         UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(66, 255, 249)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(66, 255, 249))}
