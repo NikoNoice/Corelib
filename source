@@ -379,7 +379,7 @@ function Library:CreateWindow(config)
         LineGlow.BorderColor3 = Color3.fromRGB(0, 0, 0)
         LineGlow.BorderSizePixel = 0
         LineGlow.Position = UDim2.new(-0.0599999987, 0, -0.0220584869, 0)
-        LineGlow.Size = UDim2.new(0, 55, 0, 32)
+        LineGlow.Size = UDim2.new(0, 55, 0, 40)
         LineGlow.Visible = false
         
         UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(66, 255, 249)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(66, 255, 249))}
@@ -675,7 +675,7 @@ function Library:CreateWindow(config)
                     KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
                     KeybindBox.BorderSizePixel = 0
                     KeybindBox.AnchorPoint = Vector2.new(1, 0.5) -- pivot on its right-center
-                    KeybindBox.Position = UDim2.new(1, 200, 0.5, V_PADDING) -- positioned relative to toggle, vertically centered
+                    KeybindBox.Position = UDim2.new(1, 199, 0.5, V_PADDING) -- positioned relative to toggle, vertically centered
                     KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
                     KeybindBox.Font = Enum.Font.SourceSansSemibold
                     KeybindBox.Text = Keybind.Default
