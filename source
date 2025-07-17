@@ -1,5 +1,5 @@
 -- Complete Custom GUI Library
--- Based on your original GUI design with all elements
+-- Based on your original GUI design with all elements + Config System
 
 local Library = {}
 Library.__index = Library
@@ -9,6 +9,7 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
 -- Variables
 local LocalPlayer = Players.LocalPlayer
@@ -21,6 +22,10 @@ Library.CurrentPage = nil
 Library.GUI = nil
 Library._currentColorpicker = nil -- Global tracker for open colorpickers
 Library._copiedColor = nil -- Global copied color for copy/paste across colorpickers
+
+-- Config System Variables
+Library.ConfigFolder = "YourScript_Configs" -- Change this to your script name
+Library.ConfigExtension = ".json"
 
 -- Utility Functions
 function Library:CreateConnection(signal, callback)
@@ -43,6 +48,97 @@ function Library:CreateStroke(parent, color, thickness)
     stroke.LineJoinMode = Enum.LineJoinMode.Round
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     return stroke
+end
+
+-- Config System Functions
+function Library:InitializeConfigSystem()
+    if not isfolder(self.ConfigFolder) then
+        makefolder(self.ConfigFolder)
+    end
+end
+
+function Library:SaveConfig(name)
+    self:InitializeConfigSystem()
+    
+    local configData = {}
+    for flag, value in pairs(self.Flags) do
+        if typeof(value) == "Color3" then
+            configData[flag] = {value.R, value.G, value.B}
+        else
+            configData[flag] = value
+        end
+    end
+    
+    local success, err = pcall(function()
+        writefile(self.ConfigFolder .. "/" .. name .. self.ConfigExtension, HttpService:JSONEncode(configData))
+    end)
+    
+    return success, err
+end
+
+function Library:LoadConfig(name)
+    self:InitializeConfigSystem()
+    
+    local filePath = self.ConfigFolder .. "/" .. name .. self.ConfigExtension
+    if not isfile(filePath) then
+        return false, "Config file does not exist"
+    end
+    
+    local success, result = pcall(function()
+        local fileContent = readfile(filePath)
+        local configData = HttpService:JSONDecode(fileContent)
+        
+        for flag, value in pairs(configData) do
+            if type(value) == "table" and #value == 3 then
+                -- Convert RGB array back to Color3
+                self.Flags[flag] = Color3.fromRGB(value[1] * 255, value[2] * 255, value[3] * 255)
+            else
+                self.Flags[flag] = value
+            end
+        end
+        
+        return true
+    end)
+    
+    return success, result
+end
+
+function Library:DeleteConfig(name)
+    local filePath = self.ConfigFolder .. "/" .. name .. self.ConfigExtension
+    if isfile(filePath) then
+        delfile(filePath)
+        return true
+    end
+    return false
+end
+
+function Library:RenameConfig(oldName, newName)
+    local oldPath = self.ConfigFolder .. "/" .. oldName .. self.ConfigExtension
+    local newPath = self.ConfigFolder .. "/" .. newName .. self.ConfigExtension
+    
+    if isfile(oldPath) and not isfile(newPath) then
+        local content = readfile(oldPath)
+        writefile(newPath, content)
+        delfile(oldPath)
+        return true
+    end
+    return false
+end
+
+function Library:GetConfigs()
+    self:InitializeConfigSystem()
+    
+    local configs = {}
+    local files = listfiles(self.ConfigFolder)
+    
+    for _, file in ipairs(files) do
+        if file:sub(-#self.ConfigExtension) == self.ConfigExtension then
+            local configName = file:gsub(self.ConfigFolder .. "/", ""):gsub(self.ConfigExtension, "")
+            table.insert(configs, configName)
+        end
+    end
+    
+    return configs
 end
 
 -- Add HSV to RGB conversion
@@ -2138,6 +2234,369 @@ function Library:CreateWindow(config)
                 UICorner.Parent = DividerFrame
                 
                 return Divider
+            end
+            
+            -- Config Element
+            function Section:CreateConfig(config)
+                local Config = {}
+                Config.Name = config.Name or "Config Manager"
+                
+                local ConfigFrame = Instance.new("Frame")
+                local ConfigTitle = Instance.new("TextLabel")
+                local ConfigList = Instance.new("ScrollingFrame")
+                local UIListLayout = Instance.new("UIListLayout")
+                local ButtonsFrame = Instance.new("Frame")
+                local SaveButton = Instance.new("TextButton")
+                local LoadButton = Instance.new("TextButton")
+                local DeleteButton = Instance.new("TextButton")
+                local RenameButton = Instance.new("TextButton")
+                local SaveAsFrame = Instance.new("Frame")
+                local SaveAsTextBox = Instance.new("TextBox")
+                local SaveAsButton = Instance.new("TextButton")
+                local RenameFrame = Instance.new("Frame")
+                local RenameTextBox = Instance.new("TextBox")
+                local RenameConfirmButton = Instance.new("TextButton")
+                
+                -- Main config frame
+                ConfigFrame.Name = "ConfigFrame"
+                ConfigFrame.Parent = SectionHolder
+                ConfigFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                ConfigFrame.BackgroundTransparency = 1.000
+                ConfigFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ConfigFrame.BorderSizePixel = 0
+                ConfigFrame.Size = UDim2.new(0, 215, 0, 220)
+                
+                -- Config title
+                ConfigTitle.Name = "ConfigTitle"
+                ConfigTitle.Parent = ConfigFrame
+                ConfigTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                ConfigTitle.BackgroundTransparency = 1.000
+                ConfigTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ConfigTitle.BorderSizePixel = 0
+                ConfigTitle.Position = UDim2.new(0, 0, 0, 0)
+                ConfigTitle.Size = UDim2.new(0, 215, 0, 20)
+                ConfigTitle.Font = Enum.Font.SourceSansSemibold
+                ConfigTitle.Text = Config.Name
+                ConfigTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
+                ConfigTitle.TextSize = 15.000
+                ConfigTitle.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- Config list (scrollable)
+                ConfigList.Name = "ConfigList"
+                ConfigList.Parent = ConfigFrame
+                ConfigList.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+                ConfigList.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ConfigList.BorderSizePixel = 0
+                ConfigList.Position = UDim2.new(0, 0, 0.11, 0)
+                ConfigList.Size = UDim2.new(0, 215, 0, 120)
+                ConfigList.CanvasSize = UDim2.new(0, 0, 0, 0)
+                ConfigList.ScrollBarThickness = 4
+                ConfigList.ScrollBarImageColor3 = Color3.fromRGB(66, 255, 249)
+                ConfigList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+                
+                Library:CreateStroke(ConfigList, Color3.fromRGB(50, 50, 50), 1)
+                
+                UIListLayout.Parent = ConfigList
+                UIListLayout.SortOrder = Enum.SortOrder.Name
+                UIListLayout.Padding = UDim.new(0, 2)
+                
+                -- Buttons frame
+                ButtonsFrame.Name = "ButtonsFrame"
+                ButtonsFrame.Parent = ConfigFrame
+                ButtonsFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                ButtonsFrame.BackgroundTransparency = 1.000
+                ButtonsFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                ButtonsFrame.BorderSizePixel = 0
+                ButtonsFrame.Position = UDim2.new(0, 0, 0.65, 0)
+                ButtonsFrame.Size = UDim2.new(0, 215, 0, 35)
+                
+                -- Save button
+                SaveButton.Name = "SaveButton"
+                SaveButton.Parent = ButtonsFrame
+                SaveButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SaveButton.BackgroundTransparency = 1.000
+                SaveButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                SaveButton.BorderSizePixel = 0
+                SaveButton.Position = UDim2.new(0, 0, 0, 0)
+                SaveButton.Size = UDim2.new(0, 50, 0, 25)
+                SaveButton.Font = Enum.Font.SourceSansSemibold
+                SaveButton.Text = "Save"
+                SaveButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SaveButton.TextSize = 14.000
+                
+                Library:CreateStroke(SaveButton, Color3.fromRGB(50, 50, 50), 1)
+                
+                -- Load button
+                LoadButton.Name = "LoadButton"
+                LoadButton.Parent = ButtonsFrame
+                LoadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                LoadButton.BackgroundTransparency = 1.000
+                LoadButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                LoadButton.BorderSizePixel = 0
+                LoadButton.Position = UDim2.new(0, 55, 0, 0)
+                LoadButton.Size = UDim2.new(0, 50, 0, 25)
+                LoadButton.Font = Enum.Font.SourceSansSemibold
+                LoadButton.Text = "Load"
+                LoadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                LoadButton.TextSize = 14.000
+                
+                Library:CreateStroke(LoadButton, Color3.fromRGB(50, 50, 50), 1)
+                
+                -- Delete button
+                DeleteButton.Name = "DeleteButton"
+                DeleteButton.Parent = ButtonsFrame
+                DeleteButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                DeleteButton.BackgroundTransparency = 1.000
+                DeleteButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DeleteButton.BorderSizePixel = 0
+                DeleteButton.Position = UDim2.new(0, 110, 0, 0)
+                DeleteButton.Size = UDim2.new(0, 50, 0, 25)
+                DeleteButton.Font = Enum.Font.SourceSansSemibold
+                DeleteButton.Text = "Delete"
+                DeleteButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+                DeleteButton.TextSize = 14.000
+                
+                Library:CreateStroke(DeleteButton, Color3.fromRGB(50, 50, 50), 1)
+                
+                -- Rename button
+                RenameButton.Name = "RenameButton"
+                RenameButton.Parent = ButtonsFrame
+                RenameButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                RenameButton.BackgroundTransparency = 1.000
+                RenameButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                RenameButton.BorderSizePixel = 0
+                RenameButton.Position = UDim2.new(0, 165, 0, 0)
+                RenameButton.Size = UDim2.new(0, 50, 0, 25)
+                RenameButton.Font = Enum.Font.SourceSansSemibold
+                RenameButton.Text = "Rename"
+                RenameButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                RenameButton.TextSize = 14.000
+                
+                Library:CreateStroke(RenameButton, Color3.fromRGB(50, 50, 50), 1)
+                
+                -- Save as frame (initially hidden)
+                SaveAsFrame.Name = "SaveAsFrame"
+                SaveAsFrame.Parent = ConfigFrame
+                SaveAsFrame.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+                SaveAsFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                SaveAsFrame.BorderSizePixel = 0
+                SaveAsFrame.Position = UDim2.new(0, 0, 0.82, 0)
+                SaveAsFrame.Size = UDim2.new(0, 215, 0, 25)
+                SaveAsFrame.Visible = false
+                
+                Library:CreateStroke(SaveAsFrame, Color3.fromRGB(50, 50, 50), 1)
+                
+                SaveAsTextBox.Name = "SaveAsTextBox"
+                SaveAsTextBox.Parent = SaveAsFrame
+                SaveAsTextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SaveAsTextBox.BackgroundTransparency = 1.000
+                SaveAsTextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                SaveAsTextBox.BorderSizePixel = 0
+                SaveAsTextBox.Position = UDim2.new(0, 5, 0, 0)
+                SaveAsTextBox.Size = UDim2.new(0, 150, 0, 25)
+                SaveAsTextBox.Font = Enum.Font.SourceSansSemibold
+                SaveAsTextBox.PlaceholderText = "Config name..."
+                SaveAsTextBox.Text = ""
+                SaveAsTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SaveAsTextBox.TextSize = 14.000
+                SaveAsTextBox.TextXAlignment = Enum.TextXAlignment.Left
+                
+                SaveAsButton.Name = "SaveAsButton"
+                SaveAsButton.Parent = SaveAsFrame
+                SaveAsButton.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+                SaveAsButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                SaveAsButton.BorderSizePixel = 0
+                SaveAsButton.Position = UDim2.new(0, 160, 0, 2)
+                SaveAsButton.Size = UDim2.new(0, 50, 0, 21)
+                SaveAsButton.Font = Enum.Font.SourceSansSemibold
+                SaveAsButton.Text = "Save"
+                SaveAsButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                SaveAsButton.TextSize = 14.000
+                
+                -- Rename frame (initially hidden)
+                RenameFrame.Name = "RenameFrame"
+                RenameFrame.Parent = ConfigFrame
+                RenameFrame.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+                RenameFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                RenameFrame.BorderSizePixel = 0
+                RenameFrame.Position = UDim2.new(0, 0, 0.82, 0)
+                RenameFrame.Size = UDim2.new(0, 215, 0, 25)
+                RenameFrame.Visible = false
+                
+                Library:CreateStroke(RenameFrame, Color3.fromRGB(50, 50, 50), 1)
+                
+                RenameTextBox.Name = "RenameTextBox"
+                RenameTextBox.Parent = RenameFrame
+                RenameTextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                RenameTextBox.BackgroundTransparency = 1.000
+                RenameTextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                RenameTextBox.BorderSizePixel = 0
+                RenameTextBox.Position = UDim2.new(0, 5, 0, 0)
+                RenameTextBox.Size = UDim2.new(0, 150, 0, 25)
+                RenameTextBox.Font = Enum.Font.SourceSansSemibold
+                RenameTextBox.PlaceholderText = "New name..."
+                RenameTextBox.Text = ""
+                RenameTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                RenameTextBox.TextSize = 14.000
+                RenameTextBox.TextXAlignment = Enum.TextXAlignment.Left
+                
+                RenameConfirmButton.Name = "RenameConfirmButton"
+                RenameConfirmButton.Parent = RenameFrame
+                RenameConfirmButton.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+                RenameConfirmButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                RenameConfirmButton.BorderSizePixel = 0
+                RenameConfirmButton.Position = UDim2.new(0, 160, 0, 2)
+                RenameConfirmButton.Size = UDim2.new(0, 50, 0, 21)
+                RenameConfirmButton.Font = Enum.Font.SourceSansSemibold
+                RenameConfirmButton.Text = "Rename"
+                RenameConfirmButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                RenameConfirmButton.TextSize = 14.000
+                
+                -- Variables
+                Config.SelectedConfig = nil
+                
+                -- Functions
+                function Config:RefreshList()
+                    -- Clear existing items
+                    for _, child in ipairs(ConfigList:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            child:Destroy()
+                        end
+                    end
+                    
+                    local configs = Library:GetConfigs()
+                    
+                    for _, configName in ipairs(configs) do
+                        local ConfigButton = Instance.new("TextButton")
+                        
+                        ConfigButton.Name = configName
+                        ConfigButton.Parent = ConfigList
+                        ConfigButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        ConfigButton.BackgroundTransparency = 1.000
+                        ConfigButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                        ConfigButton.BorderSizePixel = 0
+                        ConfigButton.Size = UDim2.new(0, 200, 0, 20)
+                        ConfigButton.Font = Enum.Font.SourceSansSemibold
+                        ConfigButton.Text = " " .. configName
+                        ConfigButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        ConfigButton.TextSize = 14.000
+                        ConfigButton.TextXAlignment = Enum.TextXAlignment.Left
+                        
+                        Library:CreateConnection(ConfigButton.MouseButton1Click, function()
+                            -- Deselect all other configs
+                            for _, child in ipairs(ConfigList:GetChildren()) do
+                                if child:IsA("TextButton") then
+                                    child.BackgroundTransparency = 1.000
+                                    child.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                end
+                            end
+                            
+                            -- Select this config
+                            ConfigButton.BackgroundTransparency = 0.8
+                            ConfigButton.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+                            ConfigButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                            Config.SelectedConfig = configName
+                        end)
+                    end
+                end
+                
+                function Config:HideAllFrames()
+                    SaveAsFrame.Visible = false
+                    RenameFrame.Visible = false
+                end
+                
+                -- Button connections
+                Library:CreateConnection(SaveButton.MouseButton1Click, function()
+                    Config:HideAllFrames()
+                    SaveAsFrame.Visible = true
+                    SaveAsTextBox:CaptureFocus()
+                end)
+                
+                Library:CreateConnection(LoadButton.MouseButton1Click, function()
+                    if Config.SelectedConfig then
+                        local success, error = Library:LoadConfig(Config.SelectedConfig)
+                        if success then
+                            print("Config loaded:", Config.SelectedConfig)
+                            -- Refresh UI elements to reflect loaded values
+                            for flag, value in pairs(Library.Flags) do
+                                -- You can add code here to update UI elements if needed
+                            end
+                        else
+                            warn("Failed to load config:", error)
+                        end
+                    end
+                end)
+                
+                Library:CreateConnection(DeleteButton.MouseButton1Click, function()
+                    if Config.SelectedConfig then
+                        local success = Library:DeleteConfig(Config.SelectedConfig)
+                        if success then
+                            print("Config deleted:", Config.SelectedConfig)
+                            Config.SelectedConfig = nil
+                            Config:RefreshList()
+                        else
+                            warn("Failed to delete config")
+                        end
+                    end
+                end)
+                
+                Library:CreateConnection(RenameButton.MouseButton1Click, function()
+                    if Config.SelectedConfig then
+                        Config:HideAllFrames()
+                        RenameFrame.Visible = true
+                        RenameTextBox.Text = Config.SelectedConfig
+                        RenameTextBox:CaptureFocus()
+                    end
+                end)
+                
+                Library:CreateConnection(SaveAsButton.MouseButton1Click, function()
+                    local configName = SaveAsTextBox.Text:gsub("%s+", "_") -- Replace spaces with underscores
+                    if configName ~= "" then
+                        local success, error = Library:SaveConfig(configName)
+                        if success then
+                            print("Config saved:", configName)
+                            SaveAsTextBox.Text = ""
+                            SaveAsFrame.Visible = false
+                            Config:RefreshList()
+                        else
+                            warn("Failed to save config:", error)
+                        end
+                    end
+                end)
+                
+                Library:CreateConnection(RenameConfirmButton.MouseButton1Click, function()
+                    local newName = RenameTextBox.Text:gsub("%s+", "_") -- Replace spaces with underscores
+                    if newName ~= "" and Config.SelectedConfig then
+                        local success = Library:RenameConfig(Config.SelectedConfig, newName)
+                        if success then
+                            print("Config renamed from", Config.SelectedConfig, "to", newName)
+                            Config.SelectedConfig = newName
+                            RenameTextBox.Text = ""
+                            RenameFrame.Visible = false
+                            Config:RefreshList()
+                        else
+                            warn("Failed to rename config")
+                        end
+                    end
+                end)
+                
+                -- Enter key support for textboxes
+                Library:CreateConnection(SaveAsTextBox.FocusLost, function(enterPressed)
+                    if enterPressed then
+                        SaveAsButton.MouseButton1Click:Fire()
+                    end
+                end)
+                
+                Library:CreateConnection(RenameTextBox.FocusLost, function(enterPressed)
+                    if enterPressed then
+                        RenameConfirmButton.MouseButton1Click:Fire()
+                    end
+                end)
+                
+                -- Initial refresh
+                Config:RefreshList()
+                
+                return Config
             end
             
             table.insert(Page.Sections, Section)
