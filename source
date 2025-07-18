@@ -930,7 +930,7 @@ function Library:CreateWindow(config)
     local topbarHeight = Topbar.Size.Y.Offset -- 30
     local sectionY = topbarHeight + 8 -- 8px gap under the bar
     local sectionW = 225 -- fixed width
-    local gutter = 8 -- horizontal gutter
+    local gutter = 14 -- horizontal gutter
 
     TabsHolder.Name = "TabsHolder"
     TabsHolder.Parent = Topbar
