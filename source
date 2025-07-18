@@ -1176,7 +1176,7 @@ function Library:CreateWindow(config)
         LineGlow.Position = UDim2.new(-0.06,  0, -0.022, 0)
         LineGlow.Size     = UDim2.new( 0,   55,   0,   32)
         LineGlow.Visible = false
-        LineGlow.ZIndex = 2
+        LineGlow.ZIndex = 10
         
         UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(66, 255, 249)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(66, 255, 249))}
         UIGradient.Rotation = 90
