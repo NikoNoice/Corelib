@@ -942,6 +942,7 @@ function Library:CreateWindow(config)
     Roundingfiller.Position = UDim2.new(0, 0, -0.209804028, 0)
     Roundingfiller.Size = UDim2.new(0, 470, 0, 7)
     Roundingfiller.ZIndex = 1
+    Roundingfiller.BackgroundTransparency = 1
 
     UICorner_2.CornerRadius = UDim.new(0, 3)
     UICorner_2.Parent = Roundingfiller
