@@ -226,8 +226,7 @@ function Library:UpdateThemeForAllElements()
     
     -- Update all UI elements
     for _, element in pairs(self.Elements) do
-        if element.SetValue then
-            -- Re-trigger the SetValue to update colors
+        if element.SetValue and not element.SkipRefresh then
             element:SetValue(element.Value)
         end
     end
@@ -3227,6 +3226,7 @@ function Library:CreateWindow(config)
                         Library:SetTheme(theme)
                     end
                 })
+                themeDropdown.SkipRefresh = true
                 return ThemeDropdown
             end
             
