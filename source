@@ -1,4 +1,4 @@
--- Complete Custom GUI Library
+-- Complete Custom GUI Library - FIXED VERSION
 -- Based on your original GUI design with all elements + Config System
 
 local Library = {}
@@ -22,6 +22,7 @@ Library.CurrentPage = nil
 Library.GUI = nil
 Library._currentColorpicker = nil -- Global tracker for open colorpickers
 Library._copiedColor = nil -- Global copied color for copy/paste across colorpickers
+Library.Elements = {} -- Store all elements for updating when config loads
 
 -- Config System Variables
 Library.ConfigFolder = "obeecity" -- Change this to your script name
@@ -98,6 +99,15 @@ function Library:LoadConfig(name)
                 self.Flags[flag] = Color3.fromRGB(math.floor(value[1] * 255), math.floor(value[2] * 255), math.floor(value[3] * 255))
             else
                 self.Flags[flag] = value
+            end
+        end
+        
+        -- UPDATE UI ELEMENTS TO REFLECT LOADED VALUES
+        for _, element in pairs(self.Elements) do
+            if element.Flag and self.Flags[element.Flag] ~= nil then
+                if element.SetValue then
+                    element:SetValue(self.Flags[element.Flag])
+                end
             end
         end
         
@@ -963,7 +973,8 @@ function Library:CreateWindow(config)
     GameName.Position = UDim2.new(0, 5, 0, 0)
     GameName.Size = UDim2.new(0, 300, 0, 21)
     GameName.Font = Enum.Font.SourceSansSemibold
-    GameName.Text = "Game: " .. (game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name or "Unknown")
+    -- FIXED: Removed "Game: " prefix
+    GameName.Text = (game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name or "Unknown")
     GameName.TextColor3 = Color3.fromRGB(66, 255, 249)
     GameName.TextSize = 14.000
     GameName.TextXAlignment = Enum.TextXAlignment.Left
@@ -1162,8 +1173,9 @@ function Library:CreateWindow(config)
         LineGlow.BackgroundTransparency = 0.900
         LineGlow.BorderColor3 = Color3.fromRGB(0, 0, 0)
         LineGlow.BorderSizePixel = 0
-        LineGlow.Position = UDim2.new(-0.06,  0, -0.022, 0)
-        LineGlow.Size     = UDim2.new( 0,   55,   0,   32)
+        -- FIXED: Made line glow stretch to the top of the UI
+        LineGlow.Position = UDim2.new(-0.06,  0, -1.6, 0) -- Extended upward
+        LineGlow.Size     = UDim2.new( 0,   55,   0,   84) -- Made taller to reach top
         LineGlow.Visible = false
         
         UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(66, 255, 249)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(66, 255, 249))}
@@ -1175,29 +1187,29 @@ function Library:CreateWindow(config)
         local Section1 = Instance.new("Frame")
         local Section2 = Instance.new("Frame")
         
-        -- Section 1 (Left)
+        -- Section 1 (Left) - FIXED: Better positioning for symmetry
         Section1.Name = "Section1"
         Section1.Parent = Background
         Section1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section1.BackgroundTransparency = 1.000
         Section1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section1.BorderSizePixel = 0
-        Section1.Position = UDim2.new(0.0112055354, 0, 0.0730183199, 0)
-        Section1.Size = UDim2.new(0, 225, 0, 420)
+        Section1.Position = UDim2.new(0.0127659574, 0, 0.0730183199, 0) -- Adjusted for better symmetry
+        Section1.Size = UDim2.new(0, 225, 0, 520)
         Section1.Visible = false
         
         -- Add stroke to Section1
         Library:CreateStroke(Section1, Color3.fromRGB(50, 50, 50), 1)
         
-        -- Section 2 (Right)
+        -- Section 2 (Right) - FIXED: Better positioning for symmetry
         Section2.Name = "Section2"
         Section2.Parent = Background
         Section2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section2.BackgroundTransparency = 1.000
         Section2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section2.BorderSizePixel = 0
-        Section2.Position = UDim2.new(0.497872353, 4, 0.0730183199, 0)
-        Section2.Size = UDim2.new(0, 225, 0, 420)
+        Section2.Position = UDim2.new(0.510638297, 0, 0.0730183199, 0) -- Adjusted for better symmetry
+        Section2.Size = UDim2.new(0, 225, 0, 520)
         Section2.Visible = false
         
         -- Add stroke to Section2
@@ -1431,6 +1443,7 @@ function Library:CreateWindow(config)
                     end)
                     
                     Colorpicker:SetValue(Colorpicker.Default)
+                    Library.Elements[Colorpicker.Flag] = Colorpicker -- Register for config loading
                     return Colorpicker
                 end
                 
@@ -1583,6 +1596,7 @@ function Library:CreateWindow(config)
                     end)
                     
                     Keybind:SetValue(Keybind.Default)
+                    Library.Elements[Keybind.Flag] = Keybind -- Register for config loading
                     return Keybind
                 end
                 
@@ -1591,6 +1605,7 @@ function Library:CreateWindow(config)
                 end)
                 
                 Toggle:SetValue(Toggle.Default)
+                Library.Elements[Toggle.Flag] = Toggle -- Register for config loading
                 return Toggle
             end
             
@@ -1730,6 +1745,7 @@ function Library:CreateWindow(config)
                 end)
                 
                 Slider:SetValue(Slider.Default)
+                Library.Elements[Slider.Flag] = Slider -- Register for config loading
                 return Slider
             end
             
@@ -1966,6 +1982,7 @@ function Library:CreateWindow(config)
                 
                 Dropdown:Refresh()
                 Dropdown:SetValue(Dropdown.Default)
+                Library.Elements[Dropdown.Flag] = Dropdown -- Register for config loading
                 return Dropdown
             end
             
@@ -2025,6 +2042,7 @@ function Library:CreateWindow(config)
                 end)
                 
                 Colorpicker:SetValue(Colorpicker.Default)
+                Library.Elements[Colorpicker.Flag] = Colorpicker -- Register for config loading
                 return Colorpicker
             end
             
@@ -2168,6 +2186,7 @@ function Library:CreateWindow(config)
                 end)
                 
                 Keybind:SetValue(Keybind.Default)
+                Library.Elements[Keybind.Flag] = Keybind -- Register for config loading
                 return Keybind
             end
             
@@ -2295,14 +2314,14 @@ function Library:CreateWindow(config)
                 ConfigTitle.TextSize = 15.000
                 ConfigTitle.TextXAlignment = Enum.TextXAlignment.Left
                 
-                -- Config list (scrollable)
+                -- FIXED: Better looking config list with improved sizing
                 ConfigList.Name = "ConfigList"
                 ConfigList.Parent = ConfigFrame
-                ConfigList.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+                ConfigList.BackgroundColor3 = Color3.fromRGB(28, 28, 33) -- Darker background for better contrast
                 ConfigList.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ConfigList.BorderSizePixel = 0
                 ConfigList.Position = UDim2.new(0, 0, 0.11, 0)
-                ConfigList.Size = UDim2.new(0, 215, 0, 120)
+                ConfigList.Size = UDim2.new(1, -4, 0, 120) -- FIXED: Better sizing for symmetry
                 ConfigList.CanvasSize = UDim2.new(0, 0, 0, 0)
                 ConfigList.ScrollBarThickness = 4
                 ConfigList.ScrollBarImageColor3 = Color3.fromRGB(66, 255, 249)
@@ -2489,7 +2508,7 @@ function Library:CreateWindow(config)
                         ConfigButton.BackgroundTransparency = 1.000
                         ConfigButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                         ConfigButton.BorderSizePixel = 0
-                        ConfigButton.Size = UDim2.new(1, -4, 0, 20) -- Full width minus padding
+                        ConfigButton.Size = UDim2.new(1, -8, 0, 20) -- FIXED: Better symmetrical sizing
                         ConfigButton.Font = Enum.Font.SourceSansSemibold
                         ConfigButton.Text = " " .. configName
                         ConfigButton.TextColor3 = Color3.fromRGB(255, 255, 255)
