@@ -464,7 +464,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedSlider.TextSize = 15.000
     SpeedSlider.TextXAlignment = Enum.TextXAlignment.Left
     SpeedSlider.TextYAlignment = Enum.TextYAlignment.Top
-    SpeedSlider.ZIndex = 102
+    SpeedSlider.ZIndex = 202 -- Fixed ZIndex
     
     SpeedSliderBar.Name = "SpeedSliderBar"
     SpeedSliderBar.Parent = SpeedSlider
@@ -474,7 +474,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedSliderBar.BorderSizePixel = 0
     SpeedSliderBar.Position = UDim2.new(0, 0, 0.8, 0)
     SpeedSliderBar.Size = UDim2.new(0, 120, 0, 2)
-    SpeedSliderBar.ZIndex = 102
+    SpeedSliderBar.ZIndex = 202 -- Fixed ZIndex
     
     -- Add stroke to speed slider bar
     Library:CreateStroke(SpeedSliderBar, Color3.fromRGB(50, 50, 50), 1)
@@ -486,7 +486,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedFiller.BorderSizePixel = 0
     SpeedFiller.Position = UDim2.new(0, 0, -1, 0) -- Centered vertically
     SpeedFiller.Size = UDim2.new(0, 60, 0, 4)
-    SpeedFiller.ZIndex = 103
+    SpeedFiller.ZIndex = 203 -- Fixed ZIndex
     
     UICorner_9.CornerRadius = UDim.new(0, 2)
     UICorner_9.Parent = SpeedFiller
@@ -498,7 +498,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedHead.BorderSizePixel = 0
     SpeedHead.Position = UDim2.new(0.9, 0, -0.5, 0) -- Centered on filler
     SpeedHead.Size = UDim2.new(0, 10, 0, 10)
-    SpeedHead.ZIndex = 104
+    SpeedHead.ZIndex = 204 -- Fixed ZIndex
     SpeedHead.Font = Enum.Font.SourceSans
     SpeedHead.Text = ""
     SpeedHead.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -526,7 +526,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedValue.TextColor3 = Color3.fromRGB(111, 108, 112)
     SpeedValue.TextSize = 16.000
     SpeedValue.TextXAlignment = Enum.TextXAlignment.Right
-    SpeedValue.ZIndex = 102
+    SpeedValue.ZIndex = 202 -- Fixed ZIndex
     
     -- Copy and Paste buttons
     CopyButton.Name = "CopyButton"
@@ -925,6 +925,12 @@ function Library:CreateWindow(config)
     Topbar.BorderSizePixel = 0
     Topbar.Position = UDim2.new(0, 0, 0.0103270225, 0)
     Topbar.Size = UDim2.new(0, 470, 0, 30)
+    
+    -- Store positioning variables for sections
+    local topbarHeight = Topbar.Size.Y.Offset -- 30
+    local sectionY = topbarHeight + 8 -- 8px gap under the bar
+    local sectionW = 225 -- fixed width
+    local gutter = 8 -- horizontal gutter
 
     TabsHolder.Name = "TabsHolder"
     TabsHolder.Parent = Topbar
@@ -1217,15 +1223,15 @@ function Library:CreateWindow(config)
         local UIListLayout1 = Instance.new("UIListLayout")
         local UIListLayout2 = Instance.new("UIListLayout")
         
-        -- Section 1 (Left) - Reverted to original X position, adjusted Y position
+        -- Section 1 (Left) - Using offset-based positioning
         Section1.Name = "Section1"
         Section1.Parent = Background
         Section1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section1.BackgroundTransparency = 1.000
         Section1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section1.BorderSizePixel = 0
-        Section1.Position = UDim2.new(0.0112055354, 0, 0.065, 0) -- Original X, adjusted Y
-        Section1.Size = UDim2.new(0, 225, 0, 520)
+        Section1.Position = UDim2.new(0, gutter, 0, sectionY) -- Left column
+        Section1.Size = UDim2.new(0, sectionW, 0, 0) -- Height=0, auto-size
         Section1.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
         Section1.Visible = false
         
@@ -1237,15 +1243,15 @@ function Library:CreateWindow(config)
         -- Store stroke reference for toggling
         local stroke1 = Library:CreateStroke(Section1, Color3.fromRGB(50, 50, 50), 1)
         
-        -- Section 2 (Right) - Reverted to original X position, adjusted Y position  
+        -- Section 2 (Right) - Using offset-based positioning  
         Section2.Name = "Section2"
         Section2.Parent = Background
         Section2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section2.BackgroundTransparency = 1.000
         Section2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section2.BorderSizePixel = 0
-        Section2.Position = UDim2.new(0.497872353, 4, 0.065, 0) -- Original X, adjusted Y
-        Section2.Size = UDim2.new(0, 225, 0, 520) 
+        Section2.Position = UDim2.new(0, gutter + sectionW + gutter, 0, sectionY) -- Right column
+        Section2.Size = UDim2.new(0, sectionW, 0, 0) -- Height=0, auto-size
         Section2.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
         Section2.Visible = false
         
