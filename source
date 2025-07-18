@@ -209,22 +209,8 @@ function Library:UpdateAllStrokes()
 end
 
 function Library:CreateSound(soundId, volume, pitch)
-    if not self.Settings.SoundEnabled then return end
-    
-    local sound = Instance.new("Sound")
-    sound.SoundId = soundId
-    sound.Volume = volume or 0.5
-    sound.Pitch = pitch or 1
-    sound.Parent = SoundService
-    
-    sound:Play()
-    
-    -- Clean up sound after playing
-    sound.Ended:Connect(function()
-        sound:Destroy()
-    end)
-    
-    return sound
+    -- Sounds disabled - do nothing
+    return
 end
 
 -- Enhanced Tween System
@@ -317,32 +303,29 @@ function Library:CreateStroke(parent, color, thickness)
     return stroke
 end
 
--- Enhanced Hover Effects
+-- Enhanced Hover Effects (Simplified)
 function Library:AddHoverEffect(element, hoverColor, clickColor)
     if not self.Settings.HoverEffects then return end
     
     local theme = self:GetTheme()
     local originalColor = element.BackgroundColor3
     
+    -- Only add very subtle hover effects
     element.MouseEnter:Connect(function()
-        self:TweenColor(element, "BackgroundColor3", hoverColor or theme.HoverColor, 0.15)
-        self:CreateSound("rbxasset://sounds/button_rollover.wav", 0.3, 1.2)
+        if element.BackgroundTransparency < 1 then
+            self:TweenColor(element, "BackgroundColor3", Color3.new(
+                math.min(originalColor.R + 0.05, 1),
+                math.min(originalColor.G + 0.05, 1),
+                math.min(originalColor.B + 0.05, 1)
+            ), 0.15)
+        end
     end)
     
     element.MouseLeave:Connect(function()
-        self:TweenColor(element, "BackgroundColor3", originalColor, 0.15)
+        if element.BackgroundTransparency < 1 then
+            self:TweenColor(element, "BackgroundColor3", originalColor, 0.15)
+        end
     end)
-    
-    if self.Settings.ClickEffects and element:IsA("TextButton") then
-        element.MouseButton1Down:Connect(function()
-            self:TweenColor(element, "BackgroundColor3", clickColor or theme.ClickColor, 0.05)
-            self:CreateSound("rbxasset://sounds/button_click.wav", 0.4, 1.1)
-        end)
-        
-        element.MouseButton1Up:Connect(function()
-            self:TweenColor(element, "BackgroundColor3", hoverColor or theme.HoverColor, 0.1)
-        end)
-    end
 end
 
 -- Rainbow Mode
@@ -939,8 +922,6 @@ function Library:CreateColorpickerWindow(colorpicker)
     CloseButton.TextSize = 18.000
     CloseButton.ZIndex = 101
     
-    Library:AddHoverEffect(CloseButton, Color3.fromRGB(255, 100, 100))
-    
     -- Variables for colorpicker state
     local h, s, v = 0, 1, 1
     local rainbow = colorpicker._rainbow
@@ -1104,14 +1085,12 @@ function Library:CreateColorpickerWindow(colorpicker)
     -- Copy and Paste functionality
     Library:CreateConnection(CopyButton.MouseButton1Click, function()
         Library._copiedColor = colorpicker.Value
-        Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.3, 1.5)
     end)
     
     Library:CreateConnection(PasteButton.MouseButton1Click, function()
         if Library._copiedColor then
             h, s, v = Library:RGBtoHSV(Library._copiedColor.R, Library._copiedColor.G, Library._copiedColor.B)
             updateColorpicker()
-            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.3, 1.2)
         end
     end)
     
@@ -1461,9 +1440,9 @@ function Library:CreateWindow(config)
     UICorner_28.Parent = KeybindModeFrame
 
     -- Add hover effects to keybind buttons
-    Library:AddHoverEffect(TextButton)
-    Library:AddHoverEffect(TextButton_2)
-    Library:AddHoverEffect(TextButton_3)
+    -- Library:AddHoverEffect(TextButton)
+    -- Library:AddHoverEffect(TextButton_2)
+    -- Library:AddHoverEffect(TextButton_3)
     
     -- Store references
     Window.GUI = coresploit
@@ -1517,12 +1496,9 @@ function Library:CreateWindow(config)
             coresploit.Enabled = not isVisible
             
             if not isVisible then
-                self:CreateSound("rbxasset://sounds/switch.wav", 0.4, 1.2)
                 -- Fade in animation
                 Background.BackgroundTransparency = 1
                 self:TweenTransparency(Background, 0, 0.3)
-            else
-                self:CreateSound("rbxasset://sounds/switch.wav", 0.4, 0.8)
             end
         end
     end)
@@ -1593,7 +1569,7 @@ function Library:CreateWindow(config)
         UIGradient.Parent = LineGlow
         
         -- Add hover effect to tab
-        Library:AddHoverEffect(title, Color3.new(0, 0, 0), Color3.new(0, 0, 0))
+        -- Library:AddHoverEffect(title, Color3.new(0, 0, 0), Color3.new(0, 0, 0))
         
         -- Create page content areas
         local Section1 = Instance.new("Frame")
@@ -1631,16 +1607,10 @@ function Library:CreateWindow(config)
         Page.SelectedLine = SelectedLine
         Page.LineGlow = LineGlow
         
-        -- Tab click handler with animation
+        -- Tab click handler with simple animation
         Library:CreateConnection(title.InputBegan, function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                -- Add click animation
-                Library:TweenSize(title, UDim2.new(0, 48, 0, 32), 0.05)
-                wait(0.05)
-                Library:TweenSize(title, UDim2.new(0, 50, 0, 32), 0.05)
-                
                 Window:SetPage(Page)
-                Library:CreateSound("rbxasset://sounds/button_click.wav", 0.3, 1.1)
             end
         end)
         
@@ -1655,12 +1625,11 @@ function Library:CreateWindow(config)
                 Section1.Visible = true
                 Section2.Visible = true
                 
-                -- Animate sections sliding in
-                Section1.Position = UDim2.new(-0.5, 0, 0.0730183199, 0)
-                Section2.Position = UDim2.new(1.5, 0, 0.0730183199, 0)
-                
-                Library:TweenPosition(Section1, UDim2.new(0.0127659574, 0, 0.0730183199, 0), 0.3)
-                Library:TweenPosition(Section2, UDim2.new(0.510638297, 0, 0.0730183199, 0), 0.3)
+                -- Simple fade in without sliding
+                Section1.BackgroundTransparency = 1
+                Section2.BackgroundTransparency = 1
+                Library:TweenTransparency(Section1, 0, 0.2)
+                Library:TweenTransparency(Section2, 0, 0.2)
                 
                 -- Animate selected line
                 SelectedLine.Size = UDim2.new(0, 0, 0, 2)
@@ -1788,7 +1757,6 @@ function Library:CreateWindow(config)
                 UICorner.Parent = ToggleButton
                 
                 Library:CreateStroke(ToggleButton, theme.BorderColor, 1)
-                Library:AddHoverEffect(ToggleButton)
                 
                 title.Name = "title"
                 title.Parent = ToggleButton
@@ -1823,10 +1791,6 @@ function Library:CreateWindow(config)
                         ToggleButton.BackgroundTransparency = 0
                         Library:TweenColor(title, "TextColor3", theme.TextColor, 0.2)
                         checkmark.Visible = true
-                        -- Add bounce effect
-                        Library:TweenSize(checkmark, UDim2.new(0, 16, 0, 16), 0.1)
-                        wait(0.1)
-                        Library:TweenSize(checkmark, UDim2.new(0, 13, 0, 13), 0.1)
                     else
                         Library:TweenColor(ToggleButton, "BackgroundColor3", Color3.fromRGB(255, 255, 255), 0.2)
                         ToggleButton.BackgroundTransparency = 1
@@ -1864,7 +1828,6 @@ function Library:CreateWindow(config)
                     UICorner.Parent = ColorpickerButton
                     
                     Library:CreateStroke(ColorpickerButton, theme.BorderColor, 1)
-                    Library:AddHoverEffect(ColorpickerButton)
                     
                     function Colorpicker:SetValue(color)
                         Colorpicker.Value = color
@@ -1916,7 +1879,6 @@ function Library:CreateWindow(config)
                     KeybindBox.AutoButtonColor = false
                     
                     Library:CreateStroke(KeybindBox, theme.BorderColor, 1)
-                    Library:AddHoverEffect(KeybindBox)
                     
                     -- Key name mapping
                     local KeyNames = {
@@ -2000,7 +1962,6 @@ function Library:CreateWindow(config)
                                     Library:TweenColor(KeybindBox, "TextColor3", theme.TextColor, 0.2)
                                     Keybind.Listening = false
                                     connection:Disconnect()
-                                    Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.3, 1.3)
                                 end
                             end)
                         end
@@ -2040,7 +2001,6 @@ function Library:CreateWindow(config)
                 
                 Library:CreateConnection(ToggleButton.MouseButton1Click, function()
                     Toggle:SetValue(not Toggle.Value)
-                    Library:CreateSound("rbxasset://sounds/switch.wav", 0.3, Toggle.Value and 1.2 or 0.8)
                 end)
                 
                 Toggle:SetValue(Toggle.Default)
@@ -2123,7 +2083,6 @@ function Library:CreateWindow(config)
                 UICorner_2.Parent = SliderHead
                 
                 Library:CreateStroke(SliderHead, theme.BorderColor, 1)
-                Library:AddHoverEffect(SliderHead)
                 
                 SliderValue.Name = "SliderValue"
                 SliderValue.Parent = SliderFrame
@@ -2167,7 +2126,6 @@ function Library:CreateWindow(config)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         if dragging then
                             Library:TweenSize(SliderHead, UDim2.new(0, 10, 0, 10), 0.1)
-                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.2, 1.5)
                         end
                         dragging = false
                     end
@@ -2228,7 +2186,6 @@ function Library:CreateWindow(config)
                 DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
                 
                 Library:CreateStroke(DropdownButton, theme.BorderColor, 1)
-                Library:AddHoverEffect(DropdownButton)
                 
                 Arrow.Name = "Arrow"
                 Arrow.Parent = DropdownButton
@@ -2311,14 +2268,17 @@ function Library:CreateWindow(config)
                             OptionLabel.TextColor3 = theme.SecondaryTextColor
                         end
                         
-                        -- Add hover effect to option
+                        -- Simple hover effect for option
                         Library:CreateConnection(OptionLabel.MouseEnter, function()
-                            Library:TweenColor(OptionLabel, "BackgroundColor3", theme.HoverColor, 0.1)
-                            OptionLabel.BackgroundTransparency = 0.5
+                            if not isSelected then
+                                Library:TweenColor(OptionLabel, "TextColor3", theme.TextColor, 0.1)
+                            end
                         end)
                         
                         Library:CreateConnection(OptionLabel.MouseLeave, function()
-                            Library:TweenTransparency(OptionLabel, 1, 0.1)
+                            if not isSelected then
+                                Library:TweenColor(OptionLabel, "TextColor3", theme.SecondaryTextColor, 0.1)
+                            end
                         end)
                         
                         Library:CreateConnection(OptionLabel.InputBegan, function(input)
@@ -2353,8 +2313,6 @@ function Library:CreateWindow(config)
                                     
                                     self:SetValue(option)
                                 end
-                                
-                                Library:CreateSound("rbxasset://sounds/button_click.wav", 0.2, 1.3)
                             end
                         end)
                     end
@@ -2405,7 +2363,6 @@ function Library:CreateWindow(config)
                     end)
                     
                     table.insert(Library.OpenDropdowns, self)
-                    Library:CreateSound("rbxasset://sounds/switch.wav", 0.3, 1.1)
                 end
                 
                 function Dropdown:Close()
@@ -2495,7 +2452,6 @@ function Library:CreateWindow(config)
                 UICorner.Parent = ColorpickerButton
                 
                 Library:CreateStroke(ColorpickerButton, theme.BorderColor, 1)
-                Library:AddHoverEffect(ColorpickerButton)
                 
                 function Colorpicker:SetValue(color)
                     Colorpicker.Value = color
@@ -2562,7 +2518,6 @@ function Library:CreateWindow(config)
                 KeybindBox.AutoButtonColor = false
                 
                 Library:CreateStroke(KeybindBox, theme.BorderColor, 1)
-                Library:AddHoverEffect(KeybindBox)
                 
                 local KeyNames = {
                     [Enum.KeyCode.LeftShift] = "LShift",
@@ -2645,7 +2600,6 @@ function Library:CreateWindow(config)
                                 Library:TweenColor(KeybindBox, "TextColor3", theme.TextColor, 0.2)
                                 Keybind.Listening = false
                                 connection:Disconnect()
-                                Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.3, 1.3)
                             end
                         end)
                     end
@@ -2683,35 +2637,9 @@ function Library:CreateWindow(config)
                 UICorner.Parent = ButtonFrame
                 
                 Library:CreateStroke(ButtonFrame, theme.BorderColor, 1)
-                Library:AddHoverEffect(ButtonFrame, theme.HoverColor, theme.ClickColor)
                 
                 Library:CreateConnection(ButtonFrame.MouseButton1Click, function()
-                    -- Add ripple effect
-                    local ripple = Instance.new("Frame")
-                    ripple.Name = "Ripple"
-                    ripple.Parent = ButtonFrame
-                    ripple.BackgroundColor3 = theme.MainColor
-                    ripple.BackgroundTransparency = 0.5
-                    ripple.BorderSizePixel = 0
-                    ripple.Size = UDim2.new(0, 0, 0, 0)
-                    ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-                    ripple.ZIndex = ButtonFrame.ZIndex + 1
-                    
-                    local rippleCorner = Instance.new("UICorner")
-                    rippleCorner.CornerRadius = UDim.new(1, 0)
-                    rippleCorner.Parent = ripple
-                    
-                    -- Animate ripple
-                    local rippleTween = Library:TweenSize(ripple, UDim2.new(0, 100, 0, 100), 0.5)
-                    Library:TweenTransparency(ripple, 1, 0.5)
-                    
-                    rippleTween.Completed:Connect(function()
-                        ripple:Destroy()
-                    end)
-                    
                     Button.Callback()
-                    Library:CreateSound("rbxasset://sounds/button_click.wav", 0.4, 1.1)
                 end)
                 
                 return Button
@@ -2893,7 +2821,6 @@ function Library:CreateWindow(config)
                     buttonCorner.Parent = button
                     
                     Library:CreateStroke(button, theme.BorderColor, 1)
-                    Library:AddHoverEffect(button)
                 end
                 
                 SaveAsFrame.Name = "SaveAsFrame"
@@ -2943,8 +2870,6 @@ function Library:CreateWindow(config)
                 saveAsButtonCorner.CornerRadius = UDim.new(0, 3)
                 saveAsButtonCorner.Parent = SaveAsButton
                 
-                Library:AddHoverEffect(SaveAsButton)
-                
                 RenameFrame.Name = "RenameFrame"
                 RenameFrame.Parent = ConfigFrame
                 RenameFrame.BackgroundColor3 = theme.AccentColor
@@ -2992,8 +2917,6 @@ function Library:CreateWindow(config)
                 renameButtonCorner.CornerRadius = UDim.new(0, 3)
                 renameButtonCorner.Parent = RenameConfirmButton
                 
-                Library:AddHoverEffect(RenameConfirmButton)
-                
                 Config.SelectedConfig = nil
                 
                 function Config:RefreshList()
@@ -3025,8 +2948,6 @@ function Library:CreateWindow(config)
                         configButtonCorner.CornerRadius = UDim.new(0, 3)
                         configButtonCorner.Parent = ConfigButton
                         
-                        Library:AddHoverEffect(ConfigButton)
-                        
                         Library:CreateConnection(ConfigButton.MouseButton1Click, function()
                             -- Deselect all other configs
                             for _, child in ipairs(ConfigList:GetChildren()) do
@@ -3041,8 +2962,6 @@ function Library:CreateWindow(config)
                             Library:TweenColor(ConfigButton, "BackgroundColor3", theme.MainColor, 0.2)
                             Library:TweenColor(ConfigButton, "TextColor3", Color3.fromRGB(0, 0, 0), 0.2)
                             Config.SelectedConfig = configName
-                            
-                            Library:CreateSound("rbxasset://sounds/button_click.wav", 0.2, 1.2)
                         end)
                     end
                 end
@@ -3073,10 +2992,8 @@ function Library:CreateWindow(config)
                         local success, message = Library:LoadConfig(Config.SelectedConfig)
                         if success then
                             print("✅ Config loaded successfully:", Config.SelectedConfig)
-                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 1.3)
                         else
                             warn("❌ Failed to load config:", Config.SelectedConfig, "-", message)
-                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 0.7)
                         end
                     else
                         warn("❌ No config selected")
@@ -3090,7 +3007,6 @@ function Library:CreateWindow(config)
                             print("✅ Config deleted successfully:", Config.SelectedConfig)
                             Config.SelectedConfig = nil
                             Config:RefreshList()
-                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 0.8)
                         else
                             warn("❌ Failed to delete config:", Config.SelectedConfig)
                         end
@@ -3119,7 +3035,6 @@ function Library:CreateWindow(config)
                             SaveAsTextBox.Text = ""
                             Config:HideAllFrames()
                             Config:RefreshList()
-                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 1.3)
                         else
                             warn("❌ Failed to save config:", configName, "-", message)
                         end
@@ -3138,7 +3053,6 @@ function Library:CreateWindow(config)
                             RenameTextBox.Text = ""
                             Config:HideAllFrames()
                             Config:RefreshList()
-                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 1.2)
                         else
                             warn("❌ Failed to rename config from", Config.SelectedConfig, "to", newName)
                         end
