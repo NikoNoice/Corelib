@@ -1173,7 +1173,7 @@ function Library:CreateWindow(config)
         LineGlow.BackgroundTransparency = 0.900
         LineGlow.BorderColor3 = Color3.fromRGB(0, 0, 0)
         LineGlow.BorderSizePixel = 0
-        LineGlow.Position = UDim2.new(-0.06,  0, -1.6, 0) -- Extended upward
+        LineGlow.Position = UDim2.new(-0.06,  0, -0, 0) -- Extended upward
         LineGlow.Size     = UDim2.new( 0,   55,   0,   32) -- Made taller to reach top
         LineGlow.Visible = false
         LineGlow.ZIndex = 300
