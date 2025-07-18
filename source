@@ -188,26 +188,10 @@ function Library:UpdateThemeForAllElements()
         if page.ScrollingFrame2 then
             page.ScrollingFrame2.ScrollBarImageColor3 = theme.MainColor
         end
-        -- Update section frames and their titles
+        -- Update section frames
         for _, section in pairs(page.Sections or {}) do
             if section.Frame then
                 self:TweenColor(section.Frame, "BackgroundColor3", theme.BackgroundColor, 0.3)
-                
-                -- Update section title elements
-                local title = section.Frame:FindFirstChild("Title")
-                if title then
-                    self:TweenColor(title, "BackgroundColor3", theme.SecondaryColor, 0.3)
-                    
-                    local titleLabel = title:FindFirstChild("TextLabel")
-                    if titleLabel then
-                        self:TweenColor(titleLabel, "TextColor3", theme.MainColor, 0.3)
-                    end
-                    
-                    local roundingFiller = title:FindFirstChild("Roundingfiller")
-                    if roundingFiller then
-                        self:TweenColor(roundingFiller, "BackgroundColor3", theme.SecondaryColor, 0.3)
-                    end
-                end
             end
         end
         
@@ -221,13 +205,6 @@ function Library:UpdateThemeForAllElements()
             else
                 self:TweenColor(page.TabButton, "TextColor3", theme.SecondaryTextColor, 0.3)
             end
-        end
-    end
-    
-    -- Update all UI elements
-    for _, element in pairs(self.Elements) do
-        if element.SetValue and not element.SkipRefresh then
-            element:SetValue(element.Value)
         end
     end
 end
@@ -1881,8 +1858,6 @@ function Library:CreateWindow(config)
                     Toggle.Value = value
                     Library.Flags[Toggle.Flag] = value
                     
-                    local theme = Library:GetTheme()
-                    
                     if value then
                         Library:TweenColor(ToggleButton, "BackgroundColor3", theme.MainColor, 0.2)
                         ToggleButton.BackgroundTransparency = 0
@@ -2202,14 +2177,11 @@ function Library:CreateWindow(config)
                     Slider.Value = value
                     Library.Flags[Slider.Flag] = value
                     
-                    local theme = Library:GetTheme()
-                    
                     local percent = (value - Slider.Min) / (Slider.Max - Slider.Min)
                     local fillWidth = 214 * percent
                     
                     Library:TweenSize(Filler, UDim2.new(0, fillWidth, 0, 4), 0.1)
                     Library:TweenPosition(SliderHead, UDim2.new(0, fillWidth - 5, -0.75, 0), 0.1)
-                    Library:TweenColor(Filler, "BackgroundColor3", theme.MainColor, 0.1)
                     
                     SliderValue.Text = tostring(value)
                     
@@ -2321,27 +2293,25 @@ function Library:CreateWindow(config)
                 Dropdown.UIListLayout = UIListLayout
                 Dropdown.Arrow = Arrow
                 
-              function Dropdown:SetValue(value)
-                -- guard against “no actual change”
-                if self.Value == value then
-                  -- only update visuals (no callback)
-                  self.Button.Text = " " .. tostring(value)
-                  Library:TweenColor(self.Arrow, "ImageColor3", Library:GetTheme().SecondaryTextColor, 0.2)
-                  return
+                function Dropdown:SetValue(value)
+                    self.Value = value
+                    Library.Flags[self.Flag] = value
+                    
+                    if self.Multi then
+                        if type(value) ~= "table" then
+                            value = {value}
+                        end
+                        self.Button.Text = " " .. (#value > 0 and table.concat(value, ", ") or "None")
+                    else
+                        if type(value) == "table" then
+                            value = value[1] or "None"
+                        end
+                        self.Button.Text = " " .. tostring(value)
+                    end
+                    
+                    self.Callback(value)
                 end
-            
-                -- store the new value
-                self.Value = value
-                Library.Flags[self.Flag] = value
-            
-                -- update UI
-                self.Button.Text = " " .. tostring(value)
-                Library:TweenColor(self.Arrow, "ImageColor3", Library:GetTheme().SecondaryTextColor, 0.2)
-            
-                -- only now fire the user‑supplied callback
-                self.Callback(value)
-              end
-                            
+                
                 function Dropdown:Refresh()
                     for _, child in ipairs(self.Holder:GetChildren()) do
                         if child:IsA("TextLabel") then child:Destroy() end
@@ -2812,9 +2782,6 @@ function Library:CreateWindow(config)
                 UICorner.CornerRadius = UDim.new(0, 3)
                 UICorner.Parent = DividerFrame
                 
-                -- Store reference for theme updates
-                Divider.Frame = DividerFrame
-                
                 -- Add glow effect
                 local glowEffect = Instance.new("UIGradient")
                 glowEffect.Color = ColorSequence.new{
@@ -2828,21 +2795,6 @@ function Library:CreateWindow(config)
                     NumberSequenceKeypoint.new(1, 0.5)
                 }
                 glowEffect.Parent = DividerFrame
-                
-                -- Add to elements for theme updates
-                Library.Elements[Divider.Name .. "_divider"] = Divider
-                
-                function Divider:SetValue(value)
-                    local theme = Library:GetTheme()
-                    Library:TweenColor(DividerFrame, "BackgroundColor3", theme.MainColor, 0.2)
-                    
-                    -- Update gradient colors
-                    glowEffect.Color = ColorSequence.new{
-                        ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-                        ColorSequenceKeypoint.new(0.5, theme.MainColor),
-                        ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
-                    }
-                end
                 
                 return Divider
             end
@@ -3223,7 +3175,6 @@ function Library:CreateWindow(config)
                         Library:SetTheme(theme)
                     end
                 })
-                themeDropdown.SkipRefresh = true
                 return ThemeDropdown
             end
             
