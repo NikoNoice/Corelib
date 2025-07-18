@@ -7,6 +7,7 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
+local SoundService = game:GetService("SoundService")
 
 -- Variables
 local LocalPlayer = Players.LocalPlayer
@@ -17,15 +18,282 @@ Library.Connections = {}
 Library.Pages = {}
 Library.CurrentPage = nil
 Library.GUI = nil
-Library._currentColorpicker = nil -- Global tracker for open colorpickers
-Library._copiedColor = nil -- Global copied color for copy/paste across colorpickers
-Library.Elements = {} -- Store all elements for updating when config loads
+Library._currentColorpicker = nil
+Library._copiedColor = nil
+Library.Elements = {}
+Library.OpenDropdowns = {}
 
 -- Config System Variables
-Library.ConfigFolder = "obeecity" -- Change this to your script name
+Library.ConfigFolder = "obeecity"
 Library.ConfigExtension = ".json"
 
--- Utility Functions
+-- Theme System
+Library.Themes = {
+    ["Default"] = {
+        MainColor = Color3.fromRGB(66, 255, 249),
+        BackgroundColor = Color3.fromRGB(17, 16, 24),
+        SecondaryColor = Color3.fromRGB(28, 28, 33),
+        AccentColor = Color3.fromRGB(36, 36, 43),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        SecondaryTextColor = Color3.fromRGB(124, 121, 125),
+        BorderColor = Color3.fromRGB(50, 50, 50),
+        HoverColor = Color3.fromRGB(40, 40, 50),
+        ClickColor = Color3.fromRGB(60, 60, 70),
+    },
+    ["Dark"] = {
+        MainColor = Color3.fromRGB(138, 43, 226),
+        BackgroundColor = Color3.fromRGB(13, 13, 13),
+        SecondaryColor = Color3.fromRGB(23, 23, 23),
+        AccentColor = Color3.fromRGB(33, 33, 33),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        SecondaryTextColor = Color3.fromRGB(150, 150, 150),
+        BorderColor = Color3.fromRGB(60, 60, 60),
+        HoverColor = Color3.fromRGB(43, 43, 43),
+        ClickColor = Color3.fromRGB(53, 53, 53),
+    },
+    ["Light"] = {
+        MainColor = Color3.fromRGB(0, 122, 255),
+        BackgroundColor = Color3.fromRGB(248, 248, 248),
+        SecondaryColor = Color3.fromRGB(238, 238, 238),
+        AccentColor = Color3.fromRGB(228, 228, 228),
+        TextColor = Color3.fromRGB(0, 0, 0),
+        SecondaryTextColor = Color3.fromRGB(100, 100, 100),
+        BorderColor = Color3.fromRGB(200, 200, 200),
+        HoverColor = Color3.fromRGB(218, 218, 218),
+        ClickColor = Color3.fromRGB(208, 208, 208),
+    },
+    ["Red"] = {
+        MainColor = Color3.fromRGB(255, 69, 69),
+        BackgroundColor = Color3.fromRGB(20, 15, 15),
+        SecondaryColor = Color3.fromRGB(30, 25, 25),
+        AccentColor = Color3.fromRGB(40, 35, 35),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        SecondaryTextColor = Color3.fromRGB(200, 150, 150),
+        BorderColor = Color3.fromRGB(80, 40, 40),
+        HoverColor = Color3.fromRGB(50, 45, 45),
+        ClickColor = Color3.fromRGB(60, 55, 55),
+    },
+    ["Green"] = {
+        MainColor = Color3.fromRGB(46, 204, 113),
+        BackgroundColor = Color3.fromRGB(15, 20, 15),
+        SecondaryColor = Color3.fromRGB(25, 30, 25),
+        AccentColor = Color3.fromRGB(35, 40, 35),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        SecondaryTextColor = Color3.fromRGB(150, 200, 150),
+        BorderColor = Color3.fromRGB(40, 80, 40),
+        HoverColor = Color3.fromRGB(45, 50, 45),
+        ClickColor = Color3.fromRGB(55, 60, 55),
+    },
+    ["Orange"] = {
+        MainColor = Color3.fromRGB(255, 165, 0),
+        BackgroundColor = Color3.fromRGB(20, 17, 12),
+        SecondaryColor = Color3.fromRGB(30, 27, 22),
+        AccentColor = Color3.fromRGB(40, 37, 32),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        SecondaryTextColor = Color3.fromRGB(200, 180, 130),
+        BorderColor = Color3.fromRGB(80, 70, 30),
+        HoverColor = Color3.fromRGB(50, 47, 42),
+        ClickColor = Color3.fromRGB(60, 57, 52),
+    }
+}
+
+Library.CurrentTheme = "Default"
+Library.Settings = {
+    AnimationSpeed = 0.25,
+    SoundEnabled = true,
+    Transparency = 0,
+    Scale = 1,
+    BlurEnabled = true,
+    GlowEnabled = true,
+    MenuKeybind = Enum.KeyCode.Insert,
+    AutoSaveConfig = true,
+    FadeSpeed = 0.15,
+    HoverEffects = true,
+    ClickEffects = true,
+    RainbowMode = false,
+    RainbowSpeed = 2,
+}
+
+-- Animation System
+Library.Animations = {}
+
+function Library:GetTheme()
+    return self.Themes[self.CurrentTheme] or self.Themes["Default"]
+end
+
+function Library:SetTheme(themeName)
+    if not self.Themes[themeName] then return end
+    
+    self.CurrentTheme = themeName
+    self.Flags.Theme = themeName
+    
+    -- Update all UI elements with new theme
+    self:UpdateThemeForAllElements()
+    
+    -- Save theme preference
+    if self.Settings.AutoSaveConfig then
+        self:SaveConfig("_theme_preference")
+    end
+end
+
+function Library:UpdateThemeForAllElements()
+    local theme = self:GetTheme()
+    
+    -- Update main window
+    if self.GUI then
+        local background = self.GUI:FindFirstChild("Background")
+        if background then
+            self:TweenColor(background, "BackgroundColor3", theme.BackgroundColor, 0.3)
+            
+            local topbar = background:FindFirstChild("Topbar")
+            if topbar then
+                self:TweenColor(topbar, "BackgroundColor3", theme.SecondaryColor, 0.3)
+                
+                local textLabel = topbar:FindFirstChild("TextLabel")
+                if textLabel then
+                    self:TweenColor(textLabel, "TextColor3", theme.MainColor, 0.3)
+                end
+            end
+            
+            local underBar = background:FindFirstChild("UnderBar")
+            if underBar then
+                self:TweenColor(underBar, "BackgroundColor3", theme.SecondaryColor, 0.3)
+                
+                local gameName = underBar:FindFirstChild("GameName")
+                if gameName then
+                    self:TweenColor(gameName, "TextColor3", theme.MainColor, 0.3)
+                end
+                
+                local userStatus = underBar:FindFirstChild("UserStatus")
+                if userStatus then
+                    self:TweenColor(userStatus, "TextColor3", theme.MainColor, 0.3)
+                end
+            end
+            
+            local menuGlow = background:FindFirstChild("MenuGlow")
+            if menuGlow then
+                self:TweenColor(menuGlow, "ImageColor3", theme.MainColor, 0.3)
+            end
+        end
+    end
+    
+    -- Update all strokes
+    self:UpdateAllStrokes()
+    
+    -- Update all pages and sections
+    for _, page in pairs(self.Pages) do
+        if page.Section1 then
+            -- Update section backgrounds would go here
+        end
+    end
+end
+
+function Library:UpdateAllStrokes()
+    local theme = self:GetTheme()
+    
+    local function updateStrokes(parent)
+        for _, child in pairs(parent:GetChildren()) do
+            if child:IsA("UIStroke") then
+                self:TweenColor(child, "Color", theme.BorderColor, 0.3)
+            end
+            updateStrokes(child)
+        end
+    end
+    
+    if self.GUI then
+        updateStrokes(self.GUI)
+    end
+    if self.OverlayGui then
+        updateStrokes(self.OverlayGui)
+    end
+end
+
+function Library:CreateSound(soundId, volume, pitch)
+    if not self.Settings.SoundEnabled then return end
+    
+    local sound = Instance.new("Sound")
+    sound.SoundId = soundId
+    sound.Volume = volume or 0.5
+    sound.Pitch = pitch or 1
+    sound.Parent = SoundService
+    
+    sound:Play()
+    
+    -- Clean up sound after playing
+    sound.Ended:Connect(function()
+        sound:Destroy()
+    end)
+    
+    return sound
+end
+
+-- Enhanced Tween System
+function Library:TweenColor(object, property, targetColor, duration)
+    local tween = TweenService:Create(object, TweenInfo.new(
+        duration or self.Settings.AnimationSpeed,
+        Enum.EasingStyle.Quad,
+        Enum.EasingDirection.Out
+    ), {[property] = targetColor})
+    
+    tween:Play()
+    table.insert(self.Animations, tween)
+    
+    return tween
+end
+
+function Library:TweenSize(object, targetSize, duration)
+    local tween = TweenService:Create(object, TweenInfo.new(
+        duration or self.Settings.AnimationSpeed,
+        Enum.EasingStyle.Quad,
+        Enum.EasingDirection.Out
+    ), {Size = targetSize})
+    
+    tween:Play()
+    table.insert(self.Animations, tween)
+    
+    return tween
+end
+
+function Library:TweenPosition(object, targetPosition, duration)
+    local tween = TweenService:Create(object, TweenInfo.new(
+        duration or self.Settings.AnimationSpeed,
+        Enum.EasingStyle.Quad,
+        Enum.EasingDirection.Out
+    ), {Position = targetPosition})
+    
+    tween:Play()
+    table.insert(self.Animations, tween)
+    
+    return tween
+end
+
+function Library:TweenTransparency(object, targetTransparency, duration)
+    local properties = {}
+    
+    if object:IsA("Frame") or object:IsA("TextLabel") or object:IsA("TextButton") then
+        properties.BackgroundTransparency = targetTransparency
+    end
+    
+    if object:IsA("TextLabel") or object:IsA("TextButton") then
+        properties.TextTransparency = targetTransparency
+    end
+    
+    if object:IsA("ImageLabel") or object:IsA("ImageButton") then
+        properties.ImageTransparency = targetTransparency
+    end
+    
+    local tween = TweenService:Create(object, TweenInfo.new(
+        duration or self.Settings.FadeSpeed,
+        Enum.EasingStyle.Quad,
+        Enum.EasingDirection.Out
+    ), properties)
+    
+    tween:Play()
+    table.insert(self.Animations, tween)
+    
+    return tween
+end
+
 function Library:CreateConnection(signal, callback)
     local connection = signal:Connect(callback)
     table.insert(self.Connections, connection)
@@ -33,19 +301,99 @@ function Library:CreateConnection(signal, callback)
 end
 
 function Library:Tween(object, properties, duration, easingStyle, easingDirection)
-    local tweenInfo = TweenInfo.new(duration or 0.3, easingStyle or Enum.EasingStyle.Quad, easingDirection or Enum.EasingDirection.Out)
-    return TweenService:Create(object, tweenInfo, properties)
+    local tweenInfo = TweenInfo.new(duration or self.Settings.AnimationSpeed, easingStyle or Enum.EasingStyle.Quad, easingDirection or Enum.EasingDirection.Out)
+    local tween = TweenService:Create(object, tweenInfo, properties)
+    table.insert(self.Animations, tween)
+    return tween
 end
 
--- Create UIStroke for borders
 function Library:CreateStroke(parent, color, thickness)
     local stroke = Instance.new("UIStroke")
     stroke.Parent = parent
-    stroke.Color = color or Color3.fromRGB(50, 50, 50)
+    stroke.Color = color or self:GetTheme().BorderColor
     stroke.Thickness = thickness or 1
     stroke.LineJoinMode = Enum.LineJoinMode.Round
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     return stroke
+end
+
+-- Enhanced Hover Effects
+function Library:AddHoverEffect(element, hoverColor, clickColor)
+    if not self.Settings.HoverEffects then return end
+    
+    local theme = self:GetTheme()
+    local originalColor = element.BackgroundColor3
+    
+    element.MouseEnter:Connect(function()
+        self:TweenColor(element, "BackgroundColor3", hoverColor or theme.HoverColor, 0.15)
+        self:CreateSound("rbxasset://sounds/button_rollover.wav", 0.3, 1.2)
+    end)
+    
+    element.MouseLeave:Connect(function()
+        self:TweenColor(element, "BackgroundColor3", originalColor, 0.15)
+    end)
+    
+    if self.Settings.ClickEffects and element:IsA("TextButton") then
+        element.MouseButton1Down:Connect(function()
+            self:TweenColor(element, "BackgroundColor3", clickColor or theme.ClickColor, 0.05)
+            self:CreateSound("rbxasset://sounds/button_click.wav", 0.4, 1.1)
+        end)
+        
+        element.MouseButton1Up:Connect(function()
+            self:TweenColor(element, "BackgroundColor3", hoverColor or theme.HoverColor, 0.1)
+        end)
+    end
+end
+
+-- Rainbow Mode
+function Library:StartRainbowMode()
+    if self.RainbowConnection then
+        self.RainbowConnection:Disconnect()
+    end
+    
+    local hue = 0
+    self.RainbowConnection = self:CreateConnection(RunService.Heartbeat, function()
+        if not self.Settings.RainbowMode then return end
+        
+        hue = (hue + (self.Settings.RainbowSpeed / 1000)) % 1
+        local rainbowColor = Color3.fromHSV(hue, 1, 1)
+        
+        -- Update main color elements
+        local theme = self:GetTheme()
+        theme.MainColor = rainbowColor
+        
+        -- Update specific elements
+        if self.GUI then
+            local background = self.GUI:FindFirstChild("Background")
+            if background then
+                local topbar = background:FindFirstChild("Topbar")
+                if topbar then
+                    local textLabel = topbar:FindFirstChild("TextLabel")
+                    if textLabel then
+                        textLabel.TextColor3 = rainbowColor
+                    end
+                end
+                
+                local underBar = background:FindFirstChild("UnderBar")
+                if underBar then
+                    local gameName = underBar:FindFirstChild("GameName")
+                    if gameName then
+                        gameName.TextColor3 = rainbowColor
+                    end
+                    
+                    local userStatus = underBar:FindFirstChild("UserStatus")
+                    if userStatus then
+                        userStatus.TextColor3 = rainbowColor
+                    end
+                end
+                
+                local menuGlow = background:FindFirstChild("MenuGlow")
+                if menuGlow then
+                    menuGlow.ImageColor3 = rainbowColor
+                end
+            end
+        end
+    end)
 end
 
 -- Config System Functions
@@ -58,12 +406,17 @@ end
 function Library:SaveConfig(name)
     self:InitializeConfigSystem()
     
-    local configData = {}
+    local configData = {
+        flags = {},
+        settings = self.Settings,
+        theme = self.CurrentTheme
+    }
+    
     for flag, value in pairs(self.Flags) do
         if typeof(value) == "Color3" then
-            configData[flag] = {value.R, value.G, value.B}
+            configData.flags[flag] = {value.R, value.G, value.B}
         else
-            configData[flag] = value
+            configData.flags[flag] = value
         end
     end
     
@@ -90,16 +443,30 @@ function Library:LoadConfig(name)
         local fileContent = readfile(filePath)
         local configData = HttpService:JSONDecode(fileContent)
         
-        for flag, value in pairs(configData) do
-            if type(value) == "table" and #value == 3 and type(value[1]) == "number" then
-                -- Convert RGB array back to Color3
-                self.Flags[flag] = Color3.fromRGB(math.floor(value[1] * 255), math.floor(value[2] * 255), math.floor(value[3] * 255))
-            else
-                self.Flags[flag] = value
+        -- Load flags
+        if configData.flags then
+            for flag, value in pairs(configData.flags) do
+                if type(value) == "table" and #value == 3 and type(value[1]) == "number" then
+                    self.Flags[flag] = Color3.fromRGB(math.floor(value[1] * 255), math.floor(value[2] * 255), math.floor(value[3] * 255))
+                else
+                    self.Flags[flag] = value
+                end
             end
         end
         
-        -- UPDATE UI ELEMENTS TO REFLECT LOADED VALUES
+        -- Load settings
+        if configData.settings then
+            for setting, value in pairs(configData.settings) do
+                self.Settings[setting] = value
+            end
+        end
+        
+        -- Load theme
+        if configData.theme then
+            self:SetTheme(configData.theme)
+        end
+        
+        -- Update UI elements
         for _, element in pairs(self.Elements) do
             if element.Flag and self.Flags[element.Flag] ~= nil then
                 if element.SetValue then
@@ -152,17 +519,18 @@ function Library:GetConfigs()
     
     for _, file in ipairs(files) do
         if file:sub(-#self.ConfigExtension) == self.ConfigExtension then
-            -- Extract just the filename without directory and extension
-            local fileName = file:match("([^/\\]+)$") -- Get everything after last slash/backslash
-            local configName = fileName:gsub(self.ConfigExtension .. "$", "") -- Remove extension
-            table.insert(configs, configName)
+            local fileName = file:match("([^/\\]+)$")
+            local configName = fileName:gsub(self.ConfigExtension .. "$", "")
+            if configName ~= "_theme_preference" then -- Hide internal config
+                table.insert(configs, configName)
+            end
         end
     end
     
     return configs
 end
 
--- Add HSV to RGB conversion
+-- Color conversion functions
 function Library:HSVtoRGB(h, s, v)
     local r, g, b
     local i = math.floor(h * 6)
@@ -189,7 +557,6 @@ function Library:HSVtoRGB(h, s, v)
     return r, g, b
 end
 
--- Add RGB to HSV conversion
 function Library:RGBtoHSV(r, g, b)
     local max = math.max(r, g, b)
     local min = math.min(r, g, b)
@@ -214,9 +581,8 @@ function Library:RGBtoHSV(r, g, b)
     return h, s, v
 end
 
--- Create colorpicker window with improved functionality
+-- Enhanced Colorpicker System
 function Library:CreateColorpickerWindow(colorpicker)
-    -- 1) Toggle off if you click the same bind again
     if colorpicker._window then
         colorpicker._window:Destroy()
         colorpicker._window = nil
@@ -224,7 +590,6 @@ function Library:CreateColorpickerWindow(colorpicker)
         return
     end
 
-    -- 2) Close any other open picker
     if Library._currentColorpicker
     and Library._currentColorpicker._window 
     and Library._currentColorpicker ~= colorpicker then
@@ -233,15 +598,15 @@ function Library:CreateColorpickerWindow(colorpicker)
     end
     Library._currentColorpicker = colorpicker
 
-    -- Initialize persistent state
     if colorpicker._rainbow == nil then colorpicker._rainbow = false end
     if colorpicker._rainbowSpeed == nil then colorpicker._rainbowSpeed = 5 end
 
-    -- stop any existing rainbow coroutines
     if colorpicker._rainbowConnection then
         colorpicker._rainbowConnection:Disconnect()
         colorpicker._rainbowConnection = nil
     end
+    
+    local theme = self:GetTheme()
     
     local ColorpickerFrame = Instance.new("Frame")
     local UICorner = Instance.new("UICorner")
@@ -275,22 +640,26 @@ function Library:CreateColorpickerWindow(colorpicker)
     local PasteButton = Instance.new("TextButton")
     local CloseButton = Instance.new("TextButton")
     
-    -- Properties
+    -- Properties with theme colors
     ColorpickerFrame.Name = "ColorpickerFrame"
     ColorpickerFrame.Parent = Library.OverlayGui
-    ColorpickerFrame.BackgroundColor3 = Color3.fromRGB(17, 16, 24)
+    ColorpickerFrame.BackgroundColor3 = theme.BackgroundColor
     ColorpickerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
     ColorpickerFrame.BorderSizePixel = 0
     ColorpickerFrame.Position = UDim2.new(0, 500, 0, 100)
     ColorpickerFrame.Size = UDim2.new(0, 321, 0, 225)
     ColorpickerFrame.ZIndex = 100
     
+    -- Add fade-in animation
+    ColorpickerFrame.BackgroundTransparency = 1
+    self:TweenTransparency(ColorpickerFrame, 0, 0.2)
+    
     UICorner.CornerRadius = UDim.new(0, 3)
     UICorner.Parent = ColorpickerFrame
     
-    -- Add stroke to colorpicker frame
-    Library:CreateStroke(ColorpickerFrame, Color3.fromRGB(50, 50, 50), 1)
+    Library:CreateStroke(ColorpickerFrame, theme.BorderColor, 1)
     
+    -- Continue with rest of colorpicker creation...
     Colorpicker.Name = "Colorpicker"
     Colorpicker.Parent = ColorpickerFrame
     Colorpicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -343,7 +712,6 @@ function Library:CreateColorpickerWindow(colorpicker)
     UICorner_5.CornerRadius = UDim.new(1, 0)
     UICorner_5.Parent = ColorpickerHead
     
-    -- Add stroke to colorpicker head
     Library:CreateStroke(ColorpickerHead, Color3.fromRGB(0, 0, 0), 2)
     
     -- Hue Slider
@@ -382,10 +750,9 @@ function Library:CreateColorpickerWindow(colorpicker)
     UICorner_7.CornerRadius = UDim.new(0, 2)
     UICorner_7.Parent = HueHead
     
-    -- Add stroke to hue head
     Library:CreateStroke(HueHead, Color3.fromRGB(0, 0, 0), 1)
     
-    -- List for toggles and sliders
+    -- Rest of colorpicker setup...
     List.Name = "List"
     List.Parent = ColorpickerFrame
     List.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -417,8 +784,8 @@ function Library:CreateColorpickerWindow(colorpicker)
     UICorner_8.CornerRadius = UDim.new(0, 3)
     UICorner_8.Parent = RainbowToggle
     
-    -- Add stroke to rainbow toggle
-    Library:CreateStroke(RainbowToggle, Color3.fromRGB(50, 50, 50), 1)
+    Library:CreateStroke(RainbowToggle, theme.BorderColor, 1)
+    Library:AddHoverEffect(RainbowToggle)
     
     RainbowTitle.Name = "RainbowTitle"
     RainbowTitle.Parent = RainbowToggle
@@ -430,7 +797,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowTitle.Size = UDim2.new(0, 82, 0, 20)
     RainbowTitle.Font = Enum.Font.SourceSansSemibold
     RainbowTitle.Text = "Rainbow"
-    RainbowTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
+    RainbowTitle.TextColor3 = theme.SecondaryTextColor
     RainbowTitle.TextSize = 15.000
     RainbowTitle.TextXAlignment = Enum.TextXAlignment.Left
     RainbowTitle.ZIndex = 102
@@ -456,7 +823,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedSlider.Size = UDim2.new(0, 136, 0, 32)
     SpeedSlider.Font = Enum.Font.SourceSansSemibold
     SpeedSlider.Text = "Speed"
-    SpeedSlider.TextColor3 = Color3.fromRGB(124, 121, 125)
+    SpeedSlider.TextColor3 = theme.SecondaryTextColor
     SpeedSlider.TextSize = 15.000
     SpeedSlider.TextXAlignment = Enum.TextXAlignment.Left
     SpeedSlider.TextYAlignment = Enum.TextYAlignment.Top
@@ -472,15 +839,14 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedSliderBar.Size = UDim2.new(0, 120, 0, 2)
     SpeedSliderBar.ZIndex = 102
     
-    -- Add stroke to speed slider bar
-    Library:CreateStroke(SpeedSliderBar, Color3.fromRGB(50, 50, 50), 1)
+    Library:CreateStroke(SpeedSliderBar, theme.BorderColor, 1)
     
     SpeedFiller.Name = "SpeedFiller"
     SpeedFiller.Parent = SpeedSliderBar
-    SpeedFiller.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+    SpeedFiller.BackgroundColor3 = theme.MainColor
     SpeedFiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SpeedFiller.BorderSizePixel = 0
-    SpeedFiller.Position = UDim2.new(0, 0, -1, 0) -- Centered vertically
+    SpeedFiller.Position = UDim2.new(0, 0, -1, 0)
     SpeedFiller.Size = UDim2.new(0, 60, 0, 4)
     SpeedFiller.ZIndex = 103
     
@@ -489,10 +855,10 @@ function Library:CreateColorpickerWindow(colorpicker)
     
     SpeedHead.Name = "SpeedHead"
     SpeedHead.Parent = SpeedFiller
-    SpeedHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+    SpeedHead.BackgroundColor3 = theme.AccentColor
     SpeedHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SpeedHead.BorderSizePixel = 0
-    SpeedHead.Position = UDim2.new(0.9, 0, -0.5, 0) -- Centered on filler
+    SpeedHead.Position = UDim2.new(0.9, 0, -0.5, 0)
     SpeedHead.Size = UDim2.new(0, 10, 0, 10)
     SpeedHead.ZIndex = 104
     SpeedHead.Font = Enum.Font.SourceSans
@@ -503,8 +869,8 @@ function Library:CreateColorpickerWindow(colorpicker)
     UICorner_10.CornerRadius = UDim.new(1, 0)
     UICorner_10.Parent = SpeedHead
     
-    -- Add stroke to speed head
-    Library:CreateStroke(SpeedHead, Color3.fromRGB(50, 50, 50), 1)
+    Library:CreateStroke(SpeedHead, theme.BorderColor, 1)
+    Library:AddHoverEffect(SpeedHead)
     
     SpeedValue.Name = "SpeedValue"
     SpeedValue.Parent = SpeedSlider
@@ -512,14 +878,13 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedValue.BackgroundTransparency = 1.000
     SpeedValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SpeedValue.BorderSizePixel = 0
-    -- right after you create SpeedValue, before any connections:
     SpeedValue.AnchorPoint = Vector2.new(1, 0)
     SpeedValue.Position = UDim2.new(1, -4, 0, 0)
     SpeedValue.TextYAlignment = Enum.TextYAlignment.Center
     SpeedValue.Size = UDim2.new(0, 30, 0, 19)
     SpeedValue.Font = Enum.Font.SourceSansSemibold
     SpeedValue.Text = "5"
-    SpeedValue.TextColor3 = Color3.fromRGB(111, 108, 112)
+    SpeedValue.TextColor3 = theme.SecondaryTextColor
     SpeedValue.TextSize = 16.000
     SpeedValue.TextXAlignment = Enum.TextXAlignment.Right
     SpeedValue.ZIndex = 102
@@ -535,12 +900,12 @@ function Library:CreateColorpickerWindow(colorpicker)
     CopyButton.Size = UDim2.new(0, 63, 0, 20)
     CopyButton.Font = Enum.Font.SourceSansSemibold
     CopyButton.Text = "Copy"
-    CopyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CopyButton.TextColor3 = theme.TextColor
     CopyButton.TextSize = 15.000
     CopyButton.ZIndex = 101
     
-    -- Add stroke to copy button
-    Library:CreateStroke(CopyButton, Color3.fromRGB(50, 50, 50), 1)
+    Library:CreateStroke(CopyButton, theme.BorderColor, 1)
+    Library:AddHoverEffect(CopyButton)
     
     PasteButton.Name = "PasteButton"
     PasteButton.Parent = ColorpickerFrame
@@ -552,12 +917,12 @@ function Library:CreateColorpickerWindow(colorpicker)
     PasteButton.Size = UDim2.new(0, 63, 0, 20)
     PasteButton.Font = Enum.Font.SourceSansSemibold
     PasteButton.Text = "Paste"
-    PasteButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    PasteButton.TextColor3 = theme.TextColor
     PasteButton.TextSize = 15.000
     PasteButton.ZIndex = 101
     
-    -- Add stroke to paste button
-    Library:CreateStroke(PasteButton, Color3.fromRGB(50, 50, 50), 1)
+    Library:CreateStroke(PasteButton, theme.BorderColor, 1)
+    Library:AddHoverEffect(PasteButton)
     
     -- Close button
     CloseButton.Name = "CloseButton"
@@ -570,9 +935,11 @@ function Library:CreateColorpickerWindow(colorpicker)
     CloseButton.Size = UDim2.new(0, 20, 0, 20)
     CloseButton.Font = Enum.Font.SourceSansBold
     CloseButton.Text = "×"
-    CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseButton.TextColor3 = theme.TextColor
     CloseButton.TextSize = 18.000
     CloseButton.ZIndex = 101
+    
+    Library:AddHoverEffect(CloseButton, Color3.fromRGB(255, 100, 100))
     
     -- Variables for colorpicker state
     local h, s, v = 0, 1, 1
@@ -594,9 +961,9 @@ function Library:CreateColorpickerWindow(colorpicker)
         local hueR, hueG, hueB = Library:HSVtoRGB(h, 1, 1)
         HueImage.ImageColor3 = Color3.fromRGB(math.floor(hueR * 255), math.floor(hueG * 255), math.floor(hueB * 255))
         
-        -- Update head positions
-        ColorpickerHead.Position = UDim2.new(s, -6, 1-v, -6)
-        HueHead.Position = UDim2.new(h, -2, -0.3, 0)
+        -- Update head positions with animations
+        Library:TweenPosition(ColorpickerHead, UDim2.new(s, -6, 1-v, -6), 0.1)
+        Library:TweenPosition(HueHead, UDim2.new(h, -2, -0.3, 0), 0.1)
         
         -- Update colorpicker value
         colorpicker:SetValue(color)
@@ -671,7 +1038,6 @@ function Library:CreateColorpickerWindow(colorpicker)
     
     Library:CreateConnection(UserInputService.InputChanged, function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement and input.Position then
-            -- Colorpicker interactions (priority over window drag)
             if colorpickerDragging then
                 local inputPos = Vector2.new(input.Position.X, input.Position.Y)
                 if Colorpicker and Colorpicker.AbsolutePosition then
@@ -694,11 +1060,10 @@ function Library:CreateColorpickerWindow(colorpicker)
                     local percent = math.clamp(rel.X / SpeedSliderBar.AbsoluteSize.X, 0, 1)
                     colorpicker._rainbowSpeed = math.floor(percent * 20) + 1
                     local barWidth = SpeedSliderBar.AbsoluteSize.X
-                    SpeedFiller.Size = UDim2.new(0, barWidth * percent, 0, 4)
-                    SpeedHead.Position = UDim2.new(0, (barWidth * percent) - 5, -0.5, 0)
+                    Library:TweenSize(SpeedFiller, UDim2.new(0, barWidth * percent, 0, 4), 0.1)
+                    Library:TweenPosition(SpeedHead, UDim2.new(0, (barWidth * percent) - 5, -0.5, 0), 0.1)
                     SpeedValue.Text = tostring(colorpicker._rainbowSpeed)
                 end
-            -- Window dragging (lower priority)
             elseif windowDragging and dragStart and startPos then
                 local inputPos = Vector2.new(input.Position.X, input.Position.Y)
                 local delta = inputPos - dragStart
@@ -712,7 +1077,7 @@ function Library:CreateColorpickerWindow(colorpicker)
             colorpickerDragging = false
             hueDragging = false
             speedDragging = false
-            windowDragging    = false
+            windowDragging = false
         end
     end)
     
@@ -722,15 +1087,15 @@ function Library:CreateColorpickerWindow(colorpicker)
         colorpicker._rainbow = rainbow
 
         if rainbow then
-            RainbowToggle.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+            Library:TweenColor(RainbowToggle, "BackgroundColor3", theme.MainColor, 0.2)
             RainbowToggle.BackgroundTransparency = 0
-            RainbowTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Library:TweenColor(RainbowTitle, "TextColor3", theme.TextColor, 0.2)
             RainbowCheckmark.Visible = true
             startRainbow()
         else
-            RainbowToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            Library:TweenColor(RainbowToggle, "BackgroundColor3", Color3.fromRGB(255, 255, 255), 0.2)
             RainbowToggle.BackgroundTransparency = 1
-            RainbowTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
+            Library:TweenColor(RainbowTitle, "TextColor3", theme.SecondaryTextColor, 0.2)
             RainbowCheckmark.Visible = false
             stopRainbow()
         end
@@ -739,17 +1104,21 @@ function Library:CreateColorpickerWindow(colorpicker)
     -- Copy and Paste functionality
     Library:CreateConnection(CopyButton.MouseButton1Click, function()
         Library._copiedColor = colorpicker.Value
+        Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.3, 1.5)
     end)
     
     Library:CreateConnection(PasteButton.MouseButton1Click, function()
         if Library._copiedColor then
             h, s, v = Library:RGBtoHSV(Library._copiedColor.R, Library._copiedColor.G, Library._copiedColor.B)
             updateColorpicker()
+            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.3, 1.2)
         end
     end)
     
     -- Close button
     Library:CreateConnection(CloseButton.MouseButton1Click, function()
+        Library:TweenTransparency(ColorpickerFrame, 1, 0.2)
+        wait(0.2)
         colorpicker._window = nil
         Library._currentColorpicker = nil
         ColorpickerFrame:Destroy()
@@ -764,20 +1133,19 @@ function Library:CreateColorpickerWindow(colorpicker)
             local percent = (colorpicker._rainbowSpeed - 1) / 19
             local barWidth = SpeedSliderBar.AbsoluteSize.X
             if barWidth > 0 then
-                SpeedFiller.Size = UDim2.new(0, barWidth * percent, 0, 4)
-                SpeedHead.Position = UDim2.new(0, (barWidth * percent) - 5, -0.5, 0) -- Centered
+                Library:TweenSize(SpeedFiller, UDim2.new(0, barWidth * percent, 0, 4), 0.2)
+                Library:TweenPosition(SpeedHead, UDim2.new(0, (barWidth * percent) - 5, -0.5, 0), 0.2)
             end
         end
     end)
     
-    -- Make window draggable (only on title area)
-    -- Create a draggable title area (top part of the window)
+    -- Make window draggable
     local DragArea = Instance.new("Frame")
     DragArea.Name = "DragArea"
     DragArea.Parent = ColorpickerFrame
     DragArea.BackgroundTransparency = 1
     DragArea.Position = UDim2.new(0, 0, 0, 0)
-    DragArea.Size = UDim2.new(1, 0, 0, 30) -- Only top 30 pixels are draggable
+    DragArea.Size = UDim2.new(1, 0, 0, 30)
     DragArea.ZIndex = 99
     
     Library:CreateConnection(DragArea.InputBegan, function(input)
@@ -799,9 +1167,8 @@ function Library:CreateColorpickerWindow(colorpicker)
         end
     end)
 
-    -- 3) After everything is wired up, sync the UI to your saved state:
+    -- Sync UI to saved state
     spawn(function()
-        -- wait one frame so AbsoluteSize is valid
         RunService.Heartbeat:Wait()
 
         -- rainbow toggle
@@ -809,12 +1176,8 @@ function Library:CreateColorpickerWindow(colorpicker)
             startRainbow()
         end
         RainbowToggle.BackgroundTransparency = colorpicker._rainbow and 0 or 1
-        RainbowToggle.BackgroundColor3   = colorpicker._rainbow
-            and Color3.fromRGB(66,255,249)
-            or Color3.fromRGB(255,255,255)
-        RainbowTitle.TextColor3 = colorpicker._rainbow
-            and Color3.fromRGB(255,255,255)
-            or Color3.fromRGB(124,121,125)
+        RainbowToggle.BackgroundColor3 = colorpicker._rainbow and theme.MainColor or Color3.fromRGB(255,255,255)
+        RainbowTitle.TextColor3 = colorpicker._rainbow and theme.TextColor or theme.SecondaryTextColor
         RainbowCheckmark.Visible = colorpicker._rainbow
 
         -- speed slider
@@ -828,7 +1191,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     -- Initial update
     updateColorpicker()
     
-    -- finally store & return
+    -- Store window reference
     colorpicker._window = ColorpickerFrame
     return ColorpickerFrame
 end
@@ -839,6 +1202,8 @@ function Library:CreateWindow(config)
     Window.Name = config.Name or "o bee city"
     Window.Pages = {}
     Window.CurrentPage = nil
+    
+    local theme = self:GetTheme()
     
     -- Create main GUI structure
     local coresploit = Instance.new("ScreenGui")
@@ -867,37 +1232,39 @@ function Library:CreateWindow(config)
     local Frame_3 = Instance.new("Frame")
     local UICorner_28 = Instance.new("UICorner")
 
-    -- Properties
+    -- Properties with theme colors
     coresploit.Name = "coresploit"
     coresploit.Parent = LocalPlayer:WaitForChild("PlayerGui")
     coresploit.Enabled = true
     coresploit.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
     local overlay = Instance.new("ScreenGui")
-    overlay.Name           = "coresploitOverlay"
-    overlay.Parent         = LocalPlayer.PlayerGui
+    overlay.Name = "coresploitOverlay"
+    overlay.Parent = LocalPlayer.PlayerGui
     overlay.ZIndexBehavior = Enum.ZIndexBehavior.Global
-    overlay.DisplayOrder   = 1   -- sits above your main GUI
-    Library.OverlayGui     = overlay
-    
-    -- track open dropdowns
-    Library.OpenDropdowns = {}
+    overlay.DisplayOrder = 1
+    Library.OverlayGui = overlay
 
     Background.Name = "Background"
     Background.Parent = coresploit
-    Background.BackgroundColor3 = Color3.fromRGB(17, 16, 24)
+    Background.BackgroundColor3 = theme.BackgroundColor
     Background.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Background.BorderSizePixel = 0
     Background.Position = UDim2.new(0.5, -235, 0.5, -290)
     Background.Size = UDim2.new(0, 470, 0, 581)
-    Library:CreateStroke(Background, Color3.fromRGB(50, 50, 50), 1)
+    
+    -- Add fade-in animation
+    Background.BackgroundTransparency = 1
+    self:TweenTransparency(Background, 0, 0.5)
+    
+    Library:CreateStroke(Background, theme.BorderColor, 1)
 
     UICorner.CornerRadius = UDim.new(0, 3)
     UICorner.Parent = Background
 
     Topbar.Name = "Topbar"
     Topbar.Parent = Background
-    Topbar.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    Topbar.BackgroundColor3 = theme.SecondaryColor
     Topbar.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Topbar.BorderSizePixel = 0
     Topbar.Position = UDim2.new(0, 0, 0.0103270225, 0)
@@ -926,13 +1293,13 @@ function Library:CreateWindow(config)
     TextLabel.Size = UDim2.new(0, 120, 0, 32)
     TextLabel.Font = Enum.Font.SourceSansBold
     TextLabel.Text = Window.Name
-    TextLabel.TextColor3 = Color3.fromRGB(66, 255, 249)
+    TextLabel.TextColor3 = theme.MainColor
     TextLabel.TextSize = 14.000
     TextLabel.TextXAlignment = Enum.TextXAlignment.Left
 
     Roundingfiller.Name = "Roundingfiller"
     Roundingfiller.Parent = Topbar
-    Roundingfiller.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    Roundingfiller.BackgroundColor3 = theme.SecondaryColor
     Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Roundingfiller.BorderSizePixel = 0
     Roundingfiller.ClipsDescendants = true
@@ -944,7 +1311,7 @@ function Library:CreateWindow(config)
     UICorner_2.Parent = Roundingfiller
 
     Frame.Parent = Topbar
-    Frame.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+    Frame.BackgroundColor3 = theme.AccentColor
     Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Frame.BorderSizePixel = 0
     Frame.Position = UDim2.new(0, 0, 0.95686239, 0)
@@ -952,14 +1319,13 @@ function Library:CreateWindow(config)
 
     UnderBar.Name = "UnderBar"
     UnderBar.Parent = Background
-    UnderBar.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    UnderBar.BackgroundColor3 = theme.SecondaryColor
     UnderBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
     UnderBar.BorderSizePixel = 0
     UnderBar.Position = UDim2.new(0.00212765951, 0, 0.963855445, 0)
     UnderBar.Size = UDim2.new(0, 468, 0, 21)
     
-    -- Add stroke to UnderBar
-    Library:CreateStroke(UnderBar, Color3.fromRGB(50, 50, 50), 1)
+    Library:CreateStroke(UnderBar, theme.BorderColor, 1)
 
     GameName.Name = "GameName"
     GameName.Parent = UnderBar
@@ -970,9 +1336,8 @@ function Library:CreateWindow(config)
     GameName.Position = UDim2.new(0, 5, 0, 0)
     GameName.Size = UDim2.new(0, 300, 0, 21)
     GameName.Font = Enum.Font.SourceSansSemibold
-    -- FIXED: Removed "Game: " prefix
     GameName.Text = (game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name or "Unknown")
-    GameName.TextColor3 = Color3.fromRGB(66, 255, 249)
+    GameName.TextColor3 = theme.MainColor
     GameName.TextSize = 14.000
     GameName.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -986,7 +1351,7 @@ function Library:CreateWindow(config)
     UserStatus.Size = UDim2.new(0, 94, 0, 21)
     UserStatus.Font = Enum.Font.SourceSansSemibold
     UserStatus.Text = "User"
-    UserStatus.TextColor3 = Color3.fromRGB(66, 255, 249)
+    UserStatus.TextColor3 = theme.MainColor
     UserStatus.TextSize = 14.000
     UserStatus.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -1000,22 +1365,22 @@ function Library:CreateWindow(config)
     MenuGlow.Size = UDim2.new(0, 513, 0, 623)
     MenuGlow.ZIndex = 1
     MenuGlow.Image = "rbxassetid://18245826428"
-    MenuGlow.ImageColor3 = Color3.fromRGB(66, 255, 249)
-    MenuGlow.ImageTransparency = 0.740
+    MenuGlow.ImageColor3 = theme.MainColor
+    MenuGlow.ImageTransparency = self.Settings.GlowEnabled and 0.740 or 1
     MenuGlow.ScaleType = Enum.ScaleType.Slice
     MenuGlow.SliceCenter = Rect.new(21, 21, 79, 79)
 
     -- Keybind Mode Frame
     KeybindModeFrame.Name = "KeybindModeFrame"
     KeybindModeFrame.Parent = Background
-    KeybindModeFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+    KeybindModeFrame.BackgroundColor3 = theme.SecondaryColor
     KeybindModeFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
     KeybindModeFrame.BorderSizePixel = 0
     KeybindModeFrame.Position = UDim2.new(0.351444304, 0, 0.550614119, 0)
     KeybindModeFrame.Size = UDim2.new(0, 98, 0, 68)
     KeybindModeFrame.Visible = false
     KeybindModeFrame.ZIndex = 3
-    Library:CreateStroke(KeybindModeFrame, Color3.fromRGB(50, 50, 50), 1)
+    Library:CreateStroke(KeybindModeFrame, theme.BorderColor, 1)
 
     Frame_2.Parent = KeybindModeFrame
     Frame_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1035,7 +1400,7 @@ function Library:CreateWindow(config)
     TextButton.ZIndex = 3
     TextButton.Font = Enum.Font.SourceSansSemibold
     TextButton.Text = "Hold"
-    TextButton.TextColor3 = Color3.fromRGB(253, 247, 255)
+    TextButton.TextColor3 = theme.TextColor
     TextButton.TextSize = 14.000
     TextButton.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -1049,7 +1414,7 @@ function Library:CreateWindow(config)
     TextButton_2.ZIndex = 3
     TextButton_2.Font = Enum.Font.SourceSansSemibold
     TextButton_2.Text = "Toggle"
-    TextButton_2.TextColor3 = Color3.fromRGB(124, 121, 125)
+    TextButton_2.TextColor3 = theme.SecondaryTextColor
     TextButton_2.TextSize = 14.000
     TextButton_2.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -1063,7 +1428,7 @@ function Library:CreateWindow(config)
     TextButton_3.ZIndex = 3
     TextButton_3.Font = Enum.Font.SourceSansSemibold
     TextButton_3.Text = "Always"
-    TextButton_3.TextColor3 = Color3.fromRGB(124, 121, 125)
+    TextButton_3.TextColor3 = theme.SecondaryTextColor
     TextButton_3.TextSize = 14.000
     TextButton_3.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -1080,13 +1445,13 @@ function Library:CreateWindow(config)
     TextLabel_4.Size = UDim2.new(0, 94, 0, 18)
     TextLabel_4.Font = Enum.Font.SourceSansSemibold
     TextLabel_4.Text = "Mode"
-    TextLabel_4.TextColor3 = Color3.fromRGB(66, 255, 249)
+    TextLabel_4.TextColor3 = theme.MainColor
     TextLabel_4.TextSize = 14.000
     TextLabel_4.TextXAlignment = Enum.TextXAlignment.Left
     TextLabel_4.ZIndex = 50
 
     Frame_3.Parent = TextLabel_4
-    Frame_3.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+    Frame_3.BackgroundColor3 = theme.AccentColor
     Frame_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Frame_3.BorderSizePixel = 0
     Frame_3.Position = UDim2.new(-0.0531914905, 0, 0.944444418, 0)
@@ -1095,6 +1460,11 @@ function Library:CreateWindow(config)
     UICorner_28.CornerRadius = UDim.new(0, 3)
     UICorner_28.Parent = KeybindModeFrame
 
+    -- Add hover effects to keybind buttons
+    Library:AddHoverEffect(TextButton)
+    Library:AddHoverEffect(TextButton_2)
+    Library:AddHoverEffect(TextButton_3)
+    
     -- Store references
     Window.GUI = coresploit
     Window.Background = Background
@@ -1103,7 +1473,7 @@ function Library:CreateWindow(config)
     Window.KeybindModeButtons = {TextButton, TextButton_2, TextButton_3}
     Library.GUI = coresploit
     
-    -- Make draggable
+    -- Make draggable with smooth animation
     local dragging = false
     local dragStart = nil
     local startPos = nil
@@ -1113,6 +1483,13 @@ function Library:CreateWindow(config)
             dragging = true
             dragStart = input.Position
             startPos = Background.Position
+            
+            -- Add visual feedback
+            self:TweenColor(Background, "BackgroundColor3", Color3.new(
+                theme.BackgroundColor.R * 1.1,
+                theme.BackgroundColor.G * 1.1,
+                theme.BackgroundColor.B * 1.1
+            ), 0.1)
         end
     end)
     
@@ -1126,8 +1503,34 @@ function Library:CreateWindow(config)
     Library:CreateConnection(UserInputService.InputEnded, function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
+            -- Reset visual feedback
+            self:TweenColor(Background, "BackgroundColor3", theme.BackgroundColor, 0.1)
         end
     end)
+    
+    -- Menu toggle functionality
+    Library:CreateConnection(UserInputService.InputBegan, function(input, gameProcessed)
+        if gameProcessed then return end
+        
+        if input.KeyCode == self.Settings.MenuKeybind or input.UserInputType == self.Settings.MenuKeybind then
+            local isVisible = coresploit.Enabled
+            coresploit.Enabled = not isVisible
+            
+            if not isVisible then
+                self:CreateSound("rbxasset://sounds/switch.wav", 0.4, 1.2)
+                -- Fade in animation
+                Background.BackgroundTransparency = 1
+                self:TweenTransparency(Background, 0, 0.3)
+            else
+                self:CreateSound("rbxasset://sounds/switch.wav", 0.4, 0.8)
+            end
+        end
+    end)
+    
+    -- Start rainbow mode if enabled
+    if self.Settings.RainbowMode then
+        self:StartRainbowMode()
+    end
     
     -- Page functions
     function Window:CreatePage(config)
@@ -1136,6 +1539,8 @@ function Library:CreateWindow(config)
         Page.Window = Window
         Page.Sections = {}
         Page.Active = false
+        
+        local theme = Library:GetTheme()
         
         -- Create tab button
         local title = Instance.new("TextLabel")
@@ -1152,12 +1557,12 @@ function Library:CreateWindow(config)
         title.Size = UDim2.new(0, 50, 0, 32)
         title.Font = Enum.Font.SourceSansSemibold
         title.Text = Page.Name
-        title.TextColor3 = Color3.fromRGB(124, 121, 125)
+        title.TextColor3 = theme.SecondaryTextColor
         title.TextSize = 14.000
         
         SelectedLine.Name = "SelectedLine"
         SelectedLine.Parent = title
-        SelectedLine.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+        SelectedLine.BackgroundColor3 = theme.MainColor
         SelectedLine.BorderColor3 = Color3.fromRGB(0, 0, 0)
         SelectedLine.BorderSizePixel = 0
         SelectedLine.Position = UDim2.new(-0.0599999987, 0, 1, 0)
@@ -1175,42 +1580,50 @@ function Library:CreateWindow(config)
         LineGlow.Visible = false
         LineGlow.ZIndex = 10
         
-        UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(66, 255, 249)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(66, 255, 249))}
+        UIGradient.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0.00, theme.MainColor), 
+            ColorSequenceKeypoint.new(1.00, theme.MainColor)
+        }
         UIGradient.Rotation = 90
-        UIGradient.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0.00, 1.00), NumberSequenceKeypoint.new(0.00, 0.00), NumberSequenceKeypoint.new(1.00, 0.00)}
+        UIGradient.Transparency = NumberSequence.new{
+            NumberSequenceKeypoint.new(0.00, 1.00), 
+            NumberSequenceKeypoint.new(0.00, 0.00), 
+            NumberSequenceKeypoint.new(1.00, 0.00)
+        }
         UIGradient.Parent = LineGlow
+        
+        -- Add hover effect to tab
+        Library:AddHoverEffect(title, Color3.new(0, 0, 0), Color3.new(0, 0, 0))
         
         -- Create page content areas
         local Section1 = Instance.new("Frame")
         local Section2 = Instance.new("Frame")
         
-        -- Section 1 (Left) - FIXED: Better positioning for symmetry
+        -- Section 1 (Left)
         Section1.Name = "Section1"
         Section1.Parent = Background
         Section1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section1.BackgroundTransparency = 1.000
         Section1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section1.BorderSizePixel = 0
-        Section1.Position = UDim2.new(0.0127659574, 0, 0.0730183199, 0) -- Adjusted for better symmetry
+        Section1.Position = UDim2.new(0.0127659574, 0, 0.0730183199, 0)
         Section1.Size = UDim2.new(0, 225, 0, 520)
         Section1.Visible = false
         
-        -- Add stroke to Section1
-        Library:CreateStroke(Section1, Color3.fromRGB(50, 50, 50), 1)
+        Library:CreateStroke(Section1, theme.BorderColor, 1)
         
-        -- Section 2 (Right) - FIXED: Better positioning for symmetry
+        -- Section 2 (Right)
         Section2.Name = "Section2"
         Section2.Parent = Background
         Section2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section2.BackgroundTransparency = 1.000
         Section2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section2.BorderSizePixel = 0
-        Section2.Position = UDim2.new(0.510638297, 0, 0.0730183199, 0) -- Adjusted for better symmetry
+        Section2.Position = UDim2.new(0.510638297, 0, 0.0730183199, 0)
         Section2.Size = UDim2.new(0, 225, 0, 520)
         Section2.Visible = false
         
-        -- Add stroke to Section2
-        Library:CreateStroke(Section2, Color3.fromRGB(50, 50, 50), 1)
+        Library:CreateStroke(Section2, theme.BorderColor, 1)
         
         Page.Section1 = Section1
         Page.Section2 = Section2
@@ -1218,23 +1631,42 @@ function Library:CreateWindow(config)
         Page.SelectedLine = SelectedLine
         Page.LineGlow = LineGlow
         
-        -- Tab click handler
+        -- Tab click handler with animation
         Library:CreateConnection(title.InputBegan, function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                -- Add click animation
+                Library:TweenSize(title, UDim2.new(0, 48, 0, 32), 0.05)
+                wait(0.05)
+                Library:TweenSize(title, UDim2.new(0, 50, 0, 32), 0.05)
+                
                 Window:SetPage(Page)
+                Library:CreateSound("rbxasset://sounds/button_click.wav", 0.3, 1.1)
             end
         end)
         
         function Page:SetActive(active)
             Page.Active = active
+            local theme = Library:GetTheme()
+            
             if active then
-                title.TextColor3 = Color3.fromRGB(66, 255, 249)
+                Library:TweenColor(title, "TextColor3", theme.MainColor, 0.2)
                 SelectedLine.Visible = true
                 LineGlow.Visible = true
                 Section1.Visible = true
                 Section2.Visible = true
+                
+                -- Animate sections sliding in
+                Section1.Position = UDim2.new(-0.5, 0, 0.0730183199, 0)
+                Section2.Position = UDim2.new(1.5, 0, 0.0730183199, 0)
+                
+                Library:TweenPosition(Section1, UDim2.new(0.0127659574, 0, 0.0730183199, 0), 0.3)
+                Library:TweenPosition(Section2, UDim2.new(0.510638297, 0, 0.0730183199, 0), 0.3)
+                
+                -- Animate selected line
+                SelectedLine.Size = UDim2.new(0, 0, 0, 2)
+                Library:TweenSize(SelectedLine, UDim2.new(0, 55, 0, 2), 0.3)
             else
-                title.TextColor3 = Color3.fromRGB(124, 121, 125)
+                Library:TweenColor(title, "TextColor3", theme.SecondaryTextColor, 0.2)
                 SelectedLine.Visible = false
                 LineGlow.Visible = false
                 Section1.Visible = false
@@ -1250,8 +1682,9 @@ function Library:CreateWindow(config)
             Section.Elements = {}
             
             local parentFrame = Section.Side == "left" and Section1 or Section2
+            local theme = Library:GetTheme()
             
-            -- Create section with your styling
+            -- Create section with enhanced styling
             local SectionFrame = Instance.new("Frame")
             local UICorner = Instance.new("UICorner")
             local Title = Instance.new("Frame")
@@ -1274,18 +1707,17 @@ function Library:CreateWindow(config)
             
             Title.Name = "Title"
             Title.Parent = SectionFrame
-            Title.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+            Title.BackgroundColor3 = theme.SecondaryColor
             Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Title.BorderSizePixel = 0
             Title.Position = UDim2.new(0, 0, 0.0219435729, 0)
             Title.Size = UDim2.new(0, 225, 0, 15)
             
-            -- Add stroke to section title
-            Library:CreateStroke(Title, Color3.fromRGB(50, 50, 50), 1)
+            Library:CreateStroke(Title, theme.BorderColor, 1)
             
             Roundingfiller.Name = "Roundingfiller"
             Roundingfiller.Parent = Title
-            Roundingfiller.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
+            Roundingfiller.BackgroundColor3 = theme.SecondaryColor
             Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Roundingfiller.BorderSizePixel = 0
             Roundingfiller.Position = UDim2.new(0, 0, -0.48, 0)
@@ -1303,7 +1735,7 @@ function Library:CreateWindow(config)
             TitleLabel.Size = UDim2.new(0, 79, 0, 22)
             TitleLabel.Font = Enum.Font.SourceSansSemibold
             TitleLabel.Text = Section.Name
-            TitleLabel.TextColor3 = Color3.fromRGB(66, 255, 249)
+            TitleLabel.TextColor3 = theme.MainColor
             TitleLabel.TextSize = 15.000
             TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
             
@@ -1323,7 +1755,7 @@ function Library:CreateWindow(config)
             Section.Frame = SectionFrame
             Section.SectionHolder = SectionHolder
             
-            -- Toggle Element
+            -- Enhanced Toggle Element
             function Section:CreateToggle(config)
                 local Toggle = {}
                 Toggle.Name = config.Name or "Toggle"
@@ -1332,6 +1764,8 @@ function Library:CreateWindow(config)
                 Toggle.Callback = config.Callback or function() end
                 Toggle.Value = Toggle.Default
                 
+                local theme = Library:GetTheme()
+                
                 local ToggleButton = Instance.new("TextButton")
                 local UICorner = Instance.new("UICorner")
                 local title = Instance.new("TextLabel")
@@ -1339,7 +1773,7 @@ function Library:CreateWindow(config)
                 
                 ToggleButton.Name = "ToggleButton"
                 ToggleButton.Parent = SectionHolder
-                ToggleButton.BackgroundColor3 = Toggle.Default and Color3.fromRGB(66, 255, 249) or Color3.fromRGB(255, 255, 255)
+                ToggleButton.BackgroundColor3 = Toggle.Default and theme.MainColor or Color3.fromRGB(255, 255, 255)
                 ToggleButton.BackgroundTransparency = Toggle.Default and 0 or 1
                 ToggleButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ToggleButton.BorderSizePixel = 0
@@ -1353,8 +1787,8 @@ function Library:CreateWindow(config)
                 UICorner.CornerRadius = UDim.new(0, 3)
                 UICorner.Parent = ToggleButton
                 
-                -- Add stroke to toggle button
-                Library:CreateStroke(ToggleButton, Color3.fromRGB(50, 50, 50), 1)
+                Library:CreateStroke(ToggleButton, theme.BorderColor, 1)
+                Library:AddHoverEffect(ToggleButton)
                 
                 title.Name = "title"
                 title.Parent = ToggleButton
@@ -1366,7 +1800,7 @@ function Library:CreateWindow(config)
                 title.Size = UDim2.new(0, 120, 0, 20)
                 title.Font = Enum.Font.SourceSansSemibold
                 title.Text = Toggle.Name
-                title.TextColor3 = Toggle.Default and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(124, 121, 125)
+                title.TextColor3 = Toggle.Default and theme.TextColor or theme.SecondaryTextColor
                 title.TextSize = 15.000
                 title.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -1385,14 +1819,18 @@ function Library:CreateWindow(config)
                     Library.Flags[Toggle.Flag] = value
                     
                     if value then
-                        ToggleButton.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+                        Library:TweenColor(ToggleButton, "BackgroundColor3", theme.MainColor, 0.2)
                         ToggleButton.BackgroundTransparency = 0
-                        title.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        Library:TweenColor(title, "TextColor3", theme.TextColor, 0.2)
                         checkmark.Visible = true
+                        -- Add bounce effect
+                        Library:TweenSize(checkmark, UDim2.new(0, 16, 0, 16), 0.1)
+                        wait(0.1)
+                        Library:TweenSize(checkmark, UDim2.new(0, 13, 0, 13), 0.1)
                     else
-                        ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        Library:TweenColor(ToggleButton, "BackgroundColor3", Color3.fromRGB(255, 255, 255), 0.2)
                         ToggleButton.BackgroundTransparency = 1
-                        title.TextColor3 = Color3.fromRGB(124, 121, 125)
+                        Library:TweenColor(title, "TextColor3", theme.SecondaryTextColor, 0.2)
                         checkmark.Visible = false
                     end
                     
@@ -1425,13 +1863,13 @@ function Library:CreateWindow(config)
                     UICorner.CornerRadius = UDim.new(0, 3)
                     UICorner.Parent = ColorpickerButton
                     
-                    -- Add stroke to colorpicker button
-                    Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
+                    Library:CreateStroke(ColorpickerButton, theme.BorderColor, 1)
+                    Library:AddHoverEffect(ColorpickerButton)
                     
                     function Colorpicker:SetValue(color)
                         Colorpicker.Value = color
                         Library.Flags[Colorpicker.Flag] = color
-                        ColorpickerButton.BackgroundColor3 = color
+                        Library:TweenColor(ColorpickerButton, "BackgroundColor3", color, 0.2)
                         Colorpicker.Callback(color)
                     end
                     
@@ -1440,7 +1878,7 @@ function Library:CreateWindow(config)
                     end)
                     
                     Colorpicker:SetValue(Colorpicker.Default)
-                    Library.Elements[Colorpicker.Flag] = Colorpicker -- Register for config loading
+                    Library.Elements[Colorpicker.Flag] = Colorpicker
                     return Colorpicker
                 end
                 
@@ -1455,9 +1893,9 @@ function Library:CreateWindow(config)
                     Keybind.Listening = false
                     
                     local TextService = game:GetService("TextService")
-                    local MIN_W = 20 -- minimum width
-                    local H_PADDING = 8 -- horizontal padding inside the box
-                    local V_PADDING = 0 -- adjust if you want a tiny vertical nudge
+                    local MIN_W = 20
+                    local H_PADDING = 8
+                    local V_PADDING = 0
                     
                     local KeybindBox = Instance.new("TextButton")
                     
@@ -1467,18 +1905,18 @@ function Library:CreateWindow(config)
                     KeybindBox.BackgroundTransparency = 1.000
                     KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
                     KeybindBox.BorderSizePixel = 0
-                    KeybindBox.AnchorPoint = Vector2.new(1, 0.5) -- pivot on its right-center
-                    KeybindBox.Position = UDim2.new(1, 197, 0.5, V_PADDING) -- positioned relative to toggle, vertically centered
+                    KeybindBox.AnchorPoint = Vector2.new(1, 0.5)
+                    KeybindBox.Position = UDim2.new(1, 197, 0.5, V_PADDING)
                     KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
                     KeybindBox.Font = Enum.Font.SourceSansSemibold
                     KeybindBox.Text = Keybind.Default
-                    KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    KeybindBox.TextColor3 = theme.TextColor
                     KeybindBox.TextSize = 15.000
                     KeybindBox.TextScaled = false
                     KeybindBox.AutoButtonColor = false
                     
-                    -- Add stroke to keybind box
-                    Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
+                    Library:CreateStroke(KeybindBox, theme.BorderColor, 1)
+                    Library:AddHoverEffect(KeybindBox)
                     
                     -- Key name mapping
                     local KeyNames = {
@@ -1525,27 +1963,24 @@ function Library:CreateWindow(config)
                         
                         KeybindBox.Text = displayName
                         
-                        -- measure the text
                         local bounds = TextService:GetTextSize(
                             displayName,
-                            15, -- font size
-                            Enum.Font.SourceSansSemibold, -- font
-                            Vector2.new(1e5, 20) -- unconstrained width
+                            15,
+                            Enum.Font.SourceSansSemibold,
+                            Vector2.new(1e5, 20)
                         )
                         local newWidth = math.max(MIN_W, bounds.X + H_PADDING*2)
                         
-                        -- resize only the width; pivot keeps the right edge fixed
-                        KeybindBox.Size = UDim2.new(0, newWidth, 0, 20)
+                        Library:TweenSize(KeybindBox, UDim2.new(0, newWidth, 0, 20), 0.2)
                         
                         Keybind.Callback(key)
                     end
                     
-                    -- Left click to bind key
                     Library:CreateConnection(KeybindBox.MouseButton1Click, function()
                         if not Keybind.Listening then
                             Keybind.Listening = true
                             KeybindBox.Text = "..."
-                            KeybindBox.TextColor3 = Color3.fromRGB(124, 121, 125)
+                            Library:TweenColor(KeybindBox, "TextColor3", theme.SecondaryTextColor, 0.2)
                             
                             local connection
                             connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
@@ -1562,30 +1997,36 @@ function Library:CreateWindow(config)
                                 
                                 if key then
                                     Keybind:SetValue(key)
-                                    KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                    Library:TweenColor(KeybindBox, "TextColor3", theme.TextColor, 0.2)
                                     Keybind.Listening = false
                                     connection:Disconnect()
+                                    Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.3, 1.3)
                                 end
                             end)
                         end
                     end)
                     
-                    -- Right click for mode selection
                     Library:CreateConnection(KeybindBox.MouseButton2Click, function()
                         Window.KeybindModeFrame.Visible = true
                         Window.KeybindModeFrame.Position = UDim2.new(0, Mouse.X - Window.Background.AbsolutePosition.X, 0, Mouse.Y - Window.Background.AbsolutePosition.Y)
                         
+                        -- Add fade-in animation
+                        Window.KeybindModeFrame.BackgroundTransparency = 1
+                        Library:TweenTransparency(Window.KeybindModeFrame, 0, 0.2)
+                        
                         for i, btn in pairs(Window.KeybindModeButtons) do
                             Library:CreateConnection(btn.MouseButton1Click, function()
                                 Keybind.Mode = btn.Text
+                                Library:TweenTransparency(Window.KeybindModeFrame, 1, 0.2)
+                                wait(0.2)
                                 Window.KeybindModeFrame.Visible = false
                                 
                                 -- Update button colors
                                 for j, b in pairs(Window.KeybindModeButtons) do
                                     if b == btn then
-                                        b.TextColor3 = Color3.fromRGB(253, 247, 255)
+                                        Library:TweenColor(b, "TextColor3", theme.TextColor, 0.2)
                                     else
-                                        b.TextColor3 = Color3.fromRGB(124, 121, 125)
+                                        Library:TweenColor(b, "TextColor3", theme.SecondaryTextColor, 0.2)
                                     end
                                 end
                             end)
@@ -1593,20 +2034,21 @@ function Library:CreateWindow(config)
                     end)
                     
                     Keybind:SetValue(Keybind.Default)
-                    Library.Elements[Keybind.Flag] = Keybind -- Register for config loading
+                    Library.Elements[Keybind.Flag] = Keybind
                     return Keybind
                 end
                 
                 Library:CreateConnection(ToggleButton.MouseButton1Click, function()
                     Toggle:SetValue(not Toggle.Value)
+                    Library:CreateSound("rbxasset://sounds/switch.wav", 0.3, Toggle.Value and 1.2 or 0.8)
                 end)
                 
                 Toggle:SetValue(Toggle.Default)
-                Library.Elements[Toggle.Flag] = Toggle -- Register for config loading
+                Library.Elements[Toggle.Flag] = Toggle
                 return Toggle
             end
             
-            -- Slider Element
+            -- Enhanced Slider Element
             function Section:CreateSlider(config)
                 local Slider = {}
                 Slider.Name = config.Name or "Slider"
@@ -1616,6 +2058,8 @@ function Library:CreateWindow(config)
                 Slider.Flag = config.Flag or Slider.Name
                 Slider.Callback = config.Callback or function() end
                 Slider.Value = Slider.Default
+                
+                local theme = Library:GetTheme()
                 
                 local SliderFrame = Instance.new("TextLabel")
                 local SliderBar = Instance.new("Frame")
@@ -1634,7 +2078,7 @@ function Library:CreateWindow(config)
                 SliderFrame.Size = UDim2.new(0, 215, 0, 32)
                 SliderFrame.Font = Enum.Font.SourceSansSemibold
                 SliderFrame.Text = Slider.Name
-                SliderFrame.TextColor3 = Color3.fromRGB(124, 121, 125)
+                SliderFrame.TextColor3 = theme.SecondaryTextColor
                 SliderFrame.TextSize = 15.000
                 SliderFrame.TextXAlignment = Enum.TextXAlignment.Left
                 SliderFrame.TextYAlignment = Enum.TextYAlignment.Top
@@ -1648,12 +2092,11 @@ function Library:CreateWindow(config)
                 SliderBar.Position = UDim2.new(0, 0, 0.800000012, 0)
                 SliderBar.Size = UDim2.new(0, 214, 0, 2)
                 
-                -- Add stroke to slider bar
-                Library:CreateStroke(SliderBar, Color3.fromRGB(50, 50, 50), 1)
+                Library:CreateStroke(SliderBar, theme.BorderColor, 1)
                 
                 Filler.Name = "Filler"
                 Filler.Parent = SliderBar
-                Filler.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+                Filler.BackgroundColor3 = theme.MainColor
                 Filler.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 Filler.BorderSizePixel = 0
                 Filler.Position = UDim2.new(0, 0, -4, 7)
@@ -1665,12 +2108,12 @@ function Library:CreateWindow(config)
                 
                 SliderHead.Name = "SliderHead"
                 SliderHead.Parent = Filler
-                SliderHead.BackgroundColor3 = Color3.fromRGB(54, 54, 54)
+                SliderHead.BackgroundColor3 = theme.AccentColor
                 SliderHead.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 SliderHead.BorderSizePixel = 0
                 SliderHead.Position = UDim2.new(0.899999976, 0, -0.75, 0)
                 SliderHead.Size = UDim2.new(0, 10, 0, 10)
-                SliderHead.ZIndex = 2 -- Set ZIndex to 2 as requested
+                SliderHead.ZIndex = 2
                 SliderHead.Font = Enum.Font.SourceSans
                 SliderHead.Text = ""
                 SliderHead.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -1679,8 +2122,8 @@ function Library:CreateWindow(config)
                 UICorner_2.CornerRadius = UDim.new(1, 0)
                 UICorner_2.Parent = SliderHead
                 
-                -- Add stroke to slider head
-                Library:CreateStroke(SliderHead, Color3.fromRGB(50, 50, 50), 1)
+                Library:CreateStroke(SliderHead, theme.BorderColor, 1)
+                Library:AddHoverEffect(SliderHead)
                 
                 SliderValue.Name = "SliderValue"
                 SliderValue.Parent = SliderFrame
@@ -1691,10 +2134,10 @@ function Library:CreateWindow(config)
                 SliderValue.Position = UDim2.new(0.764534891, 0, 0, 0)
                 SliderValue.Size = UDim2.new(0, 50, 0, 19)
                 SliderValue.Font = Enum.Font.SourceSansSemibold
-                SliderValue.PlaceholderColor3 = Color3.fromRGB(111, 108, 112)
+                SliderValue.PlaceholderColor3 = theme.SecondaryTextColor
                 SliderValue.PlaceholderText = tostring(Slider.Default)
                 SliderValue.Text = ""
-                SliderValue.TextColor3 = Color3.fromRGB(111, 108, 112)
+                SliderValue.TextColor3 = theme.SecondaryTextColor
                 SliderValue.TextSize = 16.000
                 SliderValue.TextXAlignment = Enum.TextXAlignment.Right
                 
@@ -1705,10 +2148,9 @@ function Library:CreateWindow(config)
                     
                     local percent = (value - Slider.Min) / (Slider.Max - Slider.Min)
                     local fillWidth = 214 * percent
-                    Filler.Size = UDim2.new(0, fillWidth, 0, 4)
                     
-                    -- Fix slider head position to follow the fill properly
-                    SliderHead.Position = UDim2.new(0, fillWidth - 5, -0.75, 0)
+                    Library:TweenSize(Filler, UDim2.new(0, fillWidth, 0, 4), 0.1)
+                    Library:TweenPosition(SliderHead, UDim2.new(0, fillWidth - 5, -0.75, 0), 0.1)
                     
                     SliderValue.Text = tostring(value)
                     
@@ -1718,10 +2160,15 @@ function Library:CreateWindow(config)
                 local dragging = false
                 Library:CreateConnection(SliderHead.MouseButton1Down, function()
                     dragging = true
+                    Library:TweenSize(SliderHead, UDim2.new(0, 12, 0, 12), 0.1)
                 end)
                 
                 Library:CreateConnection(UserInputService.InputEnded, function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if dragging then
+                            Library:TweenSize(SliderHead, UDim2.new(0, 10, 0, 10), 0.1)
+                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.2, 1.5)
+                        end
                         dragging = false
                     end
                 end)
@@ -1742,11 +2189,11 @@ function Library:CreateWindow(config)
                 end)
                 
                 Slider:SetValue(Slider.Default)
-                Library.Elements[Slider.Flag] = Slider -- Register for config loading
+                Library.Elements[Slider.Flag] = Slider
                 return Slider
             end
             
-            -- Dropdown Element
+            -- Enhanced Dropdown Element
             function Section:CreateDropdown(config)
                 local Dropdown = {}
                 Dropdown.Name = config.Name or "Dropdown"
@@ -1757,6 +2204,8 @@ function Library:CreateWindow(config)
                 Dropdown.Value = Dropdown.Default
                 Dropdown.Multi = config.Multi or false
                 Dropdown.Open = false
+                
+                local theme = Library:GetTheme()
                 
                 local DropdownButton = Instance.new("TextButton")
                 local Arrow = Instance.new("ImageLabel")
@@ -1774,12 +2223,12 @@ function Library:CreateWindow(config)
                 DropdownButton.ZIndex = 2
                 DropdownButton.Font = Enum.Font.SourceSansSemibold
                 DropdownButton.Text = " " .. (Dropdown.Multi and table.concat(Dropdown.Default, ", ") or tostring(Dropdown.Default))
-                DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                DropdownButton.TextColor3 = theme.TextColor
                 DropdownButton.TextSize = 15.000
                 DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
                 
-                -- Add stroke to dropdown button
-                Library:CreateStroke(DropdownButton, Color3.fromRGB(50, 50, 50), 1)
+                Library:CreateStroke(DropdownButton, theme.BorderColor, 1)
+                Library:AddHoverEffect(DropdownButton)
                 
                 Arrow.Name = "Arrow"
                 Arrow.Parent = DropdownButton
@@ -1789,10 +2238,11 @@ function Library:CreateWindow(config)
                 Arrow.Position = UDim2.new(0.906976759, 0, 0, 0)
                 Arrow.Size = UDim2.new(0, 20, 0, 20)
                 Arrow.Image = "http://www.roblox.com/asset/?id=6034818372"
+                Arrow.ImageColor3 = theme.SecondaryTextColor
                 
                 DropdownHolder.Name = "DropdownHolder"
                 DropdownHolder.Parent = DropdownButton
-                DropdownHolder.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+                DropdownHolder.BackgroundColor3 = theme.AccentColor
                 DropdownHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownHolder.BorderSizePixel = 0
                 DropdownHolder.Position = UDim2.new(0, 0, 1.35000002, 0)
@@ -1803,30 +2253,27 @@ function Library:CreateWindow(config)
                 UICorner.CornerRadius = UDim.new(0, 2)
                 UICorner.Parent = DropdownHolder
                 
-                -- Add stroke to dropdown holder
-                Library:CreateStroke(DropdownHolder, Color3.fromRGB(50, 50, 50), 1)
+                Library:CreateStroke(DropdownHolder, theme.BorderColor, 1)
                 
                 UIListLayout.Parent = DropdownHolder
                 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 UIListLayout.Padding = UDim.new(0, 1)
                 
-                -- Store references on the dropdown object
                 Dropdown.Button = DropdownButton
                 Dropdown.Holder = DropdownHolder
                 Dropdown.UIListLayout = UIListLayout
+                Dropdown.Arrow = Arrow
                 
                 function Dropdown:SetValue(value)
                     self.Value = value
                     Library.Flags[self.Flag] = value
                     
                     if self.Multi then
-                        -- Ensure value is a table for multi-select
                         if type(value) ~= "table" then
                             value = {value}
                         end
                         self.Button.Text = " " .. (#value > 0 and table.concat(value, ", ") or "None")
                     else
-                        -- Ensure value is a string for single-select
                         if type(value) == "table" then
                             value = value[1] or "None"
                         end
@@ -1837,7 +2284,6 @@ function Library:CreateWindow(config)
                 end
                 
                 function Dropdown:Refresh()
-                    -- clear old options
                     for _, child in ipairs(self.Holder:GetChildren()) do
                         if child:IsA("TextLabel") then child:Destroy() end
                     end
@@ -1859,17 +2305,26 @@ function Library:CreateWindow(config)
                             and table.find(self.Value, option)
                             or (not self.Multi and self.Value == option)
                         if isSelected then
-                            OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                            OptionLabel.TextColor3 = theme.MainColor
                             OptionLabel.Text = "       " .. option
                         else
-                            OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
+                            OptionLabel.TextColor3 = theme.SecondaryTextColor
                         end
+                        
+                        -- Add hover effect to option
+                        Library:CreateConnection(OptionLabel.MouseEnter, function()
+                            Library:TweenColor(OptionLabel, "BackgroundColor3", theme.HoverColor, 0.1)
+                            OptionLabel.BackgroundTransparency = 0.5
+                        end)
+                        
+                        Library:CreateConnection(OptionLabel.MouseLeave, function()
+                            Library:TweenTransparency(OptionLabel, 1, 0.1)
+                        end)
                         
                         Library:CreateConnection(OptionLabel.InputBegan, function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                                 if self.Multi then
                                     local selected = self.Value or {}
-                                    -- Ensure selected is a table
                                     if type(selected) ~= "table" then
                                         selected = {}
                                     end
@@ -1878,33 +2333,32 @@ function Library:CreateWindow(config)
                                     if index then
                                         table.remove(selected, index)
                                         OptionLabel.Text = " " .. option
-                                        OptionLabel.TextColor3 = Color3.fromRGB(111, 108, 112)
+                                        Library:TweenColor(OptionLabel, "TextColor3", theme.SecondaryTextColor, 0.2)
                                     else
                                         table.insert(selected, option)
                                         OptionLabel.Text = "       " .. option
-                                        OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                                        Library:TweenColor(OptionLabel, "TextColor3", theme.MainColor, 0.2)
                                     end
                                     self:SetValue(selected)
                                 else
-                                    -- Update all options to unselected first
                                     for _, child in pairs(self.Holder:GetChildren()) do
                                         if child:IsA("TextLabel") and child.Name == "Option" then
                                             child.Text = " " .. child.Text:gsub("^%s*", "")
-                                            child.TextColor3 = Color3.fromRGB(111, 108, 112)
+                                            Library:TweenColor(child, "TextColor3", theme.SecondaryTextColor, 0.2)
                                         end
                                     end
                                     
-                                    -- Update selected option
                                     OptionLabel.Text = "       " .. option
-                                    OptionLabel.TextColor3 = Color3.fromRGB(0, 251, 255)
+                                    Library:TweenColor(OptionLabel, "TextColor3", theme.MainColor, 0.2)
                                     
                                     self:SetValue(option)
                                 end
+                                
+                                Library:CreateSound("rbxasset://sounds/button_click.wav", 0.2, 1.3)
                             end
                         end)
                     end
                     
-                    -- Auto-size the holder based on content
                     local contentH = self.UIListLayout.AbsoluteContentSize.Y
                     self.Holder.Size = UDim2.new(0, self.Holder.Size.X.Offset, 0, contentH)
                 end
@@ -1913,17 +2367,26 @@ function Library:CreateWindow(config)
                     if self.Open then return end
                     self.Open = true
                     
-                    -- Move into overlay ScreenGui
+                    -- Rotate arrow
+                    Library:Tween(self.Arrow, {Rotation = 180}, 0.2):Play()
+                    
                     self.Holder.Parent = Library.OverlayGui
                     self.Holder.ZIndex = 50
                     
-                    -- Refresh and position
                     self:Refresh()
                     local p, s = self.Button.AbsolutePosition, self.Button.AbsoluteSize
                     self.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5)
-                    self.Holder.Visible = true
                     
-                    -- Set up outside-click watcher
+                    -- Fade in animation
+                    self.Holder.BackgroundTransparency = 1
+                    self.Holder.Visible = true
+                    Library:TweenTransparency(self.Holder, 0, 0.2)
+                    
+                    -- Scale in animation
+                    self.Holder.Size = UDim2.new(0, 0, 0, 0)
+                    local targetSize = UDim2.new(0, 215, 0, self.UIListLayout.AbsoluteContentSize.Y)
+                    Library:TweenSize(self.Holder, targetSize, 0.2)
+                    
                     self._outsideConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
                         if gameProcessed or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
                             return
@@ -1942,24 +2405,30 @@ function Library:CreateWindow(config)
                     end)
                     
                     table.insert(Library.OpenDropdowns, self)
+                    Library:CreateSound("rbxasset://sounds/switch.wav", 0.3, 1.1)
                 end
                 
                 function Dropdown:Close()
                     if not self.Open then return end
                     self.Open = false
                     
-                    -- Hide and reparent back
+                    -- Rotate arrow back
+                    Library:Tween(self.Arrow, {Rotation = 0}, 0.2):Play()
+                    
+                    -- Fade out animation
+                    Library:TweenTransparency(self.Holder, 1, 0.2)
+                    Library:TweenSize(self.Holder, UDim2.new(0, 0, 0, 0), 0.2)
+                    
+                    wait(0.2)
                     self.Holder.Visible = false
                     self.Holder.Parent = SectionHolder
                     self.Holder.Position = UDim2.new(0, 0, 1.35, 0)
                     
-                    -- Clean up outside-click watcher
                     if self._outsideConn then
                         self._outsideConn:Disconnect()
                         self._outsideConn = nil
                     end
                     
-                    -- Remove from open dropdowns list
                     for i, dd in ipairs(Library.OpenDropdowns) do
                         if dd == self then
                             table.remove(Library.OpenDropdowns, i)
@@ -1968,7 +2437,6 @@ function Library:CreateWindow(config)
                     end
                 end
                 
-                -- Hook the button
                 Library:CreateConnection(DropdownButton.MouseButton1Click, function()
                     if Dropdown.Open then
                         Dropdown:Close()
@@ -1979,11 +2447,11 @@ function Library:CreateWindow(config)
                 
                 Dropdown:Refresh()
                 Dropdown:SetValue(Dropdown.Default)
-                Library.Elements[Dropdown.Flag] = Dropdown -- Register for config loading
+                Library.Elements[Dropdown.Flag] = Dropdown
                 return Dropdown
             end
             
-            -- Colorpicker Element
+            -- Enhanced Colorpicker Element
             function Section:CreateColorpicker(config)
                 local Colorpicker = {}
                 Colorpicker.Name = config.Name or "Color"
@@ -1991,6 +2459,8 @@ function Library:CreateWindow(config)
                 Colorpicker.Flag = config.Flag or Colorpicker.Name
                 Colorpicker.Callback = config.Callback or function() end
                 Colorpicker.Value = Colorpicker.Default
+                
+                local theme = Library:GetTheme()
                 
                 local ColorpickerFrame = Instance.new("TextLabel")
                 local ColorpickerButton = Instance.new("TextButton")
@@ -2005,7 +2475,7 @@ function Library:CreateWindow(config)
                 ColorpickerFrame.Size = UDim2.new(0, 215, 0, 20)
                 ColorpickerFrame.Font = Enum.Font.SourceSansSemibold
                 ColorpickerFrame.Text = Colorpicker.Name
-                ColorpickerFrame.TextColor3 = Color3.fromRGB(124, 121, 125)
+                ColorpickerFrame.TextColor3 = theme.SecondaryTextColor
                 ColorpickerFrame.TextSize = 15.000
                 ColorpickerFrame.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -2024,13 +2494,13 @@ function Library:CreateWindow(config)
                 UICorner.CornerRadius = UDim.new(0, 3)
                 UICorner.Parent = ColorpickerButton
                 
-                -- Add stroke to standalone colorpicker button
-                Library:CreateStroke(ColorpickerButton, Color3.fromRGB(50, 50, 50), 1)
+                Library:CreateStroke(ColorpickerButton, theme.BorderColor, 1)
+                Library:AddHoverEffect(ColorpickerButton)
                 
                 function Colorpicker:SetValue(color)
                     Colorpicker.Value = color
                     Library.Flags[Colorpicker.Flag] = color
-                    ColorpickerButton.BackgroundColor3 = color
+                    Library:TweenColor(ColorpickerButton, "BackgroundColor3", color, 0.2)
                     Colorpicker.Callback(color)
                 end
                 
@@ -2039,11 +2509,11 @@ function Library:CreateWindow(config)
                 end)
                 
                 Colorpicker:SetValue(Colorpicker.Default)
-                Library.Elements[Colorpicker.Flag] = Colorpicker -- Register for config loading
+                Library.Elements[Colorpicker.Flag] = Colorpicker
                 return Colorpicker
             end
             
-            -- Keybind Element
+            -- Enhanced Keybind Element
             function Section:CreateKeybind(config)
                 local Keybind = {}
                 Keybind.Name = config.Name or "Keybind"
@@ -2053,10 +2523,11 @@ function Library:CreateWindow(config)
                 Keybind.Value = Keybind.Default
                 Keybind.Listening = false
                 
+                local theme = Library:GetTheme()
                 local TextService = game:GetService("TextService")
-                local MIN_W = 20 -- minimum width
-                local H_PADDING = 8 -- horizontal padding inside the box
-                local V_PADDING = 0 -- adjust if you want a tiny vertical nudge
+                local MIN_W = 20
+                local H_PADDING = 8
+                local V_PADDING = 0
                 
                 local KeybindFrame = Instance.new("TextLabel")
                 local KeybindBox = Instance.new("TextButton")
@@ -2070,7 +2541,7 @@ function Library:CreateWindow(config)
                 KeybindFrame.Size = UDim2.new(0, 215, 0, 20)
                 KeybindFrame.Font = Enum.Font.SourceSansSemibold
                 KeybindFrame.Text = Keybind.Name
-                KeybindFrame.TextColor3 = Color3.fromRGB(124, 121, 125)
+                KeybindFrame.TextColor3 = theme.SecondaryTextColor
                 KeybindFrame.TextSize = 15.000
                 KeybindFrame.TextXAlignment = Enum.TextXAlignment.Left
                 
@@ -2080,20 +2551,19 @@ function Library:CreateWindow(config)
                 KeybindBox.BackgroundTransparency = 1.000
                 KeybindBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 KeybindBox.BorderSizePixel = 0
-                KeybindBox.AnchorPoint = Vector2.new(1, 0.5) -- pivot on its right-center
-                KeybindBox.Position = UDim2.new(1, -0, 0.5, V_PADDING) -- 8px from right edge, vertically centered
+                KeybindBox.AnchorPoint = Vector2.new(1, 0.5)
+                KeybindBox.Position = UDim2.new(1, -0, 0.5, V_PADDING)
                 KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
                 KeybindBox.Font = Enum.Font.SourceSansSemibold
                 KeybindBox.Text = Keybind.Default
-                KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                KeybindBox.TextColor3 = theme.TextColor
                 KeybindBox.TextSize = 15.000
                 KeybindBox.TextScaled = false
                 KeybindBox.AutoButtonColor = false
                 
-                -- Add stroke to standalone keybind box
-                Library:CreateStroke(KeybindBox, Color3.fromRGB(50, 50, 50), 1)
+                Library:CreateStroke(KeybindBox, theme.BorderColor, 1)
+                Library:AddHoverEffect(KeybindBox)
                 
-                -- Key name mapping
                 local KeyNames = {
                     [Enum.KeyCode.LeftShift] = "LShift",
                     [Enum.KeyCode.RightShift] = "RShift",
@@ -2138,17 +2608,15 @@ function Library:CreateWindow(config)
                     
                     KeybindBox.Text = displayName
                     
-                    -- measure the text
                     local bounds = TextService:GetTextSize(
                         displayName,
-                        15, -- font size
-                        Enum.Font.SourceSansSemibold, -- font
-                        Vector2.new(1e5, 20) -- unconstrained width
+                        15,
+                        Enum.Font.SourceSansSemibold,
+                        Vector2.new(1e5, 20)
                     )
                     local newWidth = math.max(MIN_W, bounds.X + H_PADDING*2)
                     
-                    -- resize only the width; pivot keeps the right edge fixed
-                    KeybindBox.Size = UDim2.new(0, newWidth, 0, 20)
+                    Library:TweenSize(KeybindBox, UDim2.new(0, newWidth, 0, 20), 0.2)
                     
                     Keybind.Callback(key)
                 end
@@ -2157,7 +2625,7 @@ function Library:CreateWindow(config)
                     if not Keybind.Listening then
                         Keybind.Listening = true
                         KeybindBox.Text = "..."
-                        KeybindBox.TextColor3 = Color3.fromRGB(124, 121, 125)
+                        Library:TweenColor(KeybindBox, "TextColor3", theme.SecondaryTextColor, 0.2)
                         
                         local connection
                         connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
@@ -2174,26 +2642,30 @@ function Library:CreateWindow(config)
                             
                             if key then
                                 Keybind:SetValue(key)
-                                KeybindBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                Library:TweenColor(KeybindBox, "TextColor3", theme.TextColor, 0.2)
                                 Keybind.Listening = false
                                 connection:Disconnect()
+                                Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.3, 1.3)
                             end
                         end)
                     end
                 end)
                 
                 Keybind:SetValue(Keybind.Default)
-                Library.Elements[Keybind.Flag] = Keybind -- Register for config loading
+                Library.Elements[Keybind.Flag] = Keybind
                 return Keybind
             end
             
-            -- Button Element
+            -- Enhanced Button Element
             function Section:CreateButton(config)
                 local Button = {}
                 Button.Name = config.Name or "Button"
                 Button.Callback = config.Callback or function() end
                 
+                local theme = Library:GetTheme()
+                
                 local ButtonFrame = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
                 
                 ButtonFrame.Name = "Button"
                 ButtonFrame.Parent = SectionHolder
@@ -2204,24 +2676,54 @@ function Library:CreateWindow(config)
                 ButtonFrame.Size = UDim2.new(0, 100, 0, 30)
                 ButtonFrame.Font = Enum.Font.SourceSansSemibold
                 ButtonFrame.Text = Button.Name
-                ButtonFrame.TextColor3 = Color3.fromRGB(255, 255, 255)
+                ButtonFrame.TextColor3 = theme.TextColor
                 ButtonFrame.TextSize = 15.000
                 
-                -- Add stroke to button
-                Library:CreateStroke(ButtonFrame, Color3.fromRGB(50, 50, 50), 1)
+                UICorner.CornerRadius = UDim.new(0, 3)
+                UICorner.Parent = ButtonFrame
+                
+                Library:CreateStroke(ButtonFrame, theme.BorderColor, 1)
+                Library:AddHoverEffect(ButtonFrame, theme.HoverColor, theme.ClickColor)
                 
                 Library:CreateConnection(ButtonFrame.MouseButton1Click, function()
+                    -- Add ripple effect
+                    local ripple = Instance.new("Frame")
+                    ripple.Name = "Ripple"
+                    ripple.Parent = ButtonFrame
+                    ripple.BackgroundColor3 = theme.MainColor
+                    ripple.BackgroundTransparency = 0.5
+                    ripple.BorderSizePixel = 0
+                    ripple.Size = UDim2.new(0, 0, 0, 0)
+                    ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
+                    ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+                    ripple.ZIndex = ButtonFrame.ZIndex + 1
+                    
+                    local rippleCorner = Instance.new("UICorner")
+                    rippleCorner.CornerRadius = UDim.new(1, 0)
+                    rippleCorner.Parent = ripple
+                    
+                    -- Animate ripple
+                    local rippleTween = Library:TweenSize(ripple, UDim2.new(0, 100, 0, 100), 0.5)
+                    Library:TweenTransparency(ripple, 1, 0.5)
+                    
+                    rippleTween.Completed:Connect(function()
+                        ripple:Destroy()
+                    end)
+                    
                     Button.Callback()
+                    Library:CreateSound("rbxasset://sounds/button_click.wav", 0.4, 1.1)
                 end)
                 
                 return Button
             end
             
-            -- Label Element
+            -- Enhanced Label Element
             function Section:CreateLabel(config)
                 local Label = {}
                 Label.Name = config.Name or "Label"
                 Label.Text = config.Text or Label.Name
+                
+                local theme = Library:GetTheme()
                 
                 local LabelFrame = Instance.new("TextLabel")
                 
@@ -2234,28 +2736,34 @@ function Library:CreateWindow(config)
                 LabelFrame.Size = UDim2.new(0, 215, 0, 20)
                 LabelFrame.Font = Enum.Font.SourceSansSemibold
                 LabelFrame.Text = Label.Text
-                LabelFrame.TextColor3 = Color3.fromRGB(111, 108, 112)
+                LabelFrame.TextColor3 = theme.SecondaryTextColor
                 LabelFrame.TextSize = 15.000
                 
                 function Label:SetText(text)
                     Label.Text = text
+                    -- Add fade effect when text changes
+                    Library:TweenTransparency(LabelFrame, 0.5, 0.1)
+                    wait(0.1)
                     LabelFrame.Text = text
+                    Library:TweenTransparency(LabelFrame, 0, 0.1)
                 end
                 
                 return Label
             end
             
-            -- Divider Element
+            -- Enhanced Divider Element
             function Section:CreateDivider(config)
                 local Divider = {}
                 Divider.Name = config.Name or "Divider"
+                
+                local theme = Library:GetTheme()
                 
                 local DividerFrame = Instance.new("Frame")
                 local UICorner = Instance.new("UICorner")
                 
                 DividerFrame.Name = "Divider"
                 DividerFrame.Parent = SectionHolder
-                DividerFrame.BackgroundColor3 = Color3.fromRGB(0, 251, 255)
+                DividerFrame.BackgroundColor3 = theme.MainColor
                 DividerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DividerFrame.BorderSizePixel = 0
                 DividerFrame.Size = UDim2.new(0, 215, 0, 3)
@@ -2263,13 +2771,29 @@ function Library:CreateWindow(config)
                 UICorner.CornerRadius = UDim.new(0, 3)
                 UICorner.Parent = DividerFrame
                 
+                -- Add glow effect
+                local glowEffect = Instance.new("UIGradient")
+                glowEffect.Color = ColorSequence.new{
+                    ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+                    ColorSequenceKeypoint.new(0.5, theme.MainColor),
+                    ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
+                }
+                glowEffect.Transparency = NumberSequence.new{
+                    NumberSequenceKeypoint.new(0, 0.5),
+                    ColorSequenceKeypoint.new(0.5, 0),
+                    NumberSequenceKeypoint.new(1, 0.5)
+                }
+                glowEffect.Parent = DividerFrame
+                
                 return Divider
             end
             
-            -- Config Element
+            -- Enhanced Config Element
             function Section:CreateConfig(config)
                 local Config = {}
                 Config.Name = config.Name or "Config Manager"
+                
+                local theme = Library:GetTheme()
                 
                 local ConfigFrame = Instance.new("Frame")
                 local ConfigTitle = Instance.new("TextLabel")
@@ -2287,7 +2811,6 @@ function Library:CreateWindow(config)
                 local RenameTextBox = Instance.new("TextBox")
                 local RenameConfirmButton = Instance.new("TextButton")
                 
-                -- Main config frame
                 ConfigFrame.Name = "ConfigFrame"
                 ConfigFrame.Parent = SectionHolder
                 ConfigFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -2296,7 +2819,6 @@ function Library:CreateWindow(config)
                 ConfigFrame.BorderSizePixel = 0
                 ConfigFrame.Size = UDim2.new(0, 215, 0, 220)
                 
-                -- Config title
                 ConfigTitle.Name = "ConfigTitle"
                 ConfigTitle.Parent = ConfigFrame
                 ConfigTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -2307,114 +2829,87 @@ function Library:CreateWindow(config)
                 ConfigTitle.Size = UDim2.new(0, 215, 0, 20)
                 ConfigTitle.Font = Enum.Font.SourceSansSemibold
                 ConfigTitle.Text = Config.Name
-                ConfigTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
+                ConfigTitle.TextColor3 = theme.SecondaryTextColor
                 ConfigTitle.TextSize = 15.000
                 ConfigTitle.TextXAlignment = Enum.TextXAlignment.Left
                 
-                -- FIXED: Better looking config list with improved sizing
                 ConfigList.Name = "ConfigList"
                 ConfigList.Parent = ConfigFrame
-                ConfigList.BackgroundColor3 = Color3.fromRGB(28, 28, 33) -- Darker background for better contrast
+                ConfigList.BackgroundColor3 = theme.SecondaryColor
                 ConfigList.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ConfigList.BorderSizePixel = 0
                 ConfigList.Position = UDim2.new(0, 0, 0.11, 0)
-                ConfigList.Size = UDim2.new(1, -4, 0, 120) -- FIXED: Better sizing for symmetry
+                ConfigList.Size = UDim2.new(1, -4, 0, 120)
                 ConfigList.CanvasSize = UDim2.new(0, 0, 0, 0)
                 ConfigList.ScrollBarThickness = 4
-                ConfigList.ScrollBarImageColor3 = Color3.fromRGB(66, 255, 249)
+                ConfigList.ScrollBarImageColor3 = theme.MainColor
                 ConfigList.AutomaticCanvasSize = Enum.AutomaticSize.Y
                 
-                Library:CreateStroke(ConfigList, Color3.fromRGB(50, 50, 50), 1)
+                local configListCorner = Instance.new("UICorner")
+                configListCorner.CornerRadius = UDim.new(0, 3)
+                configListCorner.Parent = ConfigList
+                
+                Library:CreateStroke(ConfigList, theme.BorderColor, 1)
                 
                 UIListLayout.Parent = ConfigList
                 UIListLayout.SortOrder = Enum.SortOrder.Name
                 UIListLayout.Padding = UDim.new(0, 2)
                 
-                -- Buttons frame
                 ButtonsFrame.Name = "ButtonsFrame"
                 ButtonsFrame.Parent = ConfigFrame
                 ButtonsFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 ButtonsFrame.BackgroundTransparency = 1.000
                 ButtonsFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ButtonsFrame.BorderSizePixel = 0
-                ButtonsFrame.Position = UDim2.new(0, 0, 0.68, 0) -- Moved down from 0.65 to 0.68
+                ButtonsFrame.Position = UDim2.new(0, 0, 0.68, 0)
                 ButtonsFrame.Size = UDim2.new(0, 215, 0, 35)
                 
-                -- Save button
-                SaveButton.Name = "SaveButton"
-                SaveButton.Parent = ButtonsFrame
-                SaveButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SaveButton.BackgroundTransparency = 1.000
-                SaveButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                SaveButton.BorderSizePixel = 0
-                SaveButton.Position = UDim2.new(0, 0, 0, 0)
-                SaveButton.Size = UDim2.new(0, 50, 0, 25)
-                SaveButton.Font = Enum.Font.SourceSansSemibold
-                SaveButton.Text = "Save"
-                SaveButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SaveButton.TextSize = 14.000
+                -- Enhanced config buttons
+                local buttons = {
+                    {SaveButton, "Save", 0},
+                    {LoadButton, "Load", 55},
+                    {DeleteButton, "Delete", 110},
+                    {RenameButton, "Rename", 165}
+                }
                 
-                Library:CreateStroke(SaveButton, Color3.fromRGB(50, 50, 50), 1)
+                for i, buttonData in ipairs(buttons) do
+                    local button, text, xPos = buttonData[1], buttonData[2], buttonData[3]
+                    
+                    button.Name = text .. "Button"
+                    button.Parent = ButtonsFrame
+                    button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                    button.BackgroundTransparency = 1.000
+                    button.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                    button.BorderSizePixel = 0
+                    button.Position = UDim2.new(0, xPos, 0, 0)
+                    button.Size = UDim2.new(0, 50, 0, 25)
+                    button.Font = Enum.Font.SourceSansSemibold
+                    button.Text = text
+                    button.TextColor3 = theme.TextColor
+                    button.TextSize = 14.000
+                    
+                    local buttonCorner = Instance.new("UICorner")
+                    buttonCorner.CornerRadius = UDim.new(0, 3)
+                    buttonCorner.Parent = button
+                    
+                    Library:CreateStroke(button, theme.BorderColor, 1)
+                    Library:AddHoverEffect(button)
+                end
                 
-                -- Load button
-                LoadButton.Name = "LoadButton"
-                LoadButton.Parent = ButtonsFrame
-                LoadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                LoadButton.BackgroundTransparency = 1.000
-                LoadButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                LoadButton.BorderSizePixel = 0
-                LoadButton.Position = UDim2.new(0, 55, 0, 0)
-                LoadButton.Size = UDim2.new(0, 50, 0, 25)
-                LoadButton.Font = Enum.Font.SourceSansSemibold
-                LoadButton.Text = "Load"
-                LoadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                LoadButton.TextSize = 14.000
-                
-                Library:CreateStroke(LoadButton, Color3.fromRGB(50, 50, 50), 1)
-                
-                -- Delete button
-                DeleteButton.Name = "DeleteButton"
-                DeleteButton.Parent = ButtonsFrame
-                DeleteButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                DeleteButton.BackgroundTransparency = 1.000
-                DeleteButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                DeleteButton.BorderSizePixel = 0
-                DeleteButton.Position = UDim2.new(0, 110, 0, 0)
-                DeleteButton.Size = UDim2.new(0, 50, 0, 25)
-                DeleteButton.Font = Enum.Font.SourceSansSemibold
-                DeleteButton.Text = "Delete"
-                DeleteButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- Changed from red to normal white
-                DeleteButton.TextSize = 14.000
-                
-                Library:CreateStroke(DeleteButton, Color3.fromRGB(50, 50, 50), 1)
-                
-                -- Rename button
-                RenameButton.Name = "RenameButton"
-                RenameButton.Parent = ButtonsFrame
-                RenameButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                RenameButton.BackgroundTransparency = 1.000
-                RenameButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                RenameButton.BorderSizePixel = 0
-                RenameButton.Position = UDim2.new(0, 165, 0, 0)
-                RenameButton.Size = UDim2.new(0, 50, 0, 25)
-                RenameButton.Font = Enum.Font.SourceSansSemibold
-                RenameButton.Text = "Rename"
-                RenameButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                RenameButton.TextSize = 14.000
-                
-                Library:CreateStroke(RenameButton, Color3.fromRGB(50, 50, 50), 1)
-                
-                -- Save as frame (initially hidden)
                 SaveAsFrame.Name = "SaveAsFrame"
                 SaveAsFrame.Parent = ConfigFrame
-                SaveAsFrame.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+                SaveAsFrame.BackgroundColor3 = theme.AccentColor
                 SaveAsFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 SaveAsFrame.BorderSizePixel = 0
-                SaveAsFrame.Position = UDim2.new(0, 0, 0.85, 0) -- Moved down from 0.82 to 0.85
+                SaveAsFrame.Position = UDim2.new(0, 0, 0.85, 0)
                 SaveAsFrame.Size = UDim2.new(0, 215, 0, 25)
                 SaveAsFrame.Visible = false
                 
-                Library:CreateStroke(SaveAsFrame, Color3.fromRGB(50, 50, 50), 1)
+                local saveAsCorner = Instance.new("UICorner")
+                saveAsCorner.CornerRadius = UDim.new(0, 3)
+                saveAsCorner.Parent = SaveAsFrame
+                
+                Library:CreateStroke(SaveAsFrame, theme.BorderColor, 1)
                 
                 SaveAsTextBox.Name = "SaveAsTextBox"
                 SaveAsTextBox.Parent = SaveAsFrame
@@ -2426,14 +2921,15 @@ function Library:CreateWindow(config)
                 SaveAsTextBox.Size = UDim2.new(0, 150, 0, 25)
                 SaveAsTextBox.Font = Enum.Font.SourceSansSemibold
                 SaveAsTextBox.PlaceholderText = "Config name..."
+                SaveAsTextBox.PlaceholderColor3 = theme.SecondaryTextColor
                 SaveAsTextBox.Text = ""
-                SaveAsTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SaveAsTextBox.TextColor3 = theme.TextColor
                 SaveAsTextBox.TextSize = 14.000
                 SaveAsTextBox.TextXAlignment = Enum.TextXAlignment.Left
                 
                 SaveAsButton.Name = "SaveAsButton"
                 SaveAsButton.Parent = SaveAsFrame
-                SaveAsButton.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+                SaveAsButton.BackgroundColor3 = theme.MainColor
                 SaveAsButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 SaveAsButton.BorderSizePixel = 0
                 SaveAsButton.Position = UDim2.new(0, 160, 0, 2)
@@ -2443,17 +2939,26 @@ function Library:CreateWindow(config)
                 SaveAsButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 SaveAsButton.TextSize = 14.000
                 
-                -- Rename frame (initially hidden)
+                local saveAsButtonCorner = Instance.new("UICorner")
+                saveAsButtonCorner.CornerRadius = UDim.new(0, 3)
+                saveAsButtonCorner.Parent = SaveAsButton
+                
+                Library:AddHoverEffect(SaveAsButton)
+                
                 RenameFrame.Name = "RenameFrame"
                 RenameFrame.Parent = ConfigFrame
-                RenameFrame.BackgroundColor3 = Color3.fromRGB(36, 36, 43)
+                RenameFrame.BackgroundColor3 = theme.AccentColor
                 RenameFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 RenameFrame.BorderSizePixel = 0
-                RenameFrame.Position = UDim2.new(0, 0, 0.85, 0) -- Moved down from 0.82 to 0.85
+                RenameFrame.Position = UDim2.new(0, 0, 0.85, 0)
                 RenameFrame.Size = UDim2.new(0, 215, 0, 25)
                 RenameFrame.Visible = false
                 
-                Library:CreateStroke(RenameFrame, Color3.fromRGB(50, 50, 50), 1)
+                local renameCorner = Instance.new("UICorner")
+                renameCorner.CornerRadius = UDim.new(0, 3)
+                renameCorner.Parent = RenameFrame
+                
+                Library:CreateStroke(RenameFrame, theme.BorderColor, 1)
                 
                 RenameTextBox.Name = "RenameTextBox"
                 RenameTextBox.Parent = RenameFrame
@@ -2465,14 +2970,15 @@ function Library:CreateWindow(config)
                 RenameTextBox.Size = UDim2.new(0, 150, 0, 25)
                 RenameTextBox.Font = Enum.Font.SourceSansSemibold
                 RenameTextBox.PlaceholderText = "New name..."
+                RenameTextBox.PlaceholderColor3 = theme.SecondaryTextColor
                 RenameTextBox.Text = ""
-                RenameTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                RenameTextBox.TextColor3 = theme.TextColor
                 RenameTextBox.TextSize = 14.000
                 RenameTextBox.TextXAlignment = Enum.TextXAlignment.Left
                 
                 RenameConfirmButton.Name = "RenameConfirmButton"
                 RenameConfirmButton.Parent = RenameFrame
-                RenameConfirmButton.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
+                RenameConfirmButton.BackgroundColor3 = theme.MainColor
                 RenameConfirmButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 RenameConfirmButton.BorderSizePixel = 0
                 RenameConfirmButton.Position = UDim2.new(0, 160, 0, 2)
@@ -2482,12 +2988,15 @@ function Library:CreateWindow(config)
                 RenameConfirmButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 RenameConfirmButton.TextSize = 14.000
                 
-                -- Variables
+                local renameButtonCorner = Instance.new("UICorner")
+                renameButtonCorner.CornerRadius = UDim.new(0, 3)
+                renameButtonCorner.Parent = RenameConfirmButton
+                
+                Library:AddHoverEffect(RenameConfirmButton)
+                
                 Config.SelectedConfig = nil
                 
-                -- Functions
                 function Config:RefreshList()
-                    -- Clear existing items
                     for _, child in ipairs(ConfigList:GetChildren()) do
                         if child:IsA("TextButton") then
                             child:Destroy()
@@ -2505,40 +3014,57 @@ function Library:CreateWindow(config)
                         ConfigButton.BackgroundTransparency = 1.000
                         ConfigButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                         ConfigButton.BorderSizePixel = 0
-                        ConfigButton.Size = UDim2.new(1, -8, 0, 20) -- FIXED: Better symmetrical sizing
+                        ConfigButton.Size = UDim2.new(1, -8, 0, 20)
                         ConfigButton.Font = Enum.Font.SourceSansSemibold
                         ConfigButton.Text = " " .. configName
-                        ConfigButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        ConfigButton.TextColor3 = theme.TextColor
                         ConfigButton.TextSize = 14.000
                         ConfigButton.TextXAlignment = Enum.TextXAlignment.Left
+                        
+                        local configButtonCorner = Instance.new("UICorner")
+                        configButtonCorner.CornerRadius = UDim.new(0, 3)
+                        configButtonCorner.Parent = ConfigButton
+                        
+                        Library:AddHoverEffect(ConfigButton)
                         
                         Library:CreateConnection(ConfigButton.MouseButton1Click, function()
                             -- Deselect all other configs
                             for _, child in ipairs(ConfigList:GetChildren()) do
                                 if child:IsA("TextButton") then
-                                    child.BackgroundTransparency = 1.000
-                                    child.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                    Library:TweenTransparency(child, 1, 0.2)
+                                    Library:TweenColor(child, "TextColor3", theme.TextColor, 0.2)
                                 end
                             end
                             
                             -- Select this config
-                            ConfigButton.BackgroundTransparency = 0.8
-                            ConfigButton.BackgroundColor3 = Color3.fromRGB(66, 255, 249)
-                            ConfigButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                            Library:TweenTransparency(ConfigButton, 0.2, 0.2)
+                            Library:TweenColor(ConfigButton, "BackgroundColor3", theme.MainColor, 0.2)
+                            Library:TweenColor(ConfigButton, "TextColor3", Color3.fromRGB(0, 0, 0), 0.2)
                             Config.SelectedConfig = configName
+                            
+                            Library:CreateSound("rbxasset://sounds/button_click.wav", 0.2, 1.2)
                         end)
                     end
                 end
                 
                 function Config:HideAllFrames()
-                    SaveAsFrame.Visible = false
-                    RenameFrame.Visible = false
+                    if SaveAsFrame.Visible then
+                        Library:TweenTransparency(SaveAsFrame, 1, 0.2)
+                        wait(0.2)
+                        SaveAsFrame.Visible = false
+                    end
+                    if RenameFrame.Visible then
+                        Library:TweenTransparency(RenameFrame, 1, 0.2)
+                        wait(0.2)
+                        RenameFrame.Visible = false
+                    end
                 end
                 
-                -- Button connections
                 Library:CreateConnection(SaveButton.MouseButton1Click, function()
                     Config:HideAllFrames()
                     SaveAsFrame.Visible = true
+                    SaveAsFrame.BackgroundTransparency = 1
+                    Library:TweenTransparency(SaveAsFrame, 0, 0.2)
                     SaveAsTextBox:CaptureFocus()
                 end)
                 
@@ -2547,8 +3073,10 @@ function Library:CreateWindow(config)
                         local success, message = Library:LoadConfig(Config.SelectedConfig)
                         if success then
                             print("✅ Config loaded successfully:", Config.SelectedConfig)
+                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 1.3)
                         else
                             warn("❌ Failed to load config:", Config.SelectedConfig, "-", message)
+                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 0.7)
                         end
                     else
                         warn("❌ No config selected")
@@ -2562,6 +3090,7 @@ function Library:CreateWindow(config)
                             print("✅ Config deleted successfully:", Config.SelectedConfig)
                             Config.SelectedConfig = nil
                             Config:RefreshList()
+                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 0.8)
                         else
                             warn("❌ Failed to delete config:", Config.SelectedConfig)
                         end
@@ -2574,20 +3103,23 @@ function Library:CreateWindow(config)
                     if Config.SelectedConfig then
                         Config:HideAllFrames()
                         RenameFrame.Visible = true
+                        RenameFrame.BackgroundTransparency = 1
+                        Library:TweenTransparency(RenameFrame, 0, 0.2)
                         RenameTextBox.Text = Config.SelectedConfig
                         RenameTextBox:CaptureFocus()
                     end
                 end)
                 
                 Library:CreateConnection(SaveAsButton.MouseButton1Click, function()
-                    local configName = SaveAsTextBox.Text:gsub("%s+", "_") -- Replace spaces with underscores
+                    local configName = SaveAsTextBox.Text:gsub("%s+", "_")
                     if configName ~= "" then
                         local success, message = Library:SaveConfig(configName)
                         if success then
                             print("✅ Config saved successfully:", configName)
                             SaveAsTextBox.Text = ""
-                            SaveAsFrame.Visible = false
+                            Config:HideAllFrames()
                             Config:RefreshList()
+                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 1.3)
                         else
                             warn("❌ Failed to save config:", configName, "-", message)
                         end
@@ -2597,15 +3129,16 @@ function Library:CreateWindow(config)
                 end)
                 
                 Library:CreateConnection(RenameConfirmButton.MouseButton1Click, function()
-                    local newName = RenameTextBox.Text:gsub("%s+", "_") -- Replace spaces with underscores
+                    local newName = RenameTextBox.Text:gsub("%s+", "_")
                     if newName ~= "" and Config.SelectedConfig then
                         local success = Library:RenameConfig(Config.SelectedConfig, newName)
                         if success then
                             print("✅ Config renamed successfully from", Config.SelectedConfig, "to", newName)
                             Config.SelectedConfig = newName
                             RenameTextBox.Text = ""
-                            RenameFrame.Visible = false
+                            Config:HideAllFrames()
                             Config:RefreshList()
+                            Library:CreateSound("rbxasset://sounds/impact_sound.wav", 0.4, 1.2)
                         else
                             warn("❌ Failed to rename config from", Config.SelectedConfig, "to", newName)
                         end
@@ -2618,7 +3151,6 @@ function Library:CreateWindow(config)
                     end
                 end)
                 
-                -- Enter key support for textboxes
                 Library:CreateConnection(SaveAsTextBox.FocusLost, function(enterPressed)
                     if enterPressed then
                         SaveAsButton.MouseButton1Click:Fire()
@@ -2631,10 +3163,119 @@ function Library:CreateWindow(config)
                     end
                 end)
                 
-                -- Initial refresh
                 Config:RefreshList()
-                
                 return Config
+            end
+            
+            -- Settings Elements for Settings Tab
+            function Section:CreateThemeDropdown()
+                local ThemeDropdown = self:CreateDropdown({
+                    Name = "Theme",
+                    Options = {"Default", "Dark", "Light", "Red", "Green", "Orange"},
+                    Default = Library.CurrentTheme,
+                    Flag = "Theme",
+                    Callback = function(theme)
+                        Library:SetTheme(theme)
+                    end
+                })
+                return ThemeDropdown
+            end
+            
+            function Section:CreateMenuKeybind()
+                local MenuKeybind = self:CreateKeybind({
+                    Name = "Menu Keybind",
+                    Default = Library.Settings.MenuKeybind,
+                    Flag = "MenuKeybind",
+                    Callback = function(key)
+                        Library.Settings.MenuKeybind = key
+                    end
+                })
+                return MenuKeybind
+            end
+            
+            function Section:CreateAnimationSpeed()
+                local AnimationSpeed = self:CreateSlider({
+                    Name = "Animation Speed",
+                    Min = 0.1,
+                    Max = 1,
+                    Default = Library.Settings.AnimationSpeed,
+                    Flag = "AnimationSpeed",
+                    Callback = function(value)
+                        Library.Settings.AnimationSpeed = value
+                    end
+                })
+                return AnimationSpeed
+            end
+            
+            function Section:CreateSoundToggle()
+                local SoundToggle = self:CreateToggle({
+                    Name = "Sound Effects",
+                    Default = Library.Settings.SoundEnabled,
+                    Flag = "SoundEnabled",
+                    Callback = function(value)
+                        Library.Settings.SoundEnabled = value
+                    end
+                })
+                return SoundToggle
+            end
+            
+            function Section:CreateHoverEffectsToggle()
+                local HoverEffectsToggle = self:CreateToggle({
+                    Name = "Hover Effects",
+                    Default = Library.Settings.HoverEffects,
+                    Flag = "HoverEffects",
+                    Callback = function(value)
+                        Library.Settings.HoverEffects = value
+                    end
+                })
+                return HoverEffectsToggle
+            end
+            
+            function Section:CreateRainbowToggle()
+                local RainbowToggle = self:CreateToggle({
+                    Name = "Rainbow Mode",
+                    Default = Library.Settings.RainbowMode,
+                    Flag = "RainbowMode",
+                    Callback = function(value)
+                        Library.Settings.RainbowMode = value
+                        if value then
+                            Library:StartRainbowMode()
+                        else
+                            if Library.RainbowConnection then
+                                Library.RainbowConnection:Disconnect()
+                                Library.RainbowConnection = nil
+                            end
+                            Library:UpdateThemeForAllElements()
+                        end
+                    end
+                })
+                
+                local RainbowSpeed = RainbowToggle:AddSlider({
+                    Name = "Rainbow Speed",
+                    Min = 1,
+                    Max = 10,
+                    Default = Library.Settings.RainbowSpeed,
+                    Flag = "RainbowSpeed",
+                    Callback = function(value)
+                        Library.Settings.RainbowSpeed = value
+                    end
+                })
+                
+                return RainbowToggle
+            end
+            
+            function Section:CreateUIColorpicker()
+                local UIColorpicker = self:CreateColorpicker({
+                    Name = "UI Color",
+                    Default = Library:GetTheme().MainColor,
+                    Flag = "UIColor",
+                    Callback = function(color)
+                        local theme = Library:GetTheme()
+                        theme.MainColor = color
+                        Library:UpdateThemeForAllElements()
+                    end
+                })
+                return UIColorpicker
             end
             
             table.insert(Page.Sections, Section)
@@ -2651,6 +3292,14 @@ function Library:CreateWindow(config)
         end
         Window.CurrentPage = page
         page:SetActive(true)
+        
+        -- Close any open dropdowns when switching pages
+        for _, dropdown in ipairs(Library.OpenDropdowns) do
+            if dropdown.Close then
+                dropdown:Close()
+            end
+        end
+        Library.OpenDropdowns = {}
     end
     
     -- Set first page as default
@@ -2661,19 +3310,53 @@ function Library:CreateWindow(config)
         end
     end)
     
+    -- Load theme preference
+    spawn(function()
+        wait(0.5)
+        local success, _ = Library:LoadConfig("_theme_preference")
+        if success then
+            Library:UpdateThemeForAllElements()
+        end
+    end)
+    
     return Window
 end
 
 function Library:Destroy()
-    for _, connection in pairs(self.Connections) do
-        connection:Disconnect()
+    -- Stop all animations
+    for _, animation in pairs(self.Animations) do
+        if animation then
+            animation:Cancel()
+        end
     end
+    
+    -- Disconnect all connections
+    for _, connection in pairs(self.Connections) do
+        if connection then
+            connection:Disconnect()
+        end
+    end
+    
+    -- Stop rainbow mode
+    if self.RainbowConnection then
+        self.RainbowConnection:Disconnect()
+    end
+    
+    -- Destroy GUIs
     if self.GUI then
         self.GUI:Destroy()
     end
     if self.OverlayGui then
         self.OverlayGui:Destroy()
     end
+    
+    -- Clear tables
+    self.Connections = {}
+    self.Animations = {}
+    self.OpenDropdowns = {}
+    self.Elements = {}
+    self.Pages = {}
+    self.Flags = {}
 end
 
 return Library
