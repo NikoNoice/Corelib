@@ -1595,7 +1595,8 @@ function Library:CreateWindow(config)
         Section1.Position = UDim2.new(0.0127659574, 0, 0.0730183199, 0)
         Section1.Size = UDim2.new(0, 225, 0, 520)
         Section1.Visible = false
-        
+        Library:CreateStroke(Section1, theme.BorderColor, 1)
+
         -- Make it a scrolling frame
         local ScrollingFrame1 = Instance.new("ScrollingFrame")
         ScrollingFrame1.Name = "ScrollingFrame1"
@@ -1627,7 +1628,8 @@ function Library:CreateWindow(config)
         Section2.Position = UDim2.new(0.510638297, 0, 0.0730183199, 0)
         Section2.Size = UDim2.new(0, 225, 0, 520)
         Section2.Visible = false
-        
+        Library:CreateStroke(Section2, theme.BorderColor, 1)
+
         -- Make it a scrolling frame
         local ScrollingFrame2 = Instance.new("ScrollingFrame")
         ScrollingFrame2.Name = "ScrollingFrame2"
