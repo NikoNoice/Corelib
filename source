@@ -2321,30 +2321,27 @@ function Library:CreateWindow(config)
                 Dropdown.UIListLayout = UIListLayout
                 Dropdown.Arrow = Arrow
                 
-                function Dropdown:SetValue(value)
-                    self.Value = value
-                    Library.Flags[self.Flag] = value
-                    
-                    local theme = Library:GetTheme()
-                    
-                    if self.Multi then
-                        if type(value) ~= "table" then
-                            value = {value}
-                        end
-                        self.Button.Text = " " .. (#value > 0 and table.concat(value, ", ") or "None")
-                    else
-                        if type(value) == "table" then
-                            value = value[1] or "None"
-                        end
-                        self.Button.Text = " " .. tostring(value)
-                    end
-                    
-                    -- Update arrow color to match theme
-                    Library:TweenColor(self.Arrow, "ImageColor3", theme.SecondaryTextColor, 0.2)
-                    
-                    self.Callback(value)
+              function Dropdown:SetValue(value)
+                -- guard against “no actual change”
+                if self.Value == value then
+                  -- only update visuals (no callback)
+                  self.Button.Text = " " .. tostring(value)
+                  Library:TweenColor(self.Arrow, "ImageColor3", Library:GetTheme().SecondaryTextColor, 0.2)
+                  return
                 end
-                
+            
+                -- store the new value
+                self.Value = value
+                Library.Flags[self.Flag] = value
+            
+                -- update UI
+                self.Button.Text = " " .. tostring(value)
+                Library:TweenColor(self.Arrow, "ImageColor3", Library:GetTheme().SecondaryTextColor, 0.2)
+            
+                -- only now fire the user‑supplied callback
+                self.Callback(value)
+              end
+                            
                 function Dropdown:Refresh()
                     for _, child in ipairs(self.Holder:GetChildren()) do
                         if child:IsA("TextLabel") then child:Destroy() end
