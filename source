@@ -188,10 +188,26 @@ function Library:UpdateThemeForAllElements()
         if page.ScrollingFrame2 then
             page.ScrollingFrame2.ScrollBarImageColor3 = theme.MainColor
         end
-        -- Update section frames
+        -- Update section frames and their titles
         for _, section in pairs(page.Sections or {}) do
             if section.Frame then
                 self:TweenColor(section.Frame, "BackgroundColor3", theme.BackgroundColor, 0.3)
+                
+                -- Update section title elements
+                local title = section.Frame:FindFirstChild("Title")
+                if title then
+                    self:TweenColor(title, "BackgroundColor3", theme.SecondaryColor, 0.3)
+                    
+                    local titleLabel = title:FindFirstChild("TextLabel")
+                    if titleLabel then
+                        self:TweenColor(titleLabel, "TextColor3", theme.MainColor, 0.3)
+                    end
+                    
+                    local roundingFiller = title:FindFirstChild("Roundingfiller")
+                    if roundingFiller then
+                        self:TweenColor(roundingFiller, "BackgroundColor3", theme.SecondaryColor, 0.3)
+                    end
+                end
             end
         end
         
@@ -205,6 +221,14 @@ function Library:UpdateThemeForAllElements()
             else
                 self:TweenColor(page.TabButton, "TextColor3", theme.SecondaryTextColor, 0.3)
             end
+        end
+    end
+    
+    -- Update all UI elements
+    for _, element in pairs(self.Elements) do
+        if element.SetValue then
+            -- Re-trigger the SetValue to update colors
+            element:SetValue(element.Value)
         end
     end
 end
@@ -1607,8 +1631,6 @@ function Library:CreateWindow(config)
         Section1.Position = UDim2.new(0.0127659574, 0, 0.0730183199, 0)
         Section1.Size = UDim2.new(0, 225, 0, 480) -- Reduced from 520 to 480
         Section1.Visible = false
-        Library:CreateStroke(Section1, theme.BorderColor, 1)
-
         
         -- Make it a scrolling frame
         local ScrollingFrame1 = Instance.new("ScrollingFrame")
@@ -1647,8 +1669,7 @@ function Library:CreateWindow(config)
         Section2.Position = UDim2.new(0.510638297, 0, 0.0730183199, 0)
         Section2.Size = UDim2.new(0, 225, 0, 480) -- Reduced from 520 to 480
         Section2.Visible = false
-        Library:CreateStroke(Section2, theme.BorderColor, 1)
-
+        
         -- Make it a scrolling frame
         local ScrollingFrame2 = Instance.new("ScrollingFrame")
         ScrollingFrame2.Name = "ScrollingFrame2"
@@ -1860,6 +1881,8 @@ function Library:CreateWindow(config)
                 function Toggle:SetValue(value)
                     Toggle.Value = value
                     Library.Flags[Toggle.Flag] = value
+                    
+                    local theme = Library:GetTheme()
                     
                     if value then
                         Library:TweenColor(ToggleButton, "BackgroundColor3", theme.MainColor, 0.2)
@@ -2180,11 +2203,14 @@ function Library:CreateWindow(config)
                     Slider.Value = value
                     Library.Flags[Slider.Flag] = value
                     
+                    local theme = Library:GetTheme()
+                    
                     local percent = (value - Slider.Min) / (Slider.Max - Slider.Min)
                     local fillWidth = 214 * percent
                     
                     Library:TweenSize(Filler, UDim2.new(0, fillWidth, 0, 4), 0.1)
                     Library:TweenPosition(SliderHead, UDim2.new(0, fillWidth - 5, -0.75, 0), 0.1)
+                    Library:TweenColor(Filler, "BackgroundColor3", theme.MainColor, 0.1)
                     
                     SliderValue.Text = tostring(value)
                     
@@ -2300,6 +2326,8 @@ function Library:CreateWindow(config)
                     self.Value = value
                     Library.Flags[self.Flag] = value
                     
+                    local theme = Library:GetTheme()
+                    
                     if self.Multi then
                         if type(value) ~= "table" then
                             value = {value}
@@ -2311,6 +2339,9 @@ function Library:CreateWindow(config)
                         end
                         self.Button.Text = " " .. tostring(value)
                     end
+                    
+                    -- Update arrow color to match theme
+                    Library:TweenColor(self.Arrow, "ImageColor3", theme.SecondaryTextColor, 0.2)
                     
                     self.Callback(value)
                 end
@@ -2785,6 +2816,9 @@ function Library:CreateWindow(config)
                 UICorner.CornerRadius = UDim.new(0, 3)
                 UICorner.Parent = DividerFrame
                 
+                -- Store reference for theme updates
+                Divider.Frame = DividerFrame
+                
                 -- Add glow effect
                 local glowEffect = Instance.new("UIGradient")
                 glowEffect.Color = ColorSequence.new{
@@ -2798,6 +2832,21 @@ function Library:CreateWindow(config)
                     NumberSequenceKeypoint.new(1, 0.5)
                 }
                 glowEffect.Parent = DividerFrame
+                
+                -- Add to elements for theme updates
+                Library.Elements[Divider.Name .. "_divider"] = Divider
+                
+                function Divider:SetValue(value)
+                    local theme = Library:GetTheme()
+                    Library:TweenColor(DividerFrame, "BackgroundColor3", theme.MainColor, 0.2)
+                    
+                    -- Update gradient colors
+                    glowEffect.Color = ColorSequence.new{
+                        ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+                        ColorSequenceKeypoint.new(0.5, theme.MainColor),
+                        ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
+                    }
+                end
                 
                 return Divider
             end
