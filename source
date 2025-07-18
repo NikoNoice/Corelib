@@ -942,7 +942,6 @@ function Library:CreateWindow(config)
     Roundingfiller.Position = UDim2.new(0, 0, -0.209804028, 0)
     Roundingfiller.Size = UDim2.new(0, 470, 0, 7)
     Roundingfiller.ZIndex = 1
-    Roundingfiller.BackgroundTransparency = 1
 
     UICorner_2.CornerRadius = UDim.new(0, 3)
     UICorner_2.Parent = Roundingfiller
@@ -1174,11 +1173,10 @@ function Library:CreateWindow(config)
         LineGlow.BackgroundTransparency = 0.900
         LineGlow.BorderColor3 = Color3.fromRGB(0, 0, 0)
         LineGlow.BorderSizePixel = 0
-        -- FIXED: Made line glow stretch to the top of the UI
         LineGlow.Position = UDim2.new(-0.06,  0, -1.6, 0) -- Extended upward
         LineGlow.Size     = UDim2.new( 0,   55,   0,   32) -- Made taller to reach top
         LineGlow.Visible = false
-        LineGlow.ZIndex = 200
+        LineGlow.ZIndex = 300
         
         UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(66, 255, 249)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(66, 255, 249))}
         UIGradient.Rotation = 90
@@ -1295,7 +1293,7 @@ function Library:CreateWindow(config)
             Roundingfiller.BorderSizePixel = 0
             Roundingfiller.Position = UDim2.new(0, 0, -0.48, 0)
             Roundingfiller.Size = UDim2.new(0, 225, 0, 10)
-            
+
             UICorner_2.CornerRadius = UDim.new(0, 3)
             UICorner_2.Parent = Roundingfiller
             
