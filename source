@@ -1,4 +1,4 @@
--- Complete Custom GUI Library - FIXED VERSION
+-- Complete Custom GUI Library - FIXED VERSION with Positioning Improvements
 -- Based on your original GUI design with all elements + Config System
 
 local Library = {}
@@ -516,7 +516,6 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedValue.BackgroundTransparency = 1.000
     SpeedValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SpeedValue.BorderSizePixel = 0
-    -- right after you create SpeedValue, before any connections:
     SpeedValue.AnchorPoint = Vector2.new(1, 0)
     SpeedValue.Position = UDim2.new(1, -4, 0, 0)
     SpeedValue.TextYAlignment = Enum.TextYAlignment.Center
@@ -923,14 +922,8 @@ function Library:CreateWindow(config)
     Topbar.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
     Topbar.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Topbar.BorderSizePixel = 0
-    Topbar.Position = UDim2.new(0, 0, 0.0103270225, 0)
+    Topbar.Position = UDim2.new(0, 0, 0, 8)      -- FIXED: absolute positioning
     Topbar.Size = UDim2.new(0, 470, 0, 30)
-    
-        Topbar.Position = UDim2.new(0, 0, 0, 8)      -- absolute
-        local topbarH   = Topbar.Size.Y.Offset      -- 30
-        local gutter    = 16
-        local sectionY  = topbarH + 20         -- 38
-        local sectionW  = 225
 
     TabsHolder.Name = "TabsHolder"
     TabsHolder.Parent = Topbar
@@ -1174,6 +1167,13 @@ function Library:CreateWindow(config)
         Page.Sections = {}
         Page.Active = false
         
+        -- FIXED: Calculate positions using absolute integer values
+        local topbarHeight = 30
+        local topbarY = 8
+        local sectionY = topbarY + topbarHeight + 12  -- 50px from top of window
+        local gutter = 16
+        local sectionW = 225
+        
         -- Create tab button
         local title = Instance.new("TextLabel")
         local SelectedLine = Instance.new("Frame")
@@ -1223,17 +1223,15 @@ function Library:CreateWindow(config)
         local UIListLayout1 = Instance.new("UIListLayout")
         local UIListLayout2 = Instance.new("UIListLayout")
         
-        -- Section 1 (Left) - Using offset-based positioning
+        -- FIXED: Section 1 (Left) - Pure offset positioning
         Section1.Name = "Section1"
         Section1.Parent = Background
         Section1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section1.BackgroundTransparency = 1.000
         Section1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section1.BorderSizePixel = 0
--- hard‑coded scale values
-        Section1.Position = UDim2.new(0.0112055354, 0, 0.0730183199, 0)
-
-        Section1.Size          = UDim2.new(0, sectionW,           0, 0)
+        Section1.Position = UDim2.new(0, gutter, 0, sectionY)  -- 16px from left, 50px from top
+        Section1.Size = UDim2.new(0, sectionW, 0, 0)
         Section1.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
         Section1.Visible = false
         
@@ -1245,15 +1243,15 @@ function Library:CreateWindow(config)
         -- Store stroke reference for toggling
         local stroke1 = Library:CreateStroke(Section1, Color3.fromRGB(50, 50, 50), 1)
         
-        -- Section 2 (Right) - Using offset-based positioning  
+        -- FIXED: Section 2 (Right) - Pure offset positioning  
         Section2.Name = "Section2"
         Section2.Parent = Background
         Section2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section2.BackgroundTransparency = 1.000
         Section2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section2.BorderSizePixel = 0
-        Section2.Position = UDim2.new(0.497872353, 4,  0.0730183199, 0)
-        Section2.Size          = UDim2.new(0, sectionW,               0, 0)
+        Section2.Position = UDim2.new(0, gutter + sectionW + gutter, 0, sectionY)  -- 257px from left, 50px from top
+        Section2.Size = UDim2.new(0, sectionW, 0, 0)
         Section2.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
         Section2.Visible = false
         
@@ -1336,13 +1334,14 @@ function Library:CreateWindow(config)
             UICorner.CornerRadius = UDim.new(0, 3)
             UICorner.Parent = SectionFrame
             
+            -- FIXED: Use integer positioning for title elements
             Title.Name = "Title"
             Title.Parent = SectionFrame
             Title.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
             Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Title.BorderSizePixel = 0
-            Title.Position = UDim2.new(0, 0, 0.0219435729, 0)
-            Title.Size = UDim2.new(0, 225, 0, 15)
+            Title.Position = UDim2.new(0, 0, 0, 0)  -- FIXED: Exactly at top
+            Title.Size = UDim2.new(0, sectionW, 0, 15)
             
             -- Add stroke to section title
             Library:CreateStroke(Title, Color3.fromRGB(50, 50, 50), 1)
@@ -1352,8 +1351,8 @@ function Library:CreateWindow(config)
             Roundingfiller.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
             Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Roundingfiller.BorderSizePixel = 0
-            Roundingfiller.Position = UDim2.new(0, 0, -0.48, 0)
-            Roundingfiller.Size = UDim2.new(0, 225, 0, 10)
+            Roundingfiller.Position = UDim2.new(0, 0, 0, -7)  -- FIXED: 7px up for rounding
+            Roundingfiller.Size = UDim2.new(0, sectionW, 0, 10)
             
             UICorner_2.CornerRadius = UDim.new(0, 3)
             UICorner_2.Parent = Roundingfiller
@@ -1363,8 +1362,8 @@ function Library:CreateWindow(config)
             TitleLabel.BackgroundTransparency = 1.000
             TitleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
             TitleLabel.BorderSizePixel = 0
-            TitleLabel.Position = UDim2.new(0.0279069766, 0, -0.466666669, 0)
-            TitleLabel.Size = UDim2.new(0, 79, 0, 22)
+            TitleLabel.Position = UDim2.new(0, 6, 0, -7)  -- FIXED: 6px from left, 7px up
+            TitleLabel.Size = UDim2.new(0, 200, 0, 22)
             TitleLabel.Font = Enum.Font.SourceSansSemibold
             TitleLabel.Text = Section.Name
             TitleLabel.TextColor3 = Color3.fromRGB(66, 255, 249)
@@ -1377,8 +1376,9 @@ function Library:CreateWindow(config)
             SectionHolder.BackgroundTransparency = 1.000
             SectionHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionHolder.BorderSizePixel = 0
-            SectionHolder.Position = UDim2.new(0.0149999997, 0, 0.0877742916, 0)
-            SectionHolder.Size = UDim2.new(0, 216, 0, 283)
+            SectionHolder.Position = UDim2.new(0, 8, 0, 20)  -- FIXED: 8px from left, 20px down
+            SectionHolder.Size = UDim2.new(0, sectionW - 16, 0, 0)  -- Account for padding
+            SectionHolder.AutomaticSize = Enum.AutomaticSize.Y
             
             UIListLayout.Parent = SectionHolder
             UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
