@@ -1225,7 +1225,7 @@ function Library:CreateWindow(config)
         Section1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section1.BorderSizePixel = 0
         Section1.Position = UDim2.new(0.0132055354, 0, 0.0730183199, 0) -- Better centered position
-        Section1.Size = UDim2.new(0, 225, 0, 520)
+        Section1.Size = UDim2.new(0, 225, 0, 500)
         Section1.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
         Section1.Visible = false
         
@@ -1245,7 +1245,7 @@ function Library:CreateWindow(config)
         Section2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section2.BorderSizePixel = 0
         Section2.Position = UDim2.new(0.497872353, 4, 0.0730183199, 0) -- Better centered position
-        Section2.Size = UDim2.new(0, 225, 0, 520) 
+        Section2.Size = UDim2.new(0, 225, 0, 500) 
         Section2.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
         Section2.Visible = false
         
