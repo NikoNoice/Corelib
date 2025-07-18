@@ -182,16 +182,28 @@ function Library:UpdateThemeForAllElements()
     
     -- Update all pages and sections
     for _, page in pairs(self.Pages) do
-        if page.Section1 then
-            -- Update section backgrounds would go here
+        if page.ScrollingFrame1 then
+            page.ScrollingFrame1.ScrollBarImageColor3 = theme.MainColor
         end
-        if page.Section2 then
-            -- Update section backgrounds would go here
+        if page.ScrollingFrame2 then
+            page.ScrollingFrame2.ScrollBarImageColor3 = theme.MainColor
         end
         -- Update section frames
         for _, section in pairs(page.Sections or {}) do
             if section.Frame then
                 self:TweenColor(section.Frame, "BackgroundColor3", theme.BackgroundColor, 0.3)
+            end
+        end
+        
+        -- Update tab colors
+        if page.TabButton then
+            if page.Active then
+                self:TweenColor(page.TabButton, "TextColor3", theme.MainColor, 0.3)
+                if page.SelectedLine then
+                    self:TweenColor(page.SelectedLine, "BackgroundColor3", theme.MainColor, 0.3)
+                end
+            else
+                self:TweenColor(page.TabButton, "TextColor3", theme.SecondaryTextColor, 0.3)
             end
         end
     end
@@ -1593,10 +1605,9 @@ function Library:CreateWindow(config)
         Section1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section1.BorderSizePixel = 0
         Section1.Position = UDim2.new(0.0127659574, 0, 0.0730183199, 0)
-        Section1.Size = UDim2.new(0, 225, 0, 520)
+        Section1.Size = UDim2.new(0, 225, 0, 480) -- Reduced from 520 to 480
         Section1.Visible = false
-        Library:CreateStroke(Section1, theme.BorderColor, 1)
-
+        
         -- Make it a scrolling frame
         local ScrollingFrame1 = Instance.new("ScrollingFrame")
         ScrollingFrame1.Name = "ScrollingFrame1"
@@ -1618,6 +1629,12 @@ function Library:CreateWindow(config)
         Section1Layout.Padding = UDim.new(0, 10)
         Section1Layout.FillDirection = Enum.FillDirection.Vertical
         
+        -- Add padding to ScrollingFrame1
+        local Section1Padding = Instance.new("UIPadding")
+        Section1Padding.PaddingBottom = UDim.new(0, 20)
+        Section1Padding.PaddingTop = UDim.new(0, 5)
+        Section1Padding.Parent = ScrollingFrame1
+        
         -- Section 2 (Right) - Convert to ScrollingFrame
         Section2.Name = "Section2"
         Section2.Parent = Background
@@ -1626,10 +1643,9 @@ function Library:CreateWindow(config)
         Section2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section2.BorderSizePixel = 0
         Section2.Position = UDim2.new(0.510638297, 0, 0.0730183199, 0)
-        Section2.Size = UDim2.new(0, 225, 0, 520)
+        Section2.Size = UDim2.new(0, 225, 0, 480) -- Reduced from 520 to 480
         Section2.Visible = false
-        Library:CreateStroke(Section2, theme.BorderColor, 1)
-
+        
         -- Make it a scrolling frame
         local ScrollingFrame2 = Instance.new("ScrollingFrame")
         ScrollingFrame2.Name = "ScrollingFrame2"
@@ -1650,6 +1666,12 @@ function Library:CreateWindow(config)
         Section2Layout.SortOrder = Enum.SortOrder.LayoutOrder
         Section2Layout.Padding = UDim.new(0, 10)
         Section2Layout.FillDirection = Enum.FillDirection.Vertical
+        
+        -- Add padding to ScrollingFrame2
+        local Section2Padding = Instance.new("UIPadding")
+        Section2Padding.PaddingBottom = UDim.new(0, 20)
+        Section2Padding.PaddingTop = UDim.new(0, 5)
+        Section2Padding.Parent = ScrollingFrame2
         
         
         Page.Section1 = Section1
@@ -2308,14 +2330,18 @@ function Library:CreateWindow(config)
                         OptionLabel.Active = true
                         OptionLabel.ZIndex = self.Holder.ZIndex + 1
                         
+                        -- Check if option is selected
                         local isSelected = self.Multi
                             and table.find(self.Value, option)
                             or (not self.Multi and self.Value == option)
+                        
+                        -- Set initial appearance
                         if isSelected then
                             OptionLabel.TextColor3 = theme.MainColor
                             OptionLabel.Text = "       " .. option
                         else
                             OptionLabel.TextColor3 = theme.SecondaryTextColor
+                            OptionLabel.Text = " " .. option
                         end
                         
                         -- Simple hover effect for option
@@ -2344,13 +2370,16 @@ function Library:CreateWindow(config)
                                         table.remove(selected, index)
                                         OptionLabel.Text = " " .. option
                                         Library:TweenColor(OptionLabel, "TextColor3", theme.SecondaryTextColor, 0.2)
+                                        isSelected = false
                                     else
                                         table.insert(selected, option)
                                         OptionLabel.Text = "       " .. option
                                         Library:TweenColor(OptionLabel, "TextColor3", theme.MainColor, 0.2)
+                                        isSelected = true
                                     end
                                     self:SetValue(selected)
                                 else
+                                    -- Update all options to unselected first
                                     for _, child in pairs(self.Holder:GetChildren()) do
                                         if child:IsA("TextLabel") and child.Name == "Option" then
                                             child.Text = " " .. child.Text:gsub("^%s*", "")
@@ -2358,8 +2387,10 @@ function Library:CreateWindow(config)
                                         end
                                     end
                                     
+                                    -- Update selected option
                                     OptionLabel.Text = "       " .. option
                                     Library:TweenColor(OptionLabel, "TextColor3", theme.MainColor, 0.2)
+                                    isSelected = true
                                     
                                     self:SetValue(option)
                                 end
@@ -2381,7 +2412,9 @@ function Library:CreateWindow(config)
                     self.Holder.Parent = Library.OverlayGui
                     self.Holder.ZIndex = 50
                     
+                    -- Refresh to get current state
                     self:Refresh()
+                    
                     local p, s = self.Button.AbsolutePosition, self.Button.AbsoluteSize
                     self.Holder.Position = UDim2.new(0, p.X, 0, p.Y + s.Y + 5)
                     
@@ -2392,7 +2425,7 @@ function Library:CreateWindow(config)
                     
                     -- Scale in animation
                     self.Holder.Size = UDim2.new(0, 0, 0, 0)
-                    local targetSize = UDim2.new(0, 215, 0, self.UIListLayout.AbsoluteContentSize.Y)
+                    local targetSize = UDim2.new(0, 215, 0, math.max(self.UIListLayout.AbsoluteContentSize.Y, 20))
                     Library:TweenSize(self.Holder, targetSize, 0.2)
                     
                     self._outsideConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -3148,9 +3181,47 @@ function Library:CreateWindow(config)
             function Section:CreateMenuKeybind()
                 local MenuKeybind = self:CreateKeybind({
                     Name = "Menu Keybind",
-                    Default = Library.Settings.MenuKeybind,
+                    Default = "Insert",
                     Flag = "MenuKeybind",
                     Callback = function(key)
+                        -- Convert string back to EnumItem if needed
+                        if type(key) == "string" then
+                            if key == "Insert" then
+                                key = Enum.KeyCode.Insert
+                            elseif key == "Delete" then
+                                key = Enum.KeyCode.Delete
+                            elseif key == "Home" then
+                                key = Enum.KeyCode.Home
+                            elseif key == "End" then
+                                key = Enum.KeyCode.End
+                            elseif key == "F1" then
+                                key = Enum.KeyCode.F1
+                            elseif key == "F2" then
+                                key = Enum.KeyCode.F2
+                            elseif key == "F3" then
+                                key = Enum.KeyCode.F3
+                            elseif key == "F4" then
+                                key = Enum.KeyCode.F4
+                            elseif key == "F5" then
+                                key = Enum.KeyCode.F5
+                            elseif key == "F6" then
+                                key = Enum.KeyCode.F6
+                            elseif key == "F7" then
+                                key = Enum.KeyCode.F7
+                            elseif key == "F8" then
+                                key = Enum.KeyCode.F8
+                            elseif key == "F9" then
+                                key = Enum.KeyCode.F9
+                            elseif key == "F10" then
+                                key = Enum.KeyCode.F10
+                            elseif key == "F11" then
+                                key = Enum.KeyCode.F11
+                            elseif key == "F12" then
+                                key = Enum.KeyCode.F12
+                            elseif key:len() == 1 then
+                                key = Enum.KeyCode[key:upper()]
+                            end
+                        end
                         Library.Settings.MenuKeybind = key
                     end
                 })
