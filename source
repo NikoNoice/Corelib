@@ -1,4 +1,4 @@
--- Complete Custom GUI Library - FIXED VERSION with Positioning Improvements
+-- Complete Custom GUI Library - FIXED VERSION
 -- Based on your original GUI design with all elements + Config System
 
 local Library = {}
@@ -286,8 +286,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     ColorpickerFrame.BorderSizePixel = 0
     ColorpickerFrame.Position = UDim2.new(0, 500, 0, 100)
     ColorpickerFrame.Size = UDim2.new(0, 321, 0, 225)
-    ColorpickerFrame.ZIndex = 200 -- Very high ZIndex for priority
-    ColorpickerFrame.Active = true -- Make it active to capture input priority
+    ColorpickerFrame.ZIndex = 100
     
     UICorner.CornerRadius = UDim.new(0, 3)
     UICorner.Parent = ColorpickerFrame
@@ -302,7 +301,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     Colorpicker.BorderSizePixel = 0
     Colorpicker.Position = UDim2.new(0.034, 0, 0.059, 0)
     Colorpicker.Size = UDim2.new(0, 150, 0, 150)
-    Colorpicker.ZIndex = 201
+    Colorpicker.ZIndex = 101
     
     UICorner_2.CornerRadius = UDim.new(0, 3)
     UICorner_2.Parent = Colorpicker
@@ -316,7 +315,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     HueImage.Size = UDim2.new(1, 0, 1, 0)
     HueImage.Image = "rbxassetid://6976876787"
     HueImage.ImageColor3 = Color3.fromRGB(255, 0, 0)
-    HueImage.ZIndex = 202
+    HueImage.ZIndex = 102
     
     UICorner_3.CornerRadius = UDim.new(0, 3)
     UICorner_3.Parent = HueImage
@@ -328,7 +327,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SaturationImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SaturationImage.BorderSizePixel = 0
     SaturationImage.Size = UDim2.new(1, 0, 1, 0)
-    SaturationImage.ZIndex = 203
+    SaturationImage.ZIndex = 103
     SaturationImage.Image = "rbxassetid://6941137543"
     SaturationImage.ImageColor3 = Color3.fromRGB(0, 0, 0)
     
@@ -342,7 +341,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     ColorpickerHead.BorderSizePixel = 0
     ColorpickerHead.Position = UDim2.new(0.5, 0, 0.5, 0)
     ColorpickerHead.Size = UDim2.new(0, 12, 0, 12)
-    ColorpickerHead.ZIndex = 204
+    ColorpickerHead.ZIndex = 104
     
     UICorner_5.CornerRadius = UDim.new(1, 0)
     UICorner_5.Parent = ColorpickerHead
@@ -358,7 +357,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     HueSlider.BorderSizePixel = 0
     HueSlider.Position = UDim2.new(0.034, 0, 0.82, 0)
     HueSlider.Size = UDim2.new(0, 150, 0, 10)
-    HueSlider.ZIndex = 201
+    HueSlider.ZIndex = 101
     
     UICorner_6.CornerRadius = UDim.new(0, 3)
     UICorner_6.Parent = HueSlider
@@ -381,7 +380,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     HueHead.BorderSizePixel = 0
     HueHead.Position = UDim2.new(0, 0, -0.3, 0)
     HueHead.Size = UDim2.new(0, 4, 0, 16)
-    HueHead.ZIndex = 202
+    HueHead.ZIndex = 102
     
     UICorner_7.CornerRadius = UDim.new(0, 2)
     UICorner_7.Parent = HueHead
@@ -398,7 +397,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     List.BorderSizePixel = 0
     List.Position = UDim2.new(0.536, 0, 0.057, 0)
     List.Size = UDim2.new(0, 136, 0, 100)
-    List.ZIndex = 201
+    List.ZIndex = 101
     
     UIListLayout.Parent = List
     UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -412,7 +411,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
     RainbowToggle.BorderSizePixel = 0
     RainbowToggle.Size = UDim2.new(0, 18, 0, 18)
-    RainbowToggle.ZIndex = 202 -- Fixed ZIndex for proper layering
+    RainbowToggle.ZIndex = 102
     RainbowToggle.Font = Enum.Font.SourceSans
     RainbowToggle.Text = ""
     RainbowToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -437,7 +436,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
     RainbowTitle.TextSize = 15.000
     RainbowTitle.TextXAlignment = Enum.TextXAlignment.Left
-    RainbowTitle.ZIndex = 202 -- Fixed ZIndex
+    RainbowTitle.ZIndex = 102
     
     RainbowCheckmark.Name = "RainbowCheckmark"
     RainbowCheckmark.Parent = RainbowToggle
@@ -448,7 +447,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowCheckmark.Image = "http://www.roblox.com/asset/?id=6031094667"
     RainbowCheckmark.ImageColor3 = Color3.fromRGB(0, 0, 0)
     RainbowCheckmark.Visible = false
-    RainbowCheckmark.ZIndex = 203 -- Fixed ZIndex
+    RainbowCheckmark.ZIndex = 103
     
     -- Speed Slider
     SpeedSlider.Name = "SpeedSlider"
@@ -464,7 +463,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedSlider.TextSize = 15.000
     SpeedSlider.TextXAlignment = Enum.TextXAlignment.Left
     SpeedSlider.TextYAlignment = Enum.TextYAlignment.Top
-    SpeedSlider.ZIndex = 202 -- Fixed ZIndex
+    SpeedSlider.ZIndex = 102
     
     SpeedSliderBar.Name = "SpeedSliderBar"
     SpeedSliderBar.Parent = SpeedSlider
@@ -474,7 +473,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedSliderBar.BorderSizePixel = 0
     SpeedSliderBar.Position = UDim2.new(0, 0, 0.8, 0)
     SpeedSliderBar.Size = UDim2.new(0, 120, 0, 2)
-    SpeedSliderBar.ZIndex = 202 -- Fixed ZIndex
+    SpeedSliderBar.ZIndex = 102
     
     -- Add stroke to speed slider bar
     Library:CreateStroke(SpeedSliderBar, Color3.fromRGB(50, 50, 50), 1)
@@ -486,7 +485,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedFiller.BorderSizePixel = 0
     SpeedFiller.Position = UDim2.new(0, 0, -1, 0) -- Centered vertically
     SpeedFiller.Size = UDim2.new(0, 60, 0, 4)
-    SpeedFiller.ZIndex = 203 -- Fixed ZIndex
+    SpeedFiller.ZIndex = 103
     
     UICorner_9.CornerRadius = UDim.new(0, 2)
     UICorner_9.Parent = SpeedFiller
@@ -498,7 +497,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedHead.BorderSizePixel = 0
     SpeedHead.Position = UDim2.new(0.9, 0, -0.5, 0) -- Centered on filler
     SpeedHead.Size = UDim2.new(0, 10, 0, 10)
-    SpeedHead.ZIndex = 204 -- Fixed ZIndex
+    SpeedHead.ZIndex = 104
     SpeedHead.Font = Enum.Font.SourceSans
     SpeedHead.Text = ""
     SpeedHead.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -516,6 +515,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedValue.BackgroundTransparency = 1.000
     SpeedValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SpeedValue.BorderSizePixel = 0
+    -- right after you create SpeedValue, before any connections:
     SpeedValue.AnchorPoint = Vector2.new(1, 0)
     SpeedValue.Position = UDim2.new(1, -4, 0, 0)
     SpeedValue.TextYAlignment = Enum.TextYAlignment.Center
@@ -525,7 +525,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedValue.TextColor3 = Color3.fromRGB(111, 108, 112)
     SpeedValue.TextSize = 16.000
     SpeedValue.TextXAlignment = Enum.TextXAlignment.Right
-    SpeedValue.ZIndex = 202 -- Fixed ZIndex
+    SpeedValue.ZIndex = 102
     
     -- Copy and Paste buttons
     CopyButton.Name = "CopyButton"
@@ -540,7 +540,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     CopyButton.Text = "Copy"
     CopyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     CopyButton.TextSize = 15.000
-    CopyButton.ZIndex = 201
+    CopyButton.ZIndex = 101
     
     -- Add stroke to copy button
     Library:CreateStroke(CopyButton, Color3.fromRGB(50, 50, 50), 1)
@@ -557,7 +557,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     PasteButton.Text = "Paste"
     PasteButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     PasteButton.TextSize = 15.000
-    PasteButton.ZIndex = 201
+    PasteButton.ZIndex = 101
     
     -- Add stroke to paste button
     Library:CreateStroke(PasteButton, Color3.fromRGB(50, 50, 50), 1)
@@ -575,7 +575,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     CloseButton.Text = "×"
     CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     CloseButton.TextSize = 18.000
-    CloseButton.ZIndex = 201
+    CloseButton.ZIndex = 101
     
     -- Variables for colorpicker state
     local h, s, v = 0, 1, 1
@@ -758,25 +758,6 @@ function Library:CreateColorpickerWindow(colorpicker)
         ColorpickerFrame:Destroy()
     end)
     
-    -- Outside click detection to close colorpicker
-    local outsideClickConnection
-    outsideClickConnection = Library:CreateConnection(UserInputService.InputBegan, function(input, gameProcessed)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and not gameProcessed then
-            local mousePos = UserInputService:GetMouseLocation()
-            local framePos = ColorpickerFrame.AbsolutePosition
-            local frameSize = ColorpickerFrame.AbsoluteSize
-            
-            -- Check if click is outside the colorpicker frame
-            if mousePos.X < framePos.X or mousePos.X > framePos.X + frameSize.X or
-               mousePos.Y < framePos.Y or mousePos.Y > framePos.Y + frameSize.Y then
-                colorpicker._window = nil
-                Library._currentColorpicker = nil
-                outsideClickConnection:Disconnect()
-                ColorpickerFrame:Destroy()
-            end
-        end
-    end)
-    
     -- Speed value textbox
     Library:CreateConnection(SpeedValue.FocusLost, function()
         local value = tonumber(SpeedValue.Text)
@@ -800,7 +781,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     DragArea.BackgroundTransparency = 1
     DragArea.Position = UDim2.new(0, 0, 0, 0)
     DragArea.Size = UDim2.new(1, 0, 0, 30) -- Only top 30 pixels are draggable
-    DragArea.ZIndex = 199
+    DragArea.ZIndex = 99
     
     Library:CreateConnection(DragArea.InputBegan, function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position then
@@ -922,7 +903,7 @@ function Library:CreateWindow(config)
     Topbar.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
     Topbar.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Topbar.BorderSizePixel = 0
-    Topbar.Position = UDim2.new(0, 0, 0, 8)      -- FIXED: absolute positioning
+    Topbar.Position = UDim2.new(0, 0, 0.0103270225, 0)
     Topbar.Size = UDim2.new(0, 470, 0, 30)
 
     TabsHolder.Name = "TabsHolder"
@@ -1132,10 +1113,6 @@ function Library:CreateWindow(config)
     
     Library:CreateConnection(Background.InputBegan, function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            -- Don't allow dragging main window if colorpicker is open
-            if Library._currentColorpicker and Library._currentColorpicker._window then
-                return
-            end
             dragging = true
             dragStart = input.Position
             startPos = Background.Position
@@ -1144,10 +1121,6 @@ function Library:CreateWindow(config)
     
     Library:CreateConnection(UserInputService.InputChanged, function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            -- Don't allow dragging main window if colorpicker is open
-            if Library._currentColorpicker and Library._currentColorpicker._window then
-                return
-            end
             local delta = input.Position - dragStart
             Background.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
@@ -1166,13 +1139,6 @@ function Library:CreateWindow(config)
         Page.Window = Window
         Page.Sections = {}
         Page.Active = false
-        
-        -- FIXED: Calculate positions using absolute integer values
-        local topbarHeight = 30
-        local topbarY = 8
-        local sectionY = topbarY + topbarHeight + 12  -- 50px from top of window
-        local gutter = 16
-        local sectionW = 225
         
         -- Create tab button
         local title = Instance.new("TextLabel")
@@ -1207,10 +1173,11 @@ function Library:CreateWindow(config)
         LineGlow.BackgroundTransparency = 0.900
         LineGlow.BorderColor3 = Color3.fromRGB(0, 0, 0)
         LineGlow.BorderSizePixel = 0
-        LineGlow.Position = UDim2.new(-0.06,  0, -0.022, 0)
-        LineGlow.Size     = UDim2.new( 0,   55,   0,   32)
+        -- FIXED: Made line glow stretch to the top of the UI
+        LineGlow.Position = UDim2.new(-0.06,  0, -1.6, 0) -- Extended upward
+        LineGlow.Size     = UDim2.new( 0,   55,   0,   32) -- Made taller to reach top
         LineGlow.Visible = false
-        LineGlow.ZIndex = 10 -- Higher ZIndex to display above rounding filler
+        LineGlow.ZIndex = 200
         
         UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(66, 255, 249)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(66, 255, 249))}
         UIGradient.Rotation = 90
@@ -1220,51 +1187,34 @@ function Library:CreateWindow(config)
         -- Create page content areas
         local Section1 = Instance.new("Frame")
         local Section2 = Instance.new("Frame")
-        local UIListLayout1 = Instance.new("UIListLayout")
-        local UIListLayout2 = Instance.new("UIListLayout")
         
-        -- FIXED: Section 1 (Left) - Pure offset positioning
+        -- Section 1 (Left) - FIXED: Better positioning for symmetry
         Section1.Name = "Section1"
         Section1.Parent = Background
         Section1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section1.BackgroundTransparency = 1.000
         Section1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section1.BorderSizePixel = 0
-        Section1.Position = UDim2.new(0, gutter, 0, sectionY)  -- 16px from left, 50px from top
-        Section1.Size = UDim2.new(0, sectionW, 0, 0)
-        Section1.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
+        Section1.Position = UDim2.new(0.0127659574, 0, 0.0730183199, 0) -- Adjusted for better symmetry
+        Section1.Size = UDim2.new(0, 225, 0, 520)
         Section1.Visible = false
         
-        -- Add UIListLayout for auto-sizing
-        UIListLayout1.Parent = Section1
-        UIListLayout1.SortOrder = Enum.SortOrder.LayoutOrder
-        UIListLayout1.Padding = UDim.new(0, 10)
+        -- Add stroke to Section1
+        Library:CreateStroke(Section1, Color3.fromRGB(50, 50, 50), 1)
         
-        -- Store stroke reference for toggling
-        local stroke1 = Library:CreateStroke(Section1, Color3.fromRGB(50, 50, 50), 1)
-        
-        -- FIXED: Section 2 (Right) - Pure offset positioning  
+        -- Section 2 (Right) - FIXED: Better positioning for symmetry
         Section2.Name = "Section2"
         Section2.Parent = Background
         Section2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Section2.BackgroundTransparency = 1.000
         Section2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section2.BorderSizePixel = 0
-        Section2.Position = UDim2.new(0, gutter + sectionW + gutter, 0, sectionY)  -- 257px from left, 50px from top
-        Section2.Size = UDim2.new(0, sectionW, 0, 0)
-        Section2.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
+        Section2.Position = UDim2.new(0.510638297, 0, 0.0730183199, 0) -- Adjusted for better symmetry
+        Section2.Size = UDim2.new(0, 225, 0, 520)
         Section2.Visible = false
         
-        -- Add UIListLayout for auto-sizing
-        UIListLayout2.Parent = Section2
-        UIListLayout2.SortOrder = Enum.SortOrder.LayoutOrder
-        UIListLayout2.Padding = UDim.new(0, 10)
-        
-        -- Store stroke reference for toggling
-        local stroke2 = Library:CreateStroke(Section2, Color3.fromRGB(50, 50, 50), 1)
-        
-        -- Store stroke references on Page for later toggling
-        Page._sectionStrokes = { stroke1, stroke2 }
+        -- Add stroke to Section2
+        Library:CreateStroke(Section2, Color3.fromRGB(50, 50, 50), 1)
         
         Page.Section1 = Section1
         Page.Section2 = Section2
@@ -1294,13 +1244,6 @@ function Library:CreateWindow(config)
                 Section1.Visible = false
                 Section2.Visible = false
             end
-            
-            -- Toggle section strokes based on active state
-            if Page._sectionStrokes then
-                for _, stroke in ipairs(Page._sectionStrokes) do
-                    stroke.Enabled = active
-                end
-            end
         end
         
         function Page:CreateSection(config)
@@ -1328,20 +1271,18 @@ function Library:CreateWindow(config)
             SectionFrame.BackgroundTransparency = 1.000
             SectionFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionFrame.BorderSizePixel = 0
-            SectionFrame.Size          = UDim2.new(1, 0, 0, 0)
-            SectionFrame.AutomaticSize = Enum.AutomaticSize.Y
+            SectionFrame.Size = UDim2.new(1, 0, 0, 300)
             
             UICorner.CornerRadius = UDim.new(0, 3)
             UICorner.Parent = SectionFrame
             
-            -- FIXED: Use integer positioning for title elements
             Title.Name = "Title"
             Title.Parent = SectionFrame
             Title.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
             Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Title.BorderSizePixel = 0
-            Title.Position = UDim2.new(0, 0, 0, 0)  -- FIXED: Exactly at top
-            Title.Size = UDim2.new(0, sectionW, 0, 15)
+            Title.Position = UDim2.new(0, 0, 0.0219435729, 0)
+            Title.Size = UDim2.new(0, 225, 0, 15)
             
             -- Add stroke to section title
             Library:CreateStroke(Title, Color3.fromRGB(50, 50, 50), 1)
@@ -1351,8 +1292,8 @@ function Library:CreateWindow(config)
             Roundingfiller.BackgroundColor3 = Color3.fromRGB(28, 28, 33)
             Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Roundingfiller.BorderSizePixel = 0
-            Roundingfiller.Position = UDim2.new(0, 0, 0, -7)  -- FIXED: 7px up for rounding
-            Roundingfiller.Size = UDim2.new(0, sectionW, 0, 10)
+            Roundingfiller.Position = UDim2.new(0, 0, -0.48, 0)
+            Roundingfiller.Size = UDim2.new(0, 225, 0, 10)
             
             UICorner_2.CornerRadius = UDim.new(0, 3)
             UICorner_2.Parent = Roundingfiller
@@ -1362,8 +1303,8 @@ function Library:CreateWindow(config)
             TitleLabel.BackgroundTransparency = 1.000
             TitleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
             TitleLabel.BorderSizePixel = 0
-            TitleLabel.Position = UDim2.new(0, 6, 0, -7)  -- FIXED: 6px from left, 7px up
-            TitleLabel.Size = UDim2.new(0, 200, 0, 22)
+            TitleLabel.Position = UDim2.new(0.0279069766, 0, -0.466666669, 0)
+            TitleLabel.Size = UDim2.new(0, 79, 0, 22)
             TitleLabel.Font = Enum.Font.SourceSansSemibold
             TitleLabel.Text = Section.Name
             TitleLabel.TextColor3 = Color3.fromRGB(66, 255, 249)
@@ -1376,9 +1317,8 @@ function Library:CreateWindow(config)
             SectionHolder.BackgroundTransparency = 1.000
             SectionHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionHolder.BorderSizePixel = 0
-            SectionHolder.Position = UDim2.new(0, 8, 0, 20)  -- FIXED: 8px from left, 20px down
-            SectionHolder.Size = UDim2.new(0, sectionW - 16, 0, 0)  -- Account for padding
-            SectionHolder.AutomaticSize = Enum.AutomaticSize.Y
+            SectionHolder.Position = UDim2.new(0.0149999997, 0, 0.0877742916, 0)
+            SectionHolder.Size = UDim2.new(0, 216, 0, 283)
             
             UIListLayout.Parent = SectionHolder
             UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
