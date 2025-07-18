@@ -185,6 +185,15 @@ function Library:UpdateThemeForAllElements()
         if page.Section1 then
             -- Update section backgrounds would go here
         end
+        if page.Section2 then
+            -- Update section backgrounds would go here
+        end
+        -- Update section frames
+        for _, section in pairs(page.Sections or {}) do
+            if section.Frame then
+                self:TweenColor(section.Frame, "BackgroundColor3", theme.BackgroundColor, 0.3)
+            end
+        end
     end
 end
 
@@ -1451,6 +1460,7 @@ function Library:CreateWindow(config)
     Window.KeybindModeFrame = KeybindModeFrame
     Window.KeybindModeButtons = {TextButton, TextButton_2, TextButton_3}
     Library.GUI = coresploit
+    Library.Pages = Window.Pages -- Store reference to pages
     
     -- Make draggable with smooth animation
     local dragging = false
@@ -1575,7 +1585,7 @@ function Library:CreateWindow(config)
         local Section1 = Instance.new("Frame")
         local Section2 = Instance.new("Frame")
         
-        -- Section 1 (Left)
+        -- Section 1 (Left) - Convert to ScrollingFrame
         Section1.Name = "Section1"
         Section1.Parent = Background
         Section1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1586,9 +1596,28 @@ function Library:CreateWindow(config)
         Section1.Size = UDim2.new(0, 225, 0, 520)
         Section1.Visible = false
         
-        Library:CreateStroke(Section1, theme.BorderColor, 1)
+        -- Make it a scrolling frame
+        local ScrollingFrame1 = Instance.new("ScrollingFrame")
+        ScrollingFrame1.Name = "ScrollingFrame1"
+        ScrollingFrame1.Parent = Section1
+        ScrollingFrame1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ScrollingFrame1.BackgroundTransparency = 1.000
+        ScrollingFrame1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ScrollingFrame1.BorderSizePixel = 0
+        ScrollingFrame1.Size = UDim2.new(1, 0, 1, 0)
+        ScrollingFrame1.ScrollBarThickness = 2
+        ScrollingFrame1.ScrollBarImageColor3 = theme.MainColor
+        ScrollingFrame1.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        ScrollingFrame1.CanvasSize = UDim2.new(0, 0, 0, 0)
         
-        -- Section 2 (Right)
+        -- Add list layout to ScrollingFrame1 for auto-sizing
+        local Section1Layout = Instance.new("UIListLayout")
+        Section1Layout.Parent = ScrollingFrame1
+        Section1Layout.SortOrder = Enum.SortOrder.LayoutOrder
+        Section1Layout.Padding = UDim.new(0, 10)
+        Section1Layout.FillDirection = Enum.FillDirection.Vertical
+        
+        -- Section 2 (Right) - Convert to ScrollingFrame
         Section2.Name = "Section2"
         Section2.Parent = Background
         Section2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1599,13 +1628,36 @@ function Library:CreateWindow(config)
         Section2.Size = UDim2.new(0, 225, 0, 520)
         Section2.Visible = false
         
-        Library:CreateStroke(Section2, theme.BorderColor, 1)
+        -- Make it a scrolling frame
+        local ScrollingFrame2 = Instance.new("ScrollingFrame")
+        ScrollingFrame2.Name = "ScrollingFrame2"
+        ScrollingFrame2.Parent = Section2
+        ScrollingFrame2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ScrollingFrame2.BackgroundTransparency = 1.000
+        ScrollingFrame2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ScrollingFrame2.BorderSizePixel = 0
+        ScrollingFrame2.Size = UDim2.new(1, 0, 1, 0)
+        ScrollingFrame2.ScrollBarThickness = 2
+        ScrollingFrame2.ScrollBarImageColor3 = theme.MainColor
+        ScrollingFrame2.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        ScrollingFrame2.CanvasSize = UDim2.new(0, 0, 0, 0)
+        
+        -- Add list layout to ScrollingFrame2 for auto-sizing
+        local Section2Layout = Instance.new("UIListLayout")
+        Section2Layout.Parent = ScrollingFrame2
+        Section2Layout.SortOrder = Enum.SortOrder.LayoutOrder
+        Section2Layout.Padding = UDim.new(0, 10)
+        Section2Layout.FillDirection = Enum.FillDirection.Vertical
+        
         
         Page.Section1 = Section1
         Page.Section2 = Section2
+        Page.ScrollingFrame1 = ScrollingFrame1
+        Page.ScrollingFrame2 = ScrollingFrame2
         Page.TabButton = title
         Page.SelectedLine = SelectedLine
         Page.LineGlow = LineGlow
+
         
         -- Tab click handler with simple animation
         Library:CreateConnection(title.InputBegan, function(input)
@@ -1624,12 +1676,6 @@ function Library:CreateWindow(config)
                 LineGlow.Visible = true
                 Section1.Visible = true
                 Section2.Visible = true
-                
-                -- Simple fade in without sliding
-                Section1.BackgroundTransparency = 1
-                Section2.BackgroundTransparency = 1
-                Library:TweenTransparency(Section1, 0, 0.2)
-                Library:TweenTransparency(Section2, 0, 0.2)
                 
                 -- Animate selected line
                 SelectedLine.Size = UDim2.new(0, 0, 0, 2)
@@ -1650,7 +1696,9 @@ function Library:CreateWindow(config)
             Section.Page = Page
             Section.Elements = {}
             
-            local parentFrame = Section.Side == "left" and Section1 or Section2
+            local parentFrame = Section.Side == "left" and 
+                (Page.ScrollingFrame1 or Section1) or 
+                (Page.ScrollingFrame2 or Section2)
             local theme = Library:GetTheme()
             
             -- Create section with enhanced styling
@@ -1665,8 +1713,8 @@ function Library:CreateWindow(config)
             
             SectionFrame.Name = "SectionFrame"
             SectionFrame.Parent = parentFrame
-            SectionFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionFrame.BackgroundTransparency = 1.000
+            SectionFrame.BackgroundColor3 = theme.BackgroundColor
+            SectionFrame.BackgroundTransparency = 0.000
             SectionFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionFrame.BorderSizePixel = 0
             SectionFrame.Size = UDim2.new(1, 0, 0, 300)
@@ -2708,7 +2756,7 @@ function Library:CreateWindow(config)
                 }
                 glowEffect.Transparency = NumberSequence.new{
                     NumberSequenceKeypoint.new(0, 0.5),
-                    ColorSequenceKeypoint.new(0.5, 0),
+                    NumberSequenceKeypoint.new(0.5, 0),
                     NumberSequenceKeypoint.new(1, 0.5)
                 }
                 glowEffect.Parent = DividerFrame
@@ -3193,10 +3241,16 @@ function Library:CreateWindow(config)
             end
             
             table.insert(Page.Sections, Section)
+            
+            -- Update section background color immediately
+            SectionFrame.BackgroundColor3 = theme.BackgroundColor
+            
             return Section
         end
         
         table.insert(Window.Pages, Page)
+        -- Also store in Library.Pages for theme updates
+        Library.Pages = Window.Pages
         return Page
     end
     
