@@ -926,11 +926,11 @@ function Library:CreateWindow(config)
     Topbar.Position = UDim2.new(0, 0, 0.0103270225, 0)
     Topbar.Size = UDim2.new(0, 470, 0, 30)
     
-    -- Store positioning variables for sections
-    local topbarHeight = Topbar.Size.Y.Offset -- 30
-    local sectionY = topbarHeight + 8 -- 8px gap under the bar
-    local sectionW = 225 -- fixed width
-    local gutter = 14 -- horizontal gutter
+        Topbar.Position = UDim2.new(0, 0, 0, 8)      -- absolute
+        local topbarH   = Topbar.Size.Y.Offset      -- 30
+        local gutter    = 8
+        local sectionY  = topbarH + gutter          -- 38
+        local sectionW  = 225
 
     TabsHolder.Name = "TabsHolder"
     TabsHolder.Parent = Topbar
@@ -1230,8 +1230,8 @@ function Library:CreateWindow(config)
         Section1.BackgroundTransparency = 1.000
         Section1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section1.BorderSizePixel = 0
-        Section1.Position = UDim2.new(0, gutter, 0, sectionY) -- Left column
-        Section1.Size = UDim2.new(0, sectionW, 0, 0) -- Height=0, auto-size
+        Section1.Position      = UDim2.new(0, gutter,             0, sectionY)
+        Section1.Size          = UDim2.new(0, sectionW,           0, 0)
         Section1.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
         Section1.Visible = false
         
@@ -1250,8 +1250,8 @@ function Library:CreateWindow(config)
         Section2.BackgroundTransparency = 1.000
         Section2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Section2.BorderSizePixel = 0
-        Section2.Position = UDim2.new(0, gutter + sectionW + gutter, 0, sectionY) -- Right column
-        Section2.Size = UDim2.new(0, sectionW, 0, 0) -- Height=0, auto-size
+        Section2.Position      = UDim2.new(0, gutter+sectionW+gutter, 0, sectionY)
+        Section2.Size          = UDim2.new(0, sectionW,               0, 0)
         Section2.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size downwards
         Section2.Visible = false
         
@@ -1328,8 +1328,8 @@ function Library:CreateWindow(config)
             SectionFrame.BackgroundTransparency = 1.000
             SectionFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionFrame.BorderSizePixel = 0
-            SectionFrame.Size = UDim2.new(1, 0, 0, 300)
-            SectionFrame.AutomaticSize = Enum.AutomaticSize.Y -- Auto-size based on content
+            SectionFrame.Size          = UDim2.new(1, 0, 0, 0)
+            SectionFrame.AutomaticSize = Enum.AutomaticSize.Y
             
             UICorner.CornerRadius = UDim.new(0, 3)
             UICorner.Parent = SectionFrame
