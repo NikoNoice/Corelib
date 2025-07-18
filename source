@@ -412,7 +412,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
     RainbowToggle.BorderSizePixel = 0
     RainbowToggle.Size = UDim2.new(0, 18, 0, 18)
-    RainbowToggle.ZIndex = 102
+    RainbowToggle.ZIndex = 202 -- Fixed ZIndex for proper layering
     RainbowToggle.Font = Enum.Font.SourceSans
     RainbowToggle.Text = ""
     RainbowToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -437,7 +437,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowTitle.TextColor3 = Color3.fromRGB(124, 121, 125)
     RainbowTitle.TextSize = 15.000
     RainbowTitle.TextXAlignment = Enum.TextXAlignment.Left
-    RainbowTitle.ZIndex = 102
+    RainbowTitle.ZIndex = 202 -- Fixed ZIndex
     
     RainbowCheckmark.Name = "RainbowCheckmark"
     RainbowCheckmark.Parent = RainbowToggle
@@ -448,7 +448,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowCheckmark.Image = "http://www.roblox.com/asset/?id=6031094667"
     RainbowCheckmark.ImageColor3 = Color3.fromRGB(0, 0, 0)
     RainbowCheckmark.Visible = false
-    RainbowCheckmark.ZIndex = 103
+    RainbowCheckmark.ZIndex = 203 -- Fixed ZIndex
     
     -- Speed Slider
     SpeedSlider.Name = "SpeedSlider"
