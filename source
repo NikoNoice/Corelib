@@ -929,7 +929,7 @@ function Library:CreateWindow(config)
         Topbar.Position = UDim2.new(0, 0, 0, 8)      -- absolute
         local topbarH   = Topbar.Size.Y.Offset      -- 30
         local gutter    = 16
-        local sectionY  = topbarH + gutter          -- 38
+        local sectionY  = topbarH + 20         -- 38
         local sectionW  = 225
 
     TabsHolder.Name = "TabsHolder"
