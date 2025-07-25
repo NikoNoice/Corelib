@@ -123,75 +123,56 @@ end
 
 function Library:SetTheme(themeName)
     if not self.Themes[themeName] then return end
-    self.CurrentTheme = themeName
-    self.Flags.Theme   = themeName
 
+    -- 1) swap the active theme
+    self.CurrentTheme = themeName
+    self.Flags.Theme    = themeName
     local theme = self:GetTheme()
 
-    -- Main window
-    local bg = self.GUI and self.GUI:FindFirstChild("Background")
-    if bg then
-        bg.BackgroundColor3 = theme.BackgroundColor
-        local tb = bg:FindFirstChild("Topbar")
-        if tb then
-            tb.BackgroundColor3 = theme.SecondaryColor
-            local lbl = tb:FindFirstChild("TextLabel")
-            if lbl then lbl.TextColor3 = theme.MainColor end
-        end
+    -- 2) repaint all of the “big” UI bits
+    --    (this was your existing UpdateThemeForAllElements)
+    self:UpdateThemeForAllElements()
 
-        local ub = bg:FindFirstChild("UnderBar")
-        if ub then
-            ub.BackgroundColor3 = theme.SecondaryColor
-            for _, name in ipairs{"GameName","UserStatus"} do
-                local lbl = ub:FindFirstChild(name)
-                if lbl then lbl.TextColor3 = theme.MainColor end
-            end
-        end
-
-        local glow = bg:FindFirstChild("MenuGlow")
-        if glow then glow.ImageColor3 = theme.MainColor end
-    end
-
-    -- Strokes
-    local function walk(parent)
-        for _, c in ipairs(parent:GetDescendants()) do
-            if c:IsA("UIStroke") then
-                c.Color = theme.BorderColor
-            end
-        end
-    end
-    if self.GUI       then walk(self.GUI)       end
-    if self.OverlayGui then walk(self.OverlayGui) end
-
-    -- Pages & sections
-    for _, page in ipairs(self.Pages) do
-        if page.ScrollingFrame1 then
-            page.ScrollingFrame1.ScrollBarImageColor3 = theme.MainColor
-        end
-        if page.ScrollingFrame2 then
-            page.ScrollingFrame2.ScrollBarImageColor3 = theme.MainColor
-        end
-        for _, sec in ipairs(page.Sections or {}) do
-            if sec.Frame then
-                sec.Frame.BackgroundColor3 = theme.BackgroundColor
-            end
-        end
-        if page.TabButton then
-            page.TabButton.TextColor3 = page.Active
-                and theme.MainColor
-                or theme.SecondaryTextColor
-
-            if page.SelectedLine then
-                page.SelectedLine.BackgroundColor3 = theme.MainColor
+    -- 2b) also recolor every section header’s bar + its text label
+    for _, page in pairs(self.Pages) do
+        for _, section in pairs(page.Sections or {}) do
+            if section.Frame then
+                local header = section.Frame:FindFirstChild("Title")
+                if header then
+                    -- bar
+                    header.BackgroundColor3 = theme.SecondaryColor
+                    -- text inside it
+                    local lbl = header:FindFirstChild("TitleLabel")
+                    if lbl then
+                        lbl.TextColor3 = theme.MainColor
+                    end
+                end
             end
         end
     end
 
-    -- Save preference
+    -- 3) now redraw every “flagged” widget at zero tween speed
+    local oldSpeed = self.Settings.AnimationSpeed
+    self.Settings.AnimationSpeed = 0
+
+    for _, element in pairs(self.Elements) do
+        if element.SetValue then
+            -- toggles, sliders, dropdowns, colorpickers, keybinds all have SetValue
+            element:SetValue(element.Value)
+        elseif element.Refresh then
+            -- some we’ll give a custom Refresh() below
+            element:Refresh()
+        end
+    end
+
+    self.Settings.AnimationSpeed = oldSpeed
+
+    -- 4) save if you want
     if self.Settings.AutoSaveConfig then
         self:SaveConfig("_theme_preference")
     end
 end
+
 
 
 
@@ -2326,6 +2307,15 @@ title.Text = Toggle.Name
                 
                 Slider:SetValue(Slider.Default)
                 Library.Elements[Slider.Flag] = Slider
+
+                function Slider:Refresh()
+                    local theme = Library:GetTheme()
+                    -- the “fill” bar
+                    self.Filler.BackgroundColor3     = theme.MainColor
+                    -- the drag handle
+                    self.SliderHead.BackgroundColor3 = theme.AccentColor
+                end
+
                 return Slider
             end
             
@@ -2515,6 +2505,28 @@ title.Text = Toggle.Name
                     
                     -- Update holder colors
                     self.Holder.BackgroundColor3 = currentTheme.AccentColor
+
+                    function Dropdown:Refresh()
+                        local theme = Library:GetTheme()
+                        -- button text + arrow tint
+                        self.Button.TextColor3       = theme.TextColor
+                        self.Arrow.ImageColor3       = theme.SecondaryTextColor
+                        -- drop‑down panel
+                        self.Holder.BackgroundColor3 = theme.AccentColor
+                    
+                        -- re‑tint each option to main vs secondary
+                        for _, child in ipairs(self.Holder:GetChildren()) do
+                            if child:IsA("TextLabel") then
+                                -- strip leading spaces, get raw option
+                                local opt = child.Text:match("%s*(.*)")
+                                local sel = self.Multi and table.find(self.Value,opt)
+                                             or (not self.Multi and self.Value==opt)
+                                child.TextColor3 = sel and theme.MainColor
+                                                          or theme.SecondaryTextColor
+                            end
+                        end
+                    end
+
                 end
                 
                 function Dropdown:OpenMenu()
@@ -2815,6 +2827,13 @@ title.Text = Toggle.Name
                 
                 Keybind:SetValue(Keybind.Default)
                 Library.Elements[Keybind.Flag] = Keybind
+
+                function Keybind:Refresh()
+                    local theme = Library:GetTheme()
+                    -- just the text color needs flipping
+                    self.KeybindBox.TextColor3 = theme.TextColor
+                end
+
                 return Keybind
             end
             
