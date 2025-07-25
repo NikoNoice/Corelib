@@ -122,19 +122,49 @@ function Library:GetTheme()
 end
 
 function Library:SetTheme(themeName)
+    -- Guard against re-entrancy
+    if self._isSwitchingTheme then return end
     if not self.Themes[themeName] then return end
-    
+    self._isSwitchingTheme = true
+
+    -- Update state
     self.CurrentTheme = themeName
     self.Flags.Theme = themeName
-    
-    -- Update all UI elements with new theme
-    self:UpdateThemeForAllElements()
-    
-    -- Save theme preference
+    local theme = self:GetTheme()
+
+    -- 1) Directly apply colors to all UI descendants
+    for _, gui in ipairs({self.GUI, self.OverlayGui}) do
+        if gui then
+            for _, obj in ipairs(gui:GetDescendants()) do
+                if obj:IsA("Frame") then
+                    obj.BackgroundColor3 = theme.BackgroundColor
+                elseif obj:IsA("UIStroke") then
+                    obj.Color = theme.BorderColor
+                elseif obj:IsA("TextLabel") or obj:IsA("TextButton") then
+                    obj.TextColor3 = theme.TextColor
+                elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+                    obj.ImageColor3 = theme.MainColor
+                end
+            end
+        end
+    end
+
+    -- 2) Refresh any custom widgets via their SetValue handlers
+    for _, element in pairs(self.Elements) do
+        if element.SetValue and element.Value ~= nil then
+            element:SetValue(element.Value)
+        end
+    end
+
+    -- 3) Persist theme preference
     if self.Settings.AutoSaveConfig then
         self:SaveConfig("_theme_preference")
     end
+
+    -- Release guard
+    self._isSwitchingTheme = false
 end
+
 
 function Library:UpdateThemeForAllElements()
     local theme = self:GetTheme()
