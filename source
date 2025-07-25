@@ -122,48 +122,77 @@ function Library:GetTheme()
 end
 
 function Library:SetTheme(themeName)
-    -- Guard against re-entrancy
-    if self._isSwitchingTheme then return end
     if not self.Themes[themeName] then return end
-    self._isSwitchingTheme = true
-
-    -- Update state
     self.CurrentTheme = themeName
-    self.Flags.Theme = themeName
+    self.Flags.Theme   = themeName
+
     local theme = self:GetTheme()
 
-    -- 1) Directly apply colors to all UI descendants
-    for _, gui in ipairs({self.GUI, self.OverlayGui}) do
-        if gui then
-            for _, obj in ipairs(gui:GetDescendants()) do
-                if obj:IsA("Frame") then
-                    obj.BackgroundColor3 = theme.BackgroundColor
-                elseif obj:IsA("UIStroke") then
-                    obj.Color = theme.BorderColor
-                elseif obj:IsA("TextLabel") or obj:IsA("TextButton") then
-                    obj.TextColor3 = theme.TextColor
-                elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-                    obj.ImageColor3 = theme.MainColor
-                end
+    -- Main window
+    local bg = self.GUI and self.GUI:FindFirstChild("Background")
+    if bg then
+        bg.BackgroundColor3 = theme.BackgroundColor
+        local tb = bg:FindFirstChild("Topbar")
+        if tb then
+            tb.BackgroundColor3 = theme.SecondaryColor
+            local lbl = tb:FindFirstChild("TextLabel")
+            if lbl then lbl.TextColor3 = theme.MainColor end
+        end
+
+        local ub = bg:FindFirstChild("UnderBar")
+        if ub then
+            ub.BackgroundColor3 = theme.SecondaryColor
+            for _, name in ipairs{"GameName","UserStatus"} do
+                local lbl = ub:FindFirstChild(name)
+                if lbl then lbl.TextColor3 = theme.MainColor end
+            end
+        end
+
+        local glow = bg:FindFirstChild("MenuGlow")
+        if glow then glow.ImageColor3 = theme.MainColor end
+    end
+
+    -- Strokes
+    local function walk(parent)
+        for _, c in ipairs(parent:GetDescendants()) do
+            if c:IsA("UIStroke") then
+                c.Color = theme.BorderColor
+            end
+        end
+    end
+    if self.GUI       then walk(self.GUI)       end
+    if self.OverlayGui then walk(self.OverlayGui) end
+
+    -- Pages & sections
+    for _, page in ipairs(self.Pages) do
+        if page.ScrollingFrame1 then
+            page.ScrollingFrame1.ScrollBarImageColor3 = theme.MainColor
+        end
+        if page.ScrollingFrame2 then
+            page.ScrollingFrame2.ScrollBarImageColor3 = theme.MainColor
+        end
+        for _, sec in ipairs(page.Sections or {}) do
+            if sec.Frame then
+                sec.Frame.BackgroundColor3 = theme.BackgroundColor
+            end
+        end
+        if page.TabButton then
+            page.TabButton.TextColor3 = page.Active
+                and theme.MainColor
+                or theme.SecondaryTextColor
+
+            if page.SelectedLine then
+                page.SelectedLine.BackgroundColor3 = theme.MainColor
             end
         end
     end
 
-    -- 2) Refresh any custom widgets via their SetValue handlers
-    for _, element in pairs(self.Elements) do
-        if element.SetValue and element.Value ~= nil then
-            element:SetValue(element.Value)
-        end
-    end
-
-    -- 3) Persist theme preference
+    -- Save preference
     if self.Settings.AutoSaveConfig then
         self:SaveConfig("_theme_preference")
     end
-
-    -- Release guard
-    self._isSwitchingTheme = false
 end
+
 
 
 function Library:UpdateThemeForAllElements()
