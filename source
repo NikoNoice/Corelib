@@ -833,7 +833,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowTitle.BorderSizePixel = 0
     RainbowTitle.Position = UDim2.new(1.461, 0, -0.056, 0)
     RainbowTitle.Size = UDim2.new(0, 82, 0, 20)
-    RainbowTitle.Font = Enum.Font.SourceSansSemibold
+    RainbowTitle.Font = Enum.Font.SourceSansPro
     RainbowTitle.Text = "Rainbow"
     RainbowTitle.TextColor3 = theme.SecondaryTextColor
     RainbowTitle.TextSize = 15.000
@@ -859,7 +859,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedSlider.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SpeedSlider.BorderSizePixel = 0
     SpeedSlider.Size = UDim2.new(0, 136, 0, 32)
-    SpeedSlider.Font = Enum.Font.SourceSansSemibold
+    SpeedSlider.Font = Enum.Font.SourceSansPro
     SpeedSlider.Text = "Speed"
     SpeedSlider.TextColor3 = theme.SecondaryTextColor
     SpeedSlider.TextSize = 15.000
@@ -920,7 +920,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedValue.Position = UDim2.new(1, -4, 0, 0)
     SpeedValue.TextYAlignment = Enum.TextYAlignment.Center
     SpeedValue.Size = UDim2.new(0, 30, 0, 19)
-    SpeedValue.Font = Enum.Font.SourceSansSemibold
+    SpeedValue.Font = Enum.Font.SourceSansPro
     SpeedValue.Text = "5"
     SpeedValue.TextColor3 = theme.SecondaryTextColor
     SpeedValue.TextSize = 16.000
@@ -936,7 +936,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     CopyButton.BorderSizePixel = 0
     CopyButton.Position = UDim2.new(0.535, 0, 0.71, 0)
     CopyButton.Size = UDim2.new(0, 63, 0, 20)
-    CopyButton.Font = Enum.Font.SourceSansSemibold
+    CopyButton.Font = Enum.Font.SourceSansPro
     CopyButton.Text = "Copy"
     CopyButton.TextColor3 = theme.TextColor
     CopyButton.TextSize = 15.000
@@ -953,7 +953,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     PasteButton.BorderSizePixel = 0
     PasteButton.Position = UDim2.new(0.762, 0, 0.71, 0)
     PasteButton.Size = UDim2.new(0, 63, 0, 20)
-    PasteButton.Font = Enum.Font.SourceSansSemibold
+    PasteButton.Font = Enum.Font.SourceSansPro
     PasteButton.Text = "Paste"
     PasteButton.TextColor3 = theme.TextColor
     PasteButton.TextSize = 15.000
@@ -1369,7 +1369,7 @@ function Library:CreateWindow(config)
     GameName.BorderSizePixel = 0
     GameName.Position = UDim2.new(0, 5, 0, 0)
     GameName.Size = UDim2.new(0, 300, 0, 21)
-    GameName.Font = Enum.Font.SourceSansSemibold
+    GameName.Font = Enum.Font.SourceSansPro
     GameName.Text = (game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name or "Unknown")
     GameName.TextColor3 = theme.MainColor
     GameName.TextSize = 14.000
@@ -1383,7 +1383,7 @@ function Library:CreateWindow(config)
     UserStatus.BorderSizePixel = 0
     UserStatus.Position = UDim2.new(0.786324799, 0, 0, 0)
     UserStatus.Size = UDim2.new(0, 94, 0, 21)
-    UserStatus.Font = Enum.Font.SourceSansSemibold
+    UserStatus.Font = Enum.Font.SourceSansPro
     UserStatus.Text = "User"
     UserStatus.TextColor3 = theme.MainColor
     UserStatus.TextSize = 14.000
@@ -1432,7 +1432,7 @@ function Library:CreateWindow(config)
     TextButton.Position = UDim2.new(0, 0, 0.0399999991, 0)
     TextButton.Size = UDim2.new(0, 88, 0, 14)
     TextButton.ZIndex = 3
-    TextButton.Font = Enum.Font.SourceSansSemibold
+    TextButton.Font = Enum.Font.SourceSansPro
     TextButton.Text = "Hold"
     TextButton.TextColor3 = theme.TextColor
     TextButton.TextSize = 14.000
@@ -1446,7 +1446,7 @@ function Library:CreateWindow(config)
     TextButton_2.Position = UDim2.new(0, 0, 0.00722045917, 0)
     TextButton_2.Size = UDim2.new(0, 88, 0, 14)
     TextButton_2.ZIndex = 3
-    TextButton_2.Font = Enum.Font.SourceSansSemibold
+    TextButton_2.Font = Enum.Font.SourceSansPro
     TextButton_2.Text = "Toggle"
     TextButton_2.TextColor3 = theme.SecondaryTextColor
     TextButton_2.TextSize = 14.000
@@ -1460,7 +1460,7 @@ function Library:CreateWindow(config)
     TextButton_3.Position = UDim2.new(0.0500000007, 0, 0.144117743, 0)
     TextButton_3.Size = UDim2.new(0, 88, 0, 14)
     TextButton_3.ZIndex = 3
-    TextButton_3.Font = Enum.Font.SourceSansSemibold
+    TextButton_3.Font = Enum.Font.SourceSansPro
     TextButton_3.Text = "Always"
     TextButton_3.TextColor3 = theme.SecondaryTextColor
     TextButton_3.TextSize = 14.000
@@ -1477,7 +1477,7 @@ function Library:CreateWindow(config)
     TextLabel_4.BorderSizePixel = 0
     TextLabel_4.Position = UDim2.new(0.0379588865, 0, -0.00705898507, 0)
     TextLabel_4.Size = UDim2.new(0, 94, 0, 18)
-    TextLabel_4.Font = Enum.Font.SourceSansSemibold
+    TextLabel_4.Font = Enum.Font.SourceSansPro
     TextLabel_4.Text = "Mode"
     TextLabel_4.TextColor3 = theme.MainColor
     TextLabel_4.TextSize = 14.000
@@ -1589,7 +1589,7 @@ function Library:CreateWindow(config)
         title.BorderColor3 = Color3.fromRGB(0, 0, 0)
         title.BorderSizePixel = 0
         title.Size = UDim2.new(0, 50, 0, 32)
-        title.Font = Enum.Font.SourceSansSemibold
+        title.Font = Enum.Font.SourceSansPro
         title.Text = Page.Name
         title.TextColor3 = theme.SecondaryTextColor
         title.TextSize = 14.000
@@ -1792,18 +1792,18 @@ function Library:CreateWindow(config)
             Title.BackgroundColor3 = theme.SecondaryColor
             Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Title.BorderSizePixel = 0
-            Title.Position = UDim2.new(0, 1, 0, 1) -- Adjusted to fit inside border
-            Title.Size = UDim2.new(1, -2, 0, 20) -- Adjusted to fit inside border
+            Title.Position = UDim2.new(0, 3, 0, 3) -- Adjusted to fit inside border with padding
+            Title.Size = UDim2.new(1, -6, 0, 20) -- Adjusted to fit inside border with padding
             
-            Library:CreateStroke(Title, theme.BorderColor, 1)
+            -- Remove stroke from title to prevent double borders
             
             Roundingfiller.Name = "Roundingfiller"
             Roundingfiller.Parent = Title
             Roundingfiller.BackgroundColor3 = theme.SecondaryColor
             Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Roundingfiller.BorderSizePixel = 0
-            Roundingfiller.Position = UDim2.new(0, 0, -0.3, 0)
-            Roundingfiller.Size = UDim2.new(1, 0, 0, 8)
+            Roundingfiller.Position = UDim2.new(0, 0, -0.25, 0)
+            Roundingfiller.Size = UDim2.new(1, 0, 0, 6)
 
             UICorner_2.CornerRadius = UDim.new(0, 3)
             UICorner_2.Parent = Roundingfiller
@@ -1815,7 +1815,7 @@ function Library:CreateWindow(config)
             TitleLabel.BorderSizePixel = 0
             TitleLabel.Position = UDim2.new(0, 5, 0, 0) -- Adjusted positioning
             TitleLabel.Size = UDim2.new(1, -10, 1, 0) -- Adjusted size
-            TitleLabel.Font = Enum.Font.SourceSansSemibold
+            TitleLabel.Font = Enum.Font.SourceSansPro
             TitleLabel.Text = Section.Name
             TitleLabel.TextColor3 = theme.MainColor
             TitleLabel.TextSize = 15.000
@@ -1828,8 +1828,8 @@ function Library:CreateWindow(config)
             SectionHolder.BackgroundTransparency = 1.000
             SectionHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionHolder.BorderSizePixel = 0
-            SectionHolder.Position = UDim2.new(0, 5, 0, 30) -- Adjusted to account for new title height
-            SectionHolder.Size = UDim2.new(1, -10, 1, -35) -- Adjusted size
+            SectionHolder.Position = UDim2.new(0, 8, 0, 33) -- Adjusted to account for new title position
+            SectionHolder.Size = UDim2.new(1, -16, 1, -38) -- Adjusted size with proper padding
             
             UIListLayout.Parent = SectionHolder
             UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1880,7 +1880,7 @@ function Library:CreateWindow(config)
                 title.BorderSizePixel = 0
                 title.Position = UDim2.new(1.46110022, 0, -0.055555556, 0)
                 title.Size = UDim2.new(0, 120, 0, 20)
-                title.Font = Enum.Font.SourceSansSemi
+                title.Font = Enum.Font.SourceSansPro
 
 title.Text = Toggle.Name
                 title.TextColor3 = Toggle.Default and theme.TextColor or theme.SecondaryTextColor
@@ -1987,7 +1987,7 @@ title.Text = Toggle.Name
                     KeybindBox.AnchorPoint = Vector2.new(1, 0.5)
                     KeybindBox.Position = UDim2.new(1, 197, 0.5, V_PADDING)
                     KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
-                    KeybindBox.Font = Enum.Font.SourceSansSemibold
+                    KeybindBox.Font = Enum.Font.SourceSansPro
                     KeybindBox.Text = Keybind.Default
                     KeybindBox.TextColor3 = Library:GetTheme().TextColor
                     KeybindBox.TextSize = 15.000
@@ -2044,7 +2044,7 @@ title.Text = Toggle.Name
                         local bounds = TextService:GetTextSize(
                             displayName,
                             15,
-                            Enum.Font.SourceSansSemibold,
+                            Enum.Font.SourceSansPro,
                             Vector2.new(1e5, 20)
                         )
                         local newWidth = math.max(MIN_W, bounds.X + H_PADDING*2)
@@ -2153,7 +2153,7 @@ title.Text = Toggle.Name
                 SliderFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 SliderFrame.BorderSizePixel = 0
                 SliderFrame.Size = UDim2.new(0, 215, 0, 32)
-                SliderFrame.Font = Enum.Font.SourceSansSemibold
+                SliderFrame.Font = Enum.Font.SourceSansPro
                 SliderFrame.Text = Slider.Name
                 SliderFrame.TextColor3 = theme.SecondaryTextColor
                 SliderFrame.TextSize = 15.000
@@ -2209,7 +2209,7 @@ title.Text = Toggle.Name
                 SliderValue.BorderSizePixel = 0
                 SliderValue.Position = UDim2.new(0.764534891, 0, 0, 0)
                 SliderValue.Size = UDim2.new(0, 50, 0, 19)
-                SliderValue.Font = Enum.Font.SourceSansSemibold
+                SliderValue.Font = Enum.Font.SourceSansPro
                 SliderValue.PlaceholderColor3 = theme.SecondaryTextColor
                 SliderValue.PlaceholderText = tostring(Slider.Default)
                 SliderValue.Text = ""
@@ -2301,7 +2301,7 @@ title.Text = Toggle.Name
                 DropdownButton.BorderSizePixel = 0
                 DropdownButton.Size = UDim2.new(0, 215, 0, 20)
                 DropdownButton.ZIndex = 2
-                DropdownButton.Font = Enum.Font.SourceSansSemibold
+                DropdownButton.Font = Enum.Font.SourceSansPro
                 DropdownButton.Text = " " .. (Dropdown.Multi and table.concat(Dropdown.Default, ", ") or tostring(Dropdown.Default))
                 DropdownButton.TextColor3 = theme.TextColor
                 DropdownButton.TextSize = 15.000
@@ -2378,7 +2378,7 @@ title.Text = Toggle.Name
                         OptionLabel.Parent = self.Holder
                         OptionLabel.BackgroundTransparency = 1
                         OptionLabel.Size = UDim2.new(0,215,0,16)
-                        OptionLabel.Font = Enum.Font.SourceSansSemibold
+                        OptionLabel.Font = Enum.Font.SourceSansPro
                         OptionLabel.TextSize = 14
                         OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
                         OptionLabel.Text = " " .. option
@@ -2572,7 +2572,7 @@ title.Text = Toggle.Name
                 ColorpickerFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ColorpickerFrame.BorderSizePixel = 0
                 ColorpickerFrame.Size = UDim2.new(0, 215, 0, 20)
-                ColorpickerFrame.Font = Enum.Font.SourceSansSemibold
+                ColorpickerFrame.Font = Enum.Font.SourceSansPro
                 ColorpickerFrame.Text = Colorpicker.Name
                 ColorpickerFrame.TextColor3 = theme.SecondaryTextColor
                 ColorpickerFrame.TextSize = 15.000
@@ -2642,7 +2642,7 @@ title.Text = Toggle.Name
                 KeybindFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 KeybindFrame.BorderSizePixel = 0
                 KeybindFrame.Size = UDim2.new(0, 215, 0, 20)
-                KeybindFrame.Font = Enum.Font.SourceSansSemibold
+                KeybindFrame.Font = Enum.Font.SourceSansPro
                 KeybindFrame.Text = Keybind.Name
                 KeybindFrame.TextColor3 = theme.SecondaryTextColor
                 KeybindFrame.TextSize = 15.000
@@ -2657,7 +2657,7 @@ title.Text = Toggle.Name
                 KeybindBox.AnchorPoint = Vector2.new(1, 0.5)
                 KeybindBox.Position = UDim2.new(1, -0, 0.5, V_PADDING)
                 KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
-                KeybindBox.Font = Enum.Font.SourceSansSemibold
+                KeybindBox.Font = Enum.Font.SourceSansPro
                 KeybindBox.Text = Keybind.Default
                 KeybindBox.TextColor3 = theme.TextColor
                 KeybindBox.TextSize = 15.000
@@ -2713,7 +2713,7 @@ title.Text = Toggle.Name
                     local bounds = TextService:GetTextSize(
                         displayName,
                         15,
-                        Enum.Font.SourceSansSemibold,
+                        Enum.Font.SourceSansPro,
                         Vector2.new(1e5, 20)
                     )
                     local newWidth = math.max(MIN_W, bounds.X + H_PADDING*2)
@@ -2780,7 +2780,7 @@ title.Text = Toggle.Name
                 ButtonFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 ButtonFrame.BorderSizePixel = 0
                 ButtonFrame.Size = UDim2.new(0, 100, 0, 30)
-                ButtonFrame.Font = Enum.Font.SourceSansSemibold
+                ButtonFrame.Font = Enum.Font.SourceSansPro
                 ButtonFrame.Text = Button.Name
                 ButtonFrame.TextColor3 = theme.TextColor
                 ButtonFrame.TextSize = 15.000
@@ -2822,7 +2822,7 @@ title.Text = Toggle.Name
                 LabelFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 LabelFrame.BorderSizePixel = 0
                 LabelFrame.Size = UDim2.new(0, 215, 0, 20)
-                LabelFrame.Font = Enum.Font.SourceSansSemibold
+                LabelFrame.Font = Enum.Font.SourceSansPro
                 LabelFrame.Text = Label.Text
                 LabelFrame.TextColor3 = theme.SecondaryTextColor
                 LabelFrame.TextSize = 15.000
@@ -2939,7 +2939,7 @@ title.Text = Toggle.Name
                 ConfigTitle.BorderSizePixel = 0
                 ConfigTitle.Position = UDim2.new(0, 0, 0, 0)
                 ConfigTitle.Size = UDim2.new(0, 215, 0, 20)
-                ConfigTitle.Font = Enum.Font.SourceSansSemibold
+                ConfigTitle.Font = Enum.Font.SourceSansPro
                 ConfigTitle.Text = Config.Name
                 ConfigTitle.TextColor3 = theme.SecondaryTextColor
                 ConfigTitle.TextSize = 15.000
@@ -2995,7 +2995,7 @@ title.Text = Toggle.Name
                     button.BorderSizePixel = 0
                     button.Position = UDim2.new(0, xPos, 0, 0)
                     button.Size = UDim2.new(0, 50, 0, 25)
-                    button.Font = Enum.Font.SourceSansSemibold
+                    button.Font = Enum.Font.SourceSansPro
                     button.Text = text
                     button.TextColor3 = theme.TextColor
                     button.TextSize = 14.000
@@ -3030,7 +3030,7 @@ title.Text = Toggle.Name
                 SaveAsTextBox.BorderSizePixel = 0
                 SaveAsTextBox.Position = UDim2.new(0, 5, 0, 0)
                 SaveAsTextBox.Size = UDim2.new(0, 150, 0, 25)
-                SaveAsTextBox.Font = Enum.Font.SourceSansSemibold
+                SaveAsTextBox.Font = Enum.Font.SourceSansPro
                 SaveAsTextBox.PlaceholderText = "Config name..."
                 SaveAsTextBox.PlaceholderColor3 = theme.SecondaryTextColor
                 SaveAsTextBox.Text = ""
@@ -3045,7 +3045,7 @@ title.Text = Toggle.Name
                 SaveAsButton.BorderSizePixel = 0
                 SaveAsButton.Position = UDim2.new(0, 160, 0, 2)
                 SaveAsButton.Size = UDim2.new(0, 50, 0, 21)
-                SaveAsButton.Font = Enum.Font.SourceSansSemibold
+                SaveAsButton.Font = Enum.Font.SourceSansPro
                 SaveAsButton.Text = "Save"
                 SaveAsButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 SaveAsButton.TextSize = 14.000
@@ -3077,7 +3077,7 @@ title.Text = Toggle.Name
                 RenameTextBox.BorderSizePixel = 0
                 RenameTextBox.Position = UDim2.new(0, 5, 0, 0)
                 RenameTextBox.Size = UDim2.new(0, 150, 0, 25)
-                RenameTextBox.Font = Enum.Font.SourceSansSemibold
+                RenameTextBox.Font = Enum.Font.SourceSansPro
                 RenameTextBox.PlaceholderText = "New name..."
                 RenameTextBox.PlaceholderColor3 = theme.SecondaryTextColor
                 RenameTextBox.Text = ""
@@ -3092,7 +3092,7 @@ title.Text = Toggle.Name
                 RenameConfirmButton.BorderSizePixel = 0
                 RenameConfirmButton.Position = UDim2.new(0, 160, 0, 2)
                 RenameConfirmButton.Size = UDim2.new(0, 50, 0, 21)
-                RenameConfirmButton.Font = Enum.Font.SourceSansSemibold
+                RenameConfirmButton.Font = Enum.Font.SourceSansPro
                 RenameConfirmButton.Text = "Rename"
                 RenameConfirmButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 RenameConfirmButton.TextSize = 14.000
@@ -3123,7 +3123,7 @@ title.Text = Toggle.Name
                         ConfigButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                         ConfigButton.BorderSizePixel = 0
                         ConfigButton.Size = UDim2.new(1, -8, 0, 20)
-                        ConfigButton.Font = Enum.Font.SourceSansSemibold
+                        ConfigButton.Font = Enum.Font.SourceSansPro
                         ConfigButton.Text = " " .. configName
                         ConfigButton.TextColor3 = currentTheme.TextColor
                         ConfigButton.TextSize = 14.000
