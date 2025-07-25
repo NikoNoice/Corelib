@@ -1589,7 +1589,7 @@ function Library:CreateWindow(config)
         title.BorderColor3 = Color3.fromRGB(0, 0, 0)
         title.BorderSizePixel = 0
         title.Size = UDim2.new(0, 50, 0, 32)
-        title.Font = Enum.Font.SourceSansSemiboldPro
+        title.Font = Enum.Font.SourceSansSemibold
         title.Text = Page.Name
         title.TextColor3 = theme.SecondaryTextColor
         title.TextSize = 14.000
