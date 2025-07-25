@@ -971,7 +971,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     CloseButton.BorderSizePixel = 0
     CloseButton.Position = UDim2.new(0.9, 0, 0.02, 0)
     CloseButton.Size = UDim2.new(0, 20, 0, 20)
-    CloseButton.Font = Enum.Font.SourceSansSemiboldBold
+    CloseButton.Font = Enum.Font.SourceSansSemibold
     CloseButton.Text = "×"
     CloseButton.TextColor3 = theme.TextColor
     CloseButton.TextSize = 18.000
@@ -1325,7 +1325,7 @@ function Library:CreateWindow(config)
     TextLabel.BorderSizePixel = 0
     TextLabel.Position = UDim2.new(0.0245389901, 0, -0.200000003, 0)
     TextLabel.Size = UDim2.new(0, 120, 0, 32)
-    TextLabel.Font = Enum.Font.SourceSansSemiboldBold
+    TextLabel.Font = Enum.Font.SourceSansSemibold
     TextLabel.Text = Window.Name
     TextLabel.TextColor3 = theme.MainColor
     TextLabel.TextSize = 14.000
