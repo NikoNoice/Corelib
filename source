@@ -814,7 +814,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     RainbowToggle.BorderSizePixel = 0
     RainbowToggle.Size = UDim2.new(0, 18, 0, 18)
     RainbowToggle.ZIndex = 102
-    RainbowToggle.Font = Enum.Font.SourceSansSemibold
+    RainbowToggle.Font = Enum.Font.SourceSans
     RainbowToggle.Text = ""
     RainbowToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
     RainbowToggle.TextSize = 14.000
@@ -899,7 +899,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     SpeedHead.Position = UDim2.new(0.9, 0, -0.5, 0)
     SpeedHead.Size = UDim2.new(0, 10, 0, 10)
     SpeedHead.ZIndex = 104
-    SpeedHead.Font = Enum.Font.SourceSansSemibold
+    SpeedHead.Font = Enum.Font.SourceSans
     SpeedHead.Text = ""
     SpeedHead.TextColor3 = Color3.fromRGB(0, 0, 0)
     SpeedHead.TextSize = 14.000
@@ -971,7 +971,7 @@ function Library:CreateColorpickerWindow(colorpicker)
     CloseButton.BorderSizePixel = 0
     CloseButton.Position = UDim2.new(0.9, 0, 0.02, 0)
     CloseButton.Size = UDim2.new(0, 20, 0, 20)
-    CloseButton.Font = Enum.Font.SourceSansSemibold
+    CloseButton.Font = Enum.Font.SourceSansBold
     CloseButton.Text = "×"
     CloseButton.TextColor3 = theme.TextColor
     CloseButton.TextSize = 18.000
@@ -1589,7 +1589,7 @@ function Library:CreateWindow(config)
         title.BorderColor3 = Color3.fromRGB(0, 0, 0)
         title.BorderSizePixel = 0
         title.Size = UDim2.new(0, 50, 0, 32)
-        title.Font = Enum.Font.SourceSansSemibold
+        title.Font = Enum.Font.SourceSansSemiboldPro
         title.Text = Page.Name
         title.TextColor3 = theme.SecondaryTextColor
         title.TextSize = 14.000
@@ -1643,7 +1643,7 @@ function Library:CreateWindow(config)
         Section1.Position = UDim2.new(0.0127659574, 0, 0.0730183199, 0)
         Section1.Size = UDim2.new(0, 225, 0, 480) -- Reduced from 520 to 480
         Section1.Visible = false
-        Library:CreateStroke(Section1, Color3.fromRGB(0, 0, 0), 1)
+        -- NO stroke on Section1 - this was causing the double border
 
         -- Make it a scrolling frame
         local ScrollingFrame1 = Instance.new("ScrollingFrame")
@@ -1682,7 +1682,7 @@ function Library:CreateWindow(config)
         Section2.Position = UDim2.new(0.510638297, 0, 0.0730183199, 0)
         Section2.Size = UDim2.new(0, 225, 0, 480) -- Reduced from 520 to 480
         Section2.Visible = false
-        Library:CreateStroke(Section2, Color3.fromRGB(0, 0, 0), 1)
+        -- NO stroke on Section2 - this was causing the double border
 
         -- Make it a scrolling frame
         local ScrollingFrame2 = Instance.new("ScrollingFrame")
@@ -1763,7 +1763,7 @@ function Library:CreateWindow(config)
                 (Page.ScrollingFrame2 or Section2)
             local theme = Library:GetTheme()
             
-            -- Create section with enhanced styling
+            -- Create section with original structure (no double strokes)
             local SectionFrame = Instance.new("Frame")
             local UICorner = Instance.new("UICorner")
             local Title = Instance.new("Frame")
@@ -1784,25 +1784,23 @@ function Library:CreateWindow(config)
             UICorner.CornerRadius = UDim.new(0, 3)
             UICorner.Parent = SectionFrame
             
-            -- Add section frame stroke
+            -- NO UIStroke on SectionFrame - this was causing the double border
             
             Title.Name = "Title"
             Title.Parent = SectionFrame
             Title.BackgroundColor3 = theme.SecondaryColor
             Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Title.BorderSizePixel = 0
-            Title.Position = UDim2.new(0, 3, 0, 3) -- Adjusted to fit inside border with padding
-            Title.Size = UDim2.new(1, -6, 0, 20) -- Adjusted to fit inside border with padding
-            
-            -- Remove stroke from title to prevent double borders
+            Title.Position = UDim2.new(0, 0, 0.0219435729, 0) -- Original positioning
+            Title.Size = UDim2.new(1, 0, 0, 15) -- Original sizing - full width
             
             Roundingfiller.Name = "Roundingfiller"
             Roundingfiller.Parent = Title
             Roundingfiller.BackgroundColor3 = theme.SecondaryColor
             Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Roundingfiller.BorderSizePixel = 0
-            Roundingfiller.Position = UDim2.new(0, 0, -0.25, 0)
-            Roundingfiller.Size = UDim2.new(1, 0, 0, 6)
+            Roundingfiller.Position = UDim2.new(0, 0, -0.666666687, 0) -- Original positioning
+            Roundingfiller.Size = UDim2.new(1, 0, 0, 10) -- Full width
 
             UICorner_2.CornerRadius = UDim.new(0, 3)
             UICorner_2.Parent = Roundingfiller
@@ -1812,14 +1810,13 @@ function Library:CreateWindow(config)
             TitleLabel.BackgroundTransparency = 1.000
             TitleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
             TitleLabel.BorderSizePixel = 0
-            TitleLabel.Position = UDim2.new(0, 5, 0, 0) -- Adjusted positioning
-            TitleLabel.Size = UDim2.new(1, -10, 1, 0) -- Adjusted size
+            TitleLabel.Position = UDim2.new(0.0279069766, 0, -0.466666669, 0) -- Original positioning
+            TitleLabel.Size = UDim2.new(0, 79, 0, 22) -- Original size
             TitleLabel.Font = Enum.Font.SourceSansSemibold
             TitleLabel.Text = Section.Name
             TitleLabel.TextColor3 = theme.MainColor
             TitleLabel.TextSize = 15.000
             TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-            TitleLabel.TextYAlignment = Enum.TextYAlignment.Center -- Center vertically
             
             SectionHolder.Name = "SectionHolder"
             SectionHolder.Parent = SectionFrame
@@ -1827,8 +1824,8 @@ function Library:CreateWindow(config)
             SectionHolder.BackgroundTransparency = 1.000
             SectionHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionHolder.BorderSizePixel = 0
-            SectionHolder.Position = UDim2.new(0, 8, 0, 33) -- Adjusted to account for new title position
-            SectionHolder.Size = UDim2.new(1, -16, 1, -38) -- Adjusted size with proper padding
+            SectionHolder.Position = UDim2.new(0.0149999997, 0, 0.0877742916, 0) -- Original positioning
+            SectionHolder.Size = UDim2.new(0, 216, 0, 283) -- Original sizing
             
             UIListLayout.Parent = SectionHolder
             UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1861,7 +1858,7 @@ function Library:CreateWindow(config)
                 ToggleButton.BorderSizePixel = 0
                 ToggleButton.Size = UDim2.new(0, 18, 0, 18)
                 ToggleButton.ZIndex = 1
-                ToggleButton.Font = Enum.Font.SourceSansSemibold
+                ToggleButton.Font = Enum.Font.SourceSans
                 ToggleButton.Text = ""
                 ToggleButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 ToggleButton.TextSize = 14.000
@@ -1879,7 +1876,7 @@ function Library:CreateWindow(config)
                 title.BorderSizePixel = 0
                 title.Position = UDim2.new(1.46110022, 0, -0.055555556, 0)
                 title.Size = UDim2.new(0, 120, 0, 20)
-                title.Font = Enum.Font.SourceSansSemibold
+                title.Font = Enum.Font.SourceSans
 
 title.Text = Toggle.Name
                 title.TextColor3 = Toggle.Default and theme.TextColor or theme.SecondaryTextColor
@@ -1934,7 +1931,7 @@ title.Text = Toggle.Name
                     ColorpickerButton.BorderSizePixel = 0
                     ColorpickerButton.Position = UDim2.new(10.2222223, 0, 0.111111112, 0)
                     ColorpickerButton.Size = UDim2.new(0, 32, 0, 13)
-                    ColorpickerButton.Font = Enum.Font.SourceSansSemibold
+                    ColorpickerButton.Font = Enum.Font.SourceSans
                     ColorpickerButton.Text = ""
                     ColorpickerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                     ColorpickerButton.TextSize = 14.000
@@ -2190,7 +2187,7 @@ title.Text = Toggle.Name
                 SliderHead.Position = UDim2.new(0.899999976, 0, -0.75, 0)
                 SliderHead.Size = UDim2.new(0, 10, 0, 10)
                 SliderHead.ZIndex = 2
-                SliderHead.Font = Enum.Font.SourceSansSemibold
+                SliderHead.Font = Enum.Font.SourceSans
                 SliderHead.Text = ""
                 SliderHead.TextColor3 = Color3.fromRGB(0, 0, 0)
                 SliderHead.TextSize = 14.000
@@ -2584,7 +2581,7 @@ title.Text = Toggle.Name
                 ColorpickerButton.BorderSizePixel = 0
                 ColorpickerButton.Position = UDim2.new(0.851162791, 0, 0.14799957, 0)
                 ColorpickerButton.Size = UDim2.new(0, 32, 0, 13)
-                ColorpickerButton.Font = Enum.Font.SourceSansSemibold
+                ColorpickerButton.Font = Enum.Font.SourceSans
                 ColorpickerButton.Text = ""
                 ColorpickerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 ColorpickerButton.TextSize = 14.000
