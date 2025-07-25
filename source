@@ -192,6 +192,22 @@ function Library:UpdateThemeForAllElements()
         for _, section in pairs(page.Sections or {}) do
             if section.Frame then
                 self:TweenColor(section.Frame, "BackgroundColor3", theme.BackgroundColor, 0.3)
+                
+                -- Update title bar in section
+                local title = section.Frame:FindFirstChild("Title")
+                if title then
+                    self:TweenColor(title, "BackgroundColor3", theme.SecondaryColor, 0.3)
+                    
+                    local titleLabel = title:FindFirstChild("TextLabel")
+                    if titleLabel then
+                        self:TweenColor(titleLabel, "TextColor3", theme.MainColor, 0.3)
+                    end
+                    
+                    local roundingFiller = title:FindFirstChild("Roundingfiller")
+                    if roundingFiller then
+                        self:TweenColor(roundingFiller, "BackgroundColor3", theme.SecondaryColor, 0.3)
+                    end
+                end
             end
         end
         
@@ -204,6 +220,24 @@ function Library:UpdateThemeForAllElements()
                 end
             else
                 self:TweenColor(page.TabButton, "TextColor3", theme.SecondaryTextColor, 0.3)
+            end
+        end
+    end
+    
+    -- Update all UI elements
+    self:UpdateAllElements()
+end
+
+function Library:UpdateAllElements()
+    local theme = self:GetTheme()
+    
+    -- Update all stored elements
+    for flag, element in pairs(self.Elements) do
+        if element.SetValue then
+            -- Force refresh the element with current value to update colors
+            local currentValue = element.Value
+            if currentValue ~= nil then
+                element:SetValue(currentValue)
             end
         end
     end
@@ -1486,10 +1520,11 @@ function Library:CreateWindow(config)
             startPos = Background.Position
             
             -- Add visual feedback
+            local currentTheme = self:GetTheme()
             self:TweenColor(Background, "BackgroundColor3", Color3.new(
-                theme.BackgroundColor.R * 1.1,
-                theme.BackgroundColor.G * 1.1,
-                theme.BackgroundColor.B * 1.1
+                currentTheme.BackgroundColor.R * 1.1,
+                currentTheme.BackgroundColor.G * 1.1,
+                currentTheme.BackgroundColor.B * 1.1
             ), 0.1)
         end
     end)
@@ -1504,8 +1539,9 @@ function Library:CreateWindow(config)
     Library:CreateConnection(UserInputService.InputEnded, function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
-            -- Reset visual feedback
-            self:TweenColor(Background, "BackgroundColor3", theme.BackgroundColor, 0.1)
+            -- Reset visual feedback with current theme
+            local currentTheme = self:GetTheme()
+            self:TweenColor(Background, "BackgroundColor3", currentTheme.BackgroundColor, 0.1)
         end
     end)
     
@@ -1646,6 +1682,7 @@ function Library:CreateWindow(config)
         Section2.Position = UDim2.new(0.510638297, 0, 0.0730183199, 0)
         Section2.Size = UDim2.new(0, 225, 0, 480) -- Reduced from 520 to 480
         Section2.Visible = false
+        Library:CreateStroke(Section2, Color3.fromRGB(0, 0, 0), 1)
 
         -- Make it a scrolling frame
         local ScrollingFrame2 = Instance.new("ScrollingFrame")
@@ -1747,13 +1784,16 @@ function Library:CreateWindow(config)
             UICorner.CornerRadius = UDim.new(0, 3)
             UICorner.Parent = SectionFrame
             
+            -- Add section frame stroke
+            Library:CreateStroke(SectionFrame, theme.BorderColor, 1)
+            
             Title.Name = "Title"
             Title.Parent = SectionFrame
             Title.BackgroundColor3 = theme.SecondaryColor
             Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Title.BorderSizePixel = 0
-            Title.Position = UDim2.new(0, 0, 0.0219435729, 0)
-            Title.Size = UDim2.new(0, 225, 0, 15)
+            Title.Position = UDim2.new(0, 1, 0, 1) -- Adjusted to fit inside border
+            Title.Size = UDim2.new(1, -2, 0, 20) -- Adjusted to fit inside border
             
             Library:CreateStroke(Title, theme.BorderColor, 1)
             
@@ -1762,8 +1802,8 @@ function Library:CreateWindow(config)
             Roundingfiller.BackgroundColor3 = theme.SecondaryColor
             Roundingfiller.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Roundingfiller.BorderSizePixel = 0
-            Roundingfiller.Position = UDim2.new(0, 0, -0.48, 0)
-            Roundingfiller.Size = UDim2.new(0, 225, 0, 10)
+            Roundingfiller.Position = UDim2.new(0, 0, -0.3, 0)
+            Roundingfiller.Size = UDim2.new(1, 0, 0, 8)
 
             UICorner_2.CornerRadius = UDim.new(0, 3)
             UICorner_2.Parent = Roundingfiller
@@ -1773,13 +1813,14 @@ function Library:CreateWindow(config)
             TitleLabel.BackgroundTransparency = 1.000
             TitleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
             TitleLabel.BorderSizePixel = 0
-            TitleLabel.Position = UDim2.new(0.0279069766, 0, -0.466666669, 0)
-            TitleLabel.Size = UDim2.new(0, 79, 0, 22)
+            TitleLabel.Position = UDim2.new(0, 5, 0, 0) -- Adjusted positioning
+            TitleLabel.Size = UDim2.new(1, -10, 1, 0) -- Adjusted size
             TitleLabel.Font = Enum.Font.SourceSansSemibold
             TitleLabel.Text = Section.Name
             TitleLabel.TextColor3 = theme.MainColor
             TitleLabel.TextSize = 15.000
             TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            TitleLabel.TextYAlignment = Enum.TextYAlignment.Center -- Center vertically
             
             SectionHolder.Name = "SectionHolder"
             SectionHolder.Parent = SectionFrame
@@ -1787,8 +1828,8 @@ function Library:CreateWindow(config)
             SectionHolder.BackgroundTransparency = 1.000
             SectionHolder.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionHolder.BorderSizePixel = 0
-            SectionHolder.Position = UDim2.new(0.0149999997, 0, 0.0877742916, 0)
-            SectionHolder.Size = UDim2.new(0, 216, 0, 283)
+            SectionHolder.Position = UDim2.new(0, 5, 0, 30) -- Adjusted to account for new title height
+            SectionHolder.Size = UDim2.new(1, -10, 1, -35) -- Adjusted size
             
             UIListLayout.Parent = SectionHolder
             UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1839,8 +1880,9 @@ function Library:CreateWindow(config)
                 title.BorderSizePixel = 0
                 title.Position = UDim2.new(1.46110022, 0, -0.055555556, 0)
                 title.Size = UDim2.new(0, 120, 0, 20)
-                title.Font = Enum.Font.SourceSansSemibold
-                title.Text = Toggle.Name
+                title.Font = Enum.Font.SourceSansSemi
+
+title.Text = Toggle.Name
                 title.TextColor3 = Toggle.Default and theme.TextColor or theme.SecondaryTextColor
                 title.TextSize = 15.000
                 title.TextXAlignment = Enum.TextXAlignment.Left
@@ -1859,15 +1901,16 @@ function Library:CreateWindow(config)
                     Toggle.Value = value
                     Library.Flags[Toggle.Flag] = value
                     
+                    local currentTheme = Library:GetTheme()
                     if value then
-                        Library:TweenColor(ToggleButton, "BackgroundColor3", theme.MainColor, 0.2)
+                        Library:TweenColor(ToggleButton, "BackgroundColor3", currentTheme.MainColor, 0.2)
                         ToggleButton.BackgroundTransparency = 0
-                        Library:TweenColor(title, "TextColor3", theme.TextColor, 0.2)
+                        Library:TweenColor(title, "TextColor3", currentTheme.TextColor, 0.2)
                         checkmark.Visible = true
                     else
                         Library:TweenColor(ToggleButton, "BackgroundColor3", Color3.fromRGB(255, 255, 255), 0.2)
                         ToggleButton.BackgroundTransparency = 1
-                        Library:TweenColor(title, "TextColor3", theme.SecondaryTextColor, 0.2)
+                        Library:TweenColor(title, "TextColor3", currentTheme.SecondaryTextColor, 0.2)
                         checkmark.Visible = false
                     end
                     
@@ -1900,7 +1943,7 @@ function Library:CreateWindow(config)
                     UICorner.CornerRadius = UDim.new(0, 3)
                     UICorner.Parent = ColorpickerButton
                     
-                    Library:CreateStroke(ColorpickerButton, theme.BorderColor, 1)
+                    Library:CreateStroke(ColorpickerButton, Library:GetTheme().BorderColor, 1)
                     
                     function Colorpicker:SetValue(color)
                         Colorpicker.Value = color
@@ -1946,12 +1989,12 @@ function Library:CreateWindow(config)
                     KeybindBox.Size = UDim2.new(0, MIN_W, 0, 20)
                     KeybindBox.Font = Enum.Font.SourceSansSemibold
                     KeybindBox.Text = Keybind.Default
-                    KeybindBox.TextColor3 = theme.TextColor
+                    KeybindBox.TextColor3 = Library:GetTheme().TextColor
                     KeybindBox.TextSize = 15.000
                     KeybindBox.TextScaled = false
                     KeybindBox.AutoButtonColor = false
                     
-                    Library:CreateStroke(KeybindBox, theme.BorderColor, 1)
+                    Library:CreateStroke(KeybindBox, Library:GetTheme().BorderColor, 1)
                     
                     -- Key name mapping
                     local KeyNames = {
@@ -2015,7 +2058,7 @@ function Library:CreateWindow(config)
                         if not Keybind.Listening then
                             Keybind.Listening = true
                             KeybindBox.Text = "..."
-                            Library:TweenColor(KeybindBox, "TextColor3", theme.SecondaryTextColor, 0.2)
+                            Library:TweenColor(KeybindBox, "TextColor3", Library:GetTheme().SecondaryTextColor, 0.2)
                             
                             local connection
                             connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
@@ -2032,7 +2075,7 @@ function Library:CreateWindow(config)
                                 
                                 if key then
                                     Keybind:SetValue(key)
-                                    Library:TweenColor(KeybindBox, "TextColor3", theme.TextColor, 0.2)
+                                    Library:TweenColor(KeybindBox, "TextColor3", Library:GetTheme().TextColor, 0.2)
                                     Keybind.Listening = false
                                     connection:Disconnect()
                                 end
@@ -2056,11 +2099,12 @@ function Library:CreateWindow(config)
                                 Window.KeybindModeFrame.Visible = false
                                 
                                 -- Update button colors
+                                local currentTheme = Library:GetTheme()
                                 for j, b in pairs(Window.KeybindModeButtons) do
                                     if b == btn then
-                                        Library:TweenColor(b, "TextColor3", theme.TextColor, 0.2)
+                                        Library:TweenColor(b, "TextColor3", currentTheme.TextColor, 0.2)
                                     else
-                                        Library:TweenColor(b, "TextColor3", theme.SecondaryTextColor, 0.2)
+                                        Library:TweenColor(b, "TextColor3", currentTheme.SecondaryTextColor, 0.2)
                                     end
                                 end
                             end)
@@ -2186,6 +2230,11 @@ function Library:CreateWindow(config)
                     
                     SliderValue.Text = tostring(value)
                     
+                    -- Update colors based on current theme
+                    local currentTheme = Library:GetTheme()
+                    Filler.BackgroundColor3 = currentTheme.MainColor
+                    SliderHead.BackgroundColor3 = currentTheme.AccentColor
+                    
                     Slider.Callback(value)
                 end
                 
@@ -2298,6 +2347,7 @@ function Library:CreateWindow(config)
                     self.Value = value
                     Library.Flags[self.Flag] = value
                     
+                    local currentTheme = Library:GetTheme()
                     if self.Multi then
                         if type(value) ~= "table" then
                             value = {value}
@@ -2310,6 +2360,9 @@ function Library:CreateWindow(config)
                         self.Button.Text = " " .. tostring(value)
                     end
                     
+                    -- Update button colors
+                    self.Button.TextColor3 = currentTheme.TextColor
+                    
                     self.Callback(value)
                 end
                 
@@ -2318,6 +2371,7 @@ function Library:CreateWindow(config)
                         if child:IsA("TextLabel") then child:Destroy() end
                     end
                     
+                    local currentTheme = Library:GetTheme()
                     for _, option in ipairs(self.Options) do
                         local OptionLabel = Instance.new("TextLabel")
                         OptionLabel.Name = "Option"
@@ -2338,28 +2392,29 @@ function Library:CreateWindow(config)
                         
                         -- Set initial appearance
                         if isSelected then
-                            OptionLabel.TextColor3 = theme.MainColor
+                            OptionLabel.TextColor3 = currentTheme.MainColor
                             OptionLabel.Text = "       " .. option
                         else
-                            OptionLabel.TextColor3 = theme.SecondaryTextColor
+                            OptionLabel.TextColor3 = currentTheme.SecondaryTextColor
                             OptionLabel.Text = " " .. option
                         end
                         
                         -- Simple hover effect for option
                         Library:CreateConnection(OptionLabel.MouseEnter, function()
                             if not isSelected then
-                                Library:TweenColor(OptionLabel, "TextColor3", theme.TextColor, 0.1)
+                                Library:TweenColor(OptionLabel, "TextColor3", currentTheme.TextColor, 0.1)
                             end
                         end)
                         
                         Library:CreateConnection(OptionLabel.MouseLeave, function()
                             if not isSelected then
-                                Library:TweenColor(OptionLabel, "TextColor3", theme.SecondaryTextColor, 0.1)
+                                Library:TweenColor(OptionLabel, "TextColor3", currentTheme.SecondaryTextColor, 0.1)
                             end
                         end)
                         
                         Library:CreateConnection(OptionLabel.InputBegan, function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                local newTheme = Library:GetTheme()
                                 if self.Multi then
                                     local selected = self.Value or {}
                                     if type(selected) ~= "table" then
@@ -2370,12 +2425,12 @@ function Library:CreateWindow(config)
                                     if index then
                                         table.remove(selected, index)
                                         OptionLabel.Text = " " .. option
-                                        Library:TweenColor(OptionLabel, "TextColor3", theme.SecondaryTextColor, 0.2)
+                                        Library:TweenColor(OptionLabel, "TextColor3", newTheme.SecondaryTextColor, 0.2)
                                         isSelected = false
                                     else
                                         table.insert(selected, option)
                                         OptionLabel.Text = "       " .. option
-                                        Library:TweenColor(OptionLabel, "TextColor3", theme.MainColor, 0.2)
+                                        Library:TweenColor(OptionLabel, "TextColor3", newTheme.MainColor, 0.2)
                                         isSelected = true
                                     end
                                     self:SetValue(selected)
@@ -2384,13 +2439,13 @@ function Library:CreateWindow(config)
                                     for _, child in pairs(self.Holder:GetChildren()) do
                                         if child:IsA("TextLabel") and child.Name == "Option" then
                                             child.Text = " " .. child.Text:gsub("^%s*", "")
-                                            Library:TweenColor(child, "TextColor3", theme.SecondaryTextColor, 0.2)
+                                            Library:TweenColor(child, "TextColor3", newTheme.SecondaryTextColor, 0.2)
                                         end
                                     end
                                     
                                     -- Update selected option
                                     OptionLabel.Text = "       " .. option
-                                    Library:TweenColor(OptionLabel, "TextColor3", theme.MainColor, 0.2)
+                                    Library:TweenColor(OptionLabel, "TextColor3", newTheme.MainColor, 0.2)
                                     isSelected = true
                                     
                                     self:SetValue(option)
@@ -2401,6 +2456,9 @@ function Library:CreateWindow(config)
                     
                     local contentH = self.UIListLayout.AbsoluteContentSize.Y
                     self.Holder.Size = UDim2.new(0, self.Holder.Size.X.Offset, 0, contentH)
+                    
+                    -- Update holder colors
+                    self.Holder.BackgroundColor3 = currentTheme.AccentColor
                 end
                 
                 function Dropdown:OpenMenu()
@@ -2541,6 +2599,11 @@ function Library:CreateWindow(config)
                     Colorpicker.Value = color
                     Library.Flags[Colorpicker.Flag] = color
                     Library:TweenColor(ColorpickerButton, "BackgroundColor3", color, 0.2)
+                    
+                    -- Update text color based on current theme
+                    local currentTheme = Library:GetTheme()
+                    ColorpickerFrame.TextColor3 = currentTheme.SecondaryTextColor
+                    
                     Colorpicker.Callback(color)
                 end
                 
@@ -2657,6 +2720,11 @@ function Library:CreateWindow(config)
                     
                     Library:TweenSize(KeybindBox, UDim2.new(0, newWidth, 0, 20), 0.2)
                     
+                    -- Update colors based on current theme
+                    local currentTheme = Library:GetTheme()
+                    KeybindFrame.TextColor3 = currentTheme.SecondaryTextColor
+                    KeybindBox.TextColor3 = currentTheme.TextColor
+                    
                     Keybind.Callback(key)
                 end
                 
@@ -2664,7 +2732,7 @@ function Library:CreateWindow(config)
                     if not Keybind.Listening then
                         Keybind.Listening = true
                         KeybindBox.Text = "..."
-                        Library:TweenColor(KeybindBox, "TextColor3", theme.SecondaryTextColor, 0.2)
+                        Library:TweenColor(KeybindBox, "TextColor3", Library:GetTheme().SecondaryTextColor, 0.2)
                         
                         local connection
                         connection = Library:CreateConnection(UserInputService.InputBegan, function(input2, gameProcessed)
@@ -2681,7 +2749,7 @@ function Library:CreateWindow(config)
                             
                             if key then
                                 Keybind:SetValue(key)
-                                Library:TweenColor(KeybindBox, "TextColor3", theme.TextColor, 0.2)
+                                Library:TweenColor(KeybindBox, "TextColor3", Library:GetTheme().TextColor, 0.2)
                                 Keybind.Listening = false
                                 connection:Disconnect()
                             end
@@ -2726,6 +2794,14 @@ function Library:CreateWindow(config)
                     Button.Callback()
                 end)
                 
+                -- Store for theme updates
+                Library.Elements[Button.Name .. "_Button"] = {
+                    SetValue = function()
+                        local currentTheme = Library:GetTheme()
+                        ButtonFrame.TextColor3 = currentTheme.TextColor
+                    end
+                }
+                
                 return Button
             end
             
@@ -2757,8 +2833,19 @@ function Library:CreateWindow(config)
                     Library:TweenTransparency(LabelFrame, 0.5, 0.1)
                     wait(0.1)
                     LabelFrame.Text = text
+                    -- Update text color based on current theme
+                    local currentTheme = Library:GetTheme()
+                    LabelFrame.TextColor3 = currentTheme.SecondaryTextColor
                     Library:TweenTransparency(LabelFrame, 0, 0.1)
                 end
+                
+                -- Store for theme updates
+                Library.Elements[Label.Name .. "_Label"] = {
+                    SetValue = function()
+                        local currentTheme = Library:GetTheme()
+                        LabelFrame.TextColor3 = currentTheme.SecondaryTextColor
+                    end
+                }
                 
                 return Label
             end
@@ -2796,6 +2883,19 @@ function Library:CreateWindow(config)
                     NumberSequenceKeypoint.new(1, 0.5)
                 }
                 glowEffect.Parent = DividerFrame
+                
+                -- Store for theme updates
+                Library.Elements[Divider.Name .. "_Divider"] = {
+                    SetValue = function()
+                        local currentTheme = Library:GetTheme()
+                        DividerFrame.BackgroundColor3 = currentTheme.MainColor
+                        glowEffect.Color = ColorSequence.new{
+                            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+                            ColorSequenceKeypoint.new(0.5, currentTheme.MainColor),
+                            ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
+                        }
+                    end
+                }
                 
                 return Divider
             end
@@ -3011,6 +3111,7 @@ function Library:CreateWindow(config)
                     end
                     
                     local configs = Library:GetConfigs()
+                    local currentTheme = Library:GetTheme()
                     
                     for _, configName in ipairs(configs) do
                         local ConfigButton = Instance.new("TextButton")
@@ -3024,7 +3125,7 @@ function Library:CreateWindow(config)
                         ConfigButton.Size = UDim2.new(1, -8, 0, 20)
                         ConfigButton.Font = Enum.Font.SourceSansSemibold
                         ConfigButton.Text = " " .. configName
-                        ConfigButton.TextColor3 = theme.TextColor
+                        ConfigButton.TextColor3 = currentTheme.TextColor
                         ConfigButton.TextSize = 14.000
                         ConfigButton.TextXAlignment = Enum.TextXAlignment.Left
                         
@@ -3037,13 +3138,13 @@ function Library:CreateWindow(config)
                             for _, child in ipairs(ConfigList:GetChildren()) do
                                 if child:IsA("TextButton") then
                                     Library:TweenTransparency(child, 1, 0.2)
-                                    Library:TweenColor(child, "TextColor3", theme.TextColor, 0.2)
+                                    Library:TweenColor(child, "TextColor3", currentTheme.TextColor, 0.2)
                                 end
                             end
                             
                             -- Select this config
                             Library:TweenTransparency(ConfigButton, 0.2, 0.2)
-                            Library:TweenColor(ConfigButton, "BackgroundColor3", theme.MainColor, 0.2)
+                            Library:TweenColor(ConfigButton, "BackgroundColor3", currentTheme.MainColor, 0.2)
                             Library:TweenColor(ConfigButton, "TextColor3", Color3.fromRGB(0, 0, 0), 0.2)
                             Config.SelectedConfig = configName
                         end)
@@ -3160,6 +3261,32 @@ function Library:CreateWindow(config)
                         RenameConfirmButton.MouseButton1Click:Fire()
                     end
                 end)
+                
+                -- Store for theme updates
+                Library.Elements[Config.Name .. "_Config"] = {
+                    SetValue = function()
+                        local currentTheme = Library:GetTheme()
+                        ConfigTitle.TextColor3 = currentTheme.SecondaryTextColor
+                        ConfigList.BackgroundColor3 = currentTheme.SecondaryColor
+                        ConfigList.ScrollBarImageColor3 = currentTheme.MainColor
+                        SaveAsFrame.BackgroundColor3 = currentTheme.AccentColor
+                        RenameFrame.BackgroundColor3 = currentTheme.AccentColor
+                        SaveAsButton.BackgroundColor3 = currentTheme.MainColor
+                        RenameConfirmButton.BackgroundColor3 = currentTheme.MainColor
+                        SaveAsTextBox.TextColor3 = currentTheme.TextColor
+                        SaveAsTextBox.PlaceholderColor3 = currentTheme.SecondaryTextColor
+                        RenameTextBox.TextColor3 = currentTheme.TextColor
+                        RenameTextBox.PlaceholderColor3 = currentTheme.SecondaryTextColor
+                        
+                        -- Update button colors
+                        for i, buttonData in ipairs(buttons) do
+                            local button = buttonData[1]
+                            button.TextColor3 = currentTheme.TextColor
+                        end
+                        
+                        Config:RefreshList()
+                    end
+                }
                 
                 Config:RefreshList()
                 return Config
