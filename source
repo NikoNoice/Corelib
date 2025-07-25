@@ -1785,7 +1785,6 @@ function Library:CreateWindow(config)
             UICorner.Parent = SectionFrame
             
             -- Add section frame stroke
-            Library:CreateStroke(SectionFrame, theme.BorderColor, 1)
             
             Title.Name = "Title"
             Title.Parent = SectionFrame
